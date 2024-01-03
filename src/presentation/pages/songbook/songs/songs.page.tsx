@@ -1,8 +1,8 @@
 import React from 'react';
 
-import * as S from './dashboard.styles';
+import * as S from './songs.styles';
 
-export const DashboardPage: React.FC = () => {
+export const SongsPage: React.FC = () => {
   return (
     <S.Container>
       <S.Header>

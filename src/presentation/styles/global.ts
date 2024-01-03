@@ -28,7 +28,7 @@ export const GlobalStyles = createGlobalStyle`
     }
 
     body {
-        background-color: ${({ theme }) => theme.colors.grayBlue};
+        background-color: ${({ theme }) => theme.colors.black};
         color: ${({ theme }) => theme.colors.text};
         font-family: ${({ theme }) => theme.font.default};
         font-size: ${({ theme }) => theme.font.sizes.medium};

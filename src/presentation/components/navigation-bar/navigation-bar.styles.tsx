@@ -10,7 +10,7 @@ export const NavigationBar = styled.nav`
   justify-content: space-between;
   padding: 3.5rem 2.5rem;
   height: 3rem;
-  background-color: ${({ theme }) => theme.colors.primary};
+  background-color: ${({ theme }) => theme.colors.black};
   box-shadow: 0 0 1rem rgba(0, 0, 0, 0.1);
   position: fixed;
   width: 100%;

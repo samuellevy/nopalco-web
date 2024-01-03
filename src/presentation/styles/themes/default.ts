@@ -14,6 +14,11 @@ export const defaultTheme = {
 
     warning: '#FF9966',
     success: '#00C851',
+
+    black: '#000000',
+    white: '#FFFFFF',
+    grayBg: '#1f1f1f',
+    purple: '#BB86FC',
   },
 
   font: {

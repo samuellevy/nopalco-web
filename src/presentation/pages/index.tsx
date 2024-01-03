@@ -1,2 +1,3 @@
 export { Configs } from './configs';
-export { DashboardPage } from './dashboard/dashboard.page';
+export { SongsPage } from './songbook/songs/songs.page';
+export { Song } from './songbook/song/song.page';

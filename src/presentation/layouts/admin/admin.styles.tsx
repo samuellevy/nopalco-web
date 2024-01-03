@@ -3,7 +3,8 @@ import styled from 'styled-components';
 export const Container = styled.div`
   display: flex;
   flex-direction: row;
-  background-color: #f5f6fa;
+  background-color: ${({ theme }) => theme.colors.black};
+  color: ${({ theme }) => theme.colors.white};
   width: 100%;
   min-height: 100vh;
   gap: 0rem;
