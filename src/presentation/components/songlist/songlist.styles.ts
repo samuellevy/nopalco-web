@@ -29,12 +29,12 @@ export const BadgeSubTitle = styled.h2`
   padding: 1rem;
 `;
 
-export const ASide = styled.h2`
+export const ASide = styled.div`
   display: flex;
   flex-direction: column;
 `;
 
-export const Thumbnail = styled.h2`
+export const Thumbnail = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;

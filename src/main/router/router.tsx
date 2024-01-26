@@ -3,8 +3,13 @@ import { Configs, HomePage, SongPage, SongsPage } from '@/presentation/pages';
 import { PrivateRoute } from './private-route';
 import AdminLayout from '@/presentation/layouts/admin/admin.layout';
 import ScrollToTop from '@/presentation/components/scrolltotop';
+import { RemoteLoadAllSongsRequest } from '@/data/usecases/songs/remote-load-all-songs-request';
+import { AxiosHttpClient } from '@/infra/http/axios-http-client/axios-http-client';
 
 export const Router: React.FC = () => {
+  const axiosHttpClient = new AxiosHttpClient();
+  const loadAllSongsRequest = new RemoteLoadAllSongsRequest('/songs', axiosHttpClient);
+
   return (
     <BrowserRouter>
       <Routes>
@@ -13,8 +18,8 @@ export const Router: React.FC = () => {
         <Route path="/" element={<PrivateRoute />}>
           <Route path="/" element={<AdminLayout />}>
             <Route path="/home" element={<HomePage />} />
-            <Route path="/songbook/songs" element={<SongsPage />} />
-            <Route path="/songs/123" element={<SongPage />} />
+            <Route path="/songs" element={<SongsPage loadAllSongsRequest={loadAllSongsRequest} />} />
+            <Route path="/songs/:songId" element={<SongPage />} />
           </Route>
         </Route>
       </Routes>
