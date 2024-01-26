@@ -65,8 +65,12 @@ export const CellValue = styled.div<CellValueProps>`
 `;
 
 export const CellLabel = styled.div`
-  font-size: 1rem;
+  font-size: 1.3rem;
   font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
 `;
 /** END CELL */
 

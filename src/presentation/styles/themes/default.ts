@@ -59,5 +59,9 @@ export const defaultTheme = {
       background: '#E5E5E5',
       color: '#999',
     },
+    darkGray: {
+      background: '#1F1F1F',
+      color: '#FFF',
+    },
   },
 };

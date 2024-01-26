@@ -4407,6 +4407,18 @@ ms@2.1.2:
   resolved "https://registry.npmjs.org/ms/-/ms-2.1.2.tgz"
   integrity sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==
 
+music-gamut@^0.9.2:
+  version "0.9.2"
+  resolved "https://registry.yarnpkg.com/music-gamut/-/music-gamut-0.9.2.tgz#16053dd92f1e51f776d9e809c46f71625c810f9d"
+  integrity sha512-iZ1cj9+dIjAOpq4Vz8xR2DLK1guJHRqeZEs/ELyRXyImxkVdGNiA0yyiowSkmPgyCvnarT46sBRaJxFmGqhgyw==
+  dependencies:
+    music-notation "^1.0.1"
+
+music-notation@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/music-notation/-/music-notation-1.0.1.tgz#33e9034b69ff0279f84e9c7d2e2e3d1093b6aaf9"
+  integrity sha512-fxyEfPhJoGZlkFuV1LROUQHojEAntlBvy7Zvp0yaHvRMuMmhNr3yAWKt69jicZaCSAiYrVlelka84vWQmAP2Mw==
+
 nanoid@^3.3.6:
   version "3.3.6"
   resolved "https://registry.npmjs.org/nanoid/-/nanoid-3.3.6.tgz"
@@ -4650,6 +4662,21 @@ pirates@^4.0.4:
   version "4.0.6"
   resolved "https://registry.npmjs.org/pirates/-/pirates-4.0.6.tgz"
   integrity sha512-saLsH7WeYYPiD25LDuLRRY/i+6HaPYr6G1OUlN39otzkSTxKnubR9RTxS3/Kk50s1g2JTgFwWQDQyplC5/SHZg==
+
+pitch-set@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/pitch-set/-/pitch-set-1.1.0.tgz#47d22b4d07b4522f44e9ea227fce7444192059c0"
+  integrity sha512-c9WLVX2eSLTSw2kNOGJT3WTqRDqbHI1Xgd2IUqc5pKdADEknrhg+r63jzOzzV/pOR0+dZwbua/vrZnVkXKXjMg==
+  dependencies:
+    music-gamut "^0.9.2"
+    pitch-sort "^1.0.1"
+
+pitch-sort@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/pitch-sort/-/pitch-sort-1.0.1.tgz#f8edc1565968dd96568b760a231a9106c22c0234"
+  integrity sha512-rPF9BvflEoM5452VfkYccPTK+lSCiDlnKuOWdVf77ztZ82cgPE7aPi3mfNLk2ha3OsmwnzPE8BnV+7w2NzIKCg==
+  dependencies:
+    music-gamut "^0.9.2"
 
 pkg-dir@^4.2.0:
   version "4.2.0"
