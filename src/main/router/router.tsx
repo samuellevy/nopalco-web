@@ -5,10 +5,12 @@ import AdminLayout from '@/presentation/layouts/admin/admin.layout';
 import ScrollToTop from '@/presentation/components/scrolltotop';
 import { RemoteLoadAllSongsRequest } from '@/data/usecases/songs/remote-load-all-songs-request';
 import { AxiosHttpClient } from '@/infra/http/axios-http-client/axios-http-client';
+import { RemoteLoadSongRequest } from '@/data/usecases/songs/remote-load-song-request';
 
 export const Router: React.FC = () => {
   const axiosHttpClient = new AxiosHttpClient();
   const loadAllSongsRequest = new RemoteLoadAllSongsRequest('/songs', axiosHttpClient);
+  const loadSongRequest = new RemoteLoadSongRequest('/songs', axiosHttpClient);
 
   return (
     <BrowserRouter>
@@ -19,7 +21,7 @@ export const Router: React.FC = () => {
           <Route path="/" element={<AdminLayout />}>
             <Route path="/home" element={<HomePage />} />
             <Route path="/songs" element={<SongsPage loadAllSongsRequest={loadAllSongsRequest} />} />
-            <Route path="/songs/:songId" element={<SongPage />} />
+            <Route path="/songs/:songId" element={<SongPage loadSongRequest={loadSongRequest} />} />
           </Route>
         </Route>
       </Routes>

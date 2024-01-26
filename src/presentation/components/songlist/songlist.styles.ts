@@ -11,6 +11,7 @@ export const Badge = styled.div<BadgeProps>`
   box-shadow: 0 0 1rem rgba(0, 0, 0, 0.1);
   width: 100%;
   height: 10rem;
+  cursor: pointer;
 
   ${({ theme, $variant }) =>
     $variant && `background-color: ${theme.variants[$variant].background}; color: ${theme.variants[$variant].color};`};

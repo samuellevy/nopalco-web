@@ -1,8 +1,10 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { PlusCircle, MinusCircle } from 'lucide-react';
 
 import * as S from './song.styles';
+import { useParams } from 'react-router-dom';
+import { LoadSongRequest } from '@/domain/usecases/songs/load-song-request';
 
 interface Content {
   block: string;
@@ -26,101 +28,35 @@ interface Song {
   duration: string;
   versions: Version[];
 }
-export const SongPage: React.FC = () => {
-  const [song, setSong] = useState({} as Song);
 
-  useEffect(() => {
-    async function fetchData() {
-      const response = await fetch('/song.json');
-      const songFromApi: Song = await response.json();
-      setSong(songFromApi);
+type Props = {
+  loadSongRequest: LoadSongRequest;
+};
+
+export const SongPage: React.FC<Props> = ({ loadSongRequest }) => {
+  const { songId } = useParams<{ songId: string }>();
+  const [loadingData, setLoadingData] = React.useState(true);
+  const [song, setSong] = React.useState<Song>({} as Song);
+
+  const fetchLoadSongRequest = React.useCallback(async () => {
+    setLoadingData(true);
+    try {
+      const loadSongRequestResult = await loadSongRequest.execute(songId);
+      setSong(loadSongRequestResult);
+      console.log(loadSongRequestResult);
+      setLoadingData(false);
+    } catch (error) {
+      throw new Error(error as undefined);
     }
-    fetchData();
-  }, []);
+  }, [loadSongRequest]);
 
-  const musicalNotes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-  const increaseNotePitch = (note: string): string => {
-    const index = musicalNotes.indexOf(note);
+  React.useEffect(() => {
+    if (!loadingData) return;
 
-    if (index !== -1) {
-      const newIndex = (index + 1) % musicalNotes.length;
-      return musicalNotes[newIndex];
-    }
-
-    return note;
-  };
-
-  const parseChord = (chord: string): string[] => {
-    const regex = /([CDEFGAB])([b#]?)([mM]?[b#]?)?([+\-º\d]*)/;
-    const [, baseNote, accidental, quality, extension] = chord.match(regex) || [];
-
-    const parsedChord = [baseNote];
-
-    if (accidental) {
-      if (accidental === 'b') {
-        // Ajuste para aumentar meio tom abaixo
-        const index = musicalNotes.indexOf(baseNote);
-        const newIndex = (index + musicalNotes.length - 1) % musicalNotes.length;
-        parsedChord[0] = musicalNotes[newIndex] + '#';
-      } else {
-        parsedChord[0] = increaseNotePitch(parsedChord[0]);
-      }
-    }
-
-    if (quality) {
-      parsedChord.push(quality);
-    }
-
-    if (extension) {
-      parsedChord.push(extension);
-    }
-
-    return parsedChord;
-  };
-
-  const increasePitchOfChord = (chord: string): string => {
-    const parsedChord = parseChord(chord);
-
-    return parsedChord
-      .map((component) => {
-        if (/^\d+$/.test(component) || ['+', '-', 'º'].includes(component)) {
-          return component;
-        } else {
-          return increaseNotePitch(component);
-        }
-      })
-      .join('');
-  };
-
-  const increasePitchOfNotes = (notes: (string | [string, string])[]): (string | [string, string])[] => {
-    return notes.map((note) => {
-      if (Array.isArray(note)) {
-        return [increasePitchOfChord(note[0]), increasePitchOfChord(note[1])];
-      } else {
-        return note === '%' ? note : increasePitchOfChord(note);
-      }
-    });
-  };
-
-  const increasePitchOfVersion = (version: Version): Version => {
-    return {
-      ...version,
-      content: version.content.map((item) => ({
-        ...item,
-        notes: increasePitchOfNotes(item.notes),
-      })),
-    };
-  };
-
-  const increasePitchOfSong = (song: Song): Song => {
-    return {
-      ...song,
-      versions: song.versions.map(increasePitchOfVersion),
-    };
-  };
-
+    fetchLoadSongRequest();
+  }, [fetchLoadSongRequest, loadingData, song]);
   const handleIncreasePitch = () => {
-    setSong(increasePitchOfSong(song));
+    console.log('increase pitch');
   };
 
   return (
