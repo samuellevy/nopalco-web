@@ -9,6 +9,11 @@ type CellValueProps = {
   $variant?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'lightGray' | 'purple';
 };
 
+type SectionTitleProps = {
+  $isBold?: boolean;
+  $isUnderline?: boolean;
+};
+
 export const Container = styled.div`
   display: flex;
   flex-direction: column;
@@ -95,11 +100,12 @@ export const Section = styled.section`
   width: 100%;
 `;
 
-export const SectionTitle = styled.h1`
+export const SectionTitle = styled.h1<SectionTitleProps>`
   font-size: 1.5rem;
-  font-weight: 500;
   margin-bottom: 1.2rem;
-  color: ${({ theme }) => theme.colors.gray};
+  color: ${({ theme, $isBold }) => ($isBold ? theme.colors.white : theme.colors.gray)};
+  font-weight: ${({ $isBold }) => ($isBold ? 'bold' : 'normal')};
+  text-decoration: ${({ $isUnderline }) => ($isUnderline ? 'underline' : 'normal')};
 `;
 
 export const SectionContent = styled.div`

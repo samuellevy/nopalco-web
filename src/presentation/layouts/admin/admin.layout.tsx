@@ -2,7 +2,7 @@ import React from 'react';
 
 import { Container, ContentContainer, ContentWrapper } from './admin.styles';
 import { Outlet } from 'react-router-dom';
-import NavigationBarAdmin from '@/presentation/components/navigation-bar/navigation-bar-admin';
+// import NavigationBarAdmin from '@/presentation/components/navigation-bar/navigation-bar-admin';
 
 type Props = {
   children?: React.ReactNode;
@@ -15,7 +15,7 @@ const AdminLayout: React.FC<Props> = () => {
         <ContentWrapper>
           <Outlet />
         </ContentWrapper>
-        <NavigationBarAdmin />
+        {/* <NavigationBarAdmin /> */}
       </ContentContainer>
     </Container>
   );

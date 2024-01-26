@@ -59,6 +59,22 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest }) => {
     console.log('increase pitch');
   };
 
+  function isStringBetweenAsterisks(str: string): boolean {
+    const asteriskRegex = /\*([^*]+)\*/;
+    const asteriskMatch = str.match(asteriskRegex);
+    return !!asteriskMatch;
+  }
+
+  function isStringBetweenUnderscores(str: string): boolean {
+    const underscoreRegex = /_([^_]+)_/;
+    const underscoreMatch = str.match(underscoreRegex);
+    return !!underscoreMatch;
+  }
+
+  function removeAsterisksAndUnderscores(str: string): string {
+    return str.replace(/^[*_]+|[*_]+$/g, '');
+  }
+
   return (
     <>
       {!song && <h1>Loading</h1>}
@@ -105,7 +121,12 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest }) => {
           <S.Content>
             {song.versions[0].content.map((songSection: Content, keyContent) => (
               <S.Section key={`content-${keyContent}`}>
-                <S.SectionTitle>{songSection.block}</S.SectionTitle>
+                <S.SectionTitle
+                  $isBold={isStringBetweenAsterisks(songSection.block)}
+                  $isUnderline={isStringBetweenUnderscores(songSection.block)}
+                >
+                  {removeAsterisksAndUnderscores(songSection.block)}
+                </S.SectionTitle>
                 <S.Grid>
                   {songSection.notes.map((note: string, key) => (
                     <S.Cell key={key}>
