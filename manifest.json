@@ -1,0 +1,7 @@
+{
+  "name": "NoPalco",
+  "short_name": "NoPalco",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/"
+}

@@ -5,10 +5,11 @@ import { LoadSongRequest } from '@/domain/usecases/songs/load-song-request';
 export class RemoteLoadSongRequest implements LoadSongRequest {
   constructor(
     private readonly url: string,
-    private readonly httpClient: HttpClient<Song>,
+    private readonly httpClient: HttpClient<any>,
   ) {}
 
   async execute(uid: string): Promise<Song> {
+    console.log('chegou');
     const url = `${import.meta.env.VITE_NOPALCO_API}${this.url}/${uid}`;
     const httpResponse = await this.httpClient.request({
       url,
@@ -17,7 +18,7 @@ export class RemoteLoadSongRequest implements LoadSongRequest {
 
     switch (httpResponse.statusCode) {
       case 200:
-        return httpResponse.body;
+        return { ...httpResponse.body, content: JSON.parse(httpResponse.body?.content) || [] };
       case 204:
         return null;
       default:

@@ -45,9 +45,9 @@ export const SongsPage: React.FC<Props> = ({ loadAllSongsRequest }) => {
   ) : (
     <S.Container>
       <S.Header>
-        <S.Title>Olá, Chico!</S.Title>
+        <S.Title>Olá, Samuel!</S.Title>
         <S.UserNavigation>
-          <S.UserAvatar src="https://avatars.githubusercontent.com/u/26466516?v=4" />
+          <S.UserAvatar src="/assets/avatar.jpg" />
         </S.UserNavigation>
       </S.Header>
 

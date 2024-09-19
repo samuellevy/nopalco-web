@@ -12,16 +12,19 @@ export const Badge = styled.div<BadgeProps>`
   width: 100%;
   height: 10rem;
   cursor: pointer;
+  padding: 1rem;
 
   ${({ theme, $variant }) =>
     $variant && `background-color: ${theme.variants[$variant].background}; color: ${theme.variants[$variant].color};`};
 `;
 
 export const BadgeTitle = styled.h1`
-  font-size: 1.7rem;
+  font-size: 1.5rem;
+  line-height: 1.5rem;
   font-weight: bold;
   text-align: left;
   padding: 1rem;
+  overflow-x: hidden;
 `;
 
 export const BadgeSubTitle = styled.h2`
@@ -39,8 +42,8 @@ export const Thumbnail = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 10rem;
-  height: 10rem;
+  width: 18vw;
+  height: 18vw;
   padding: 1rem;
 
   img {

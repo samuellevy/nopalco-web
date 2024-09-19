@@ -14,6 +14,7 @@ export const Badge = styled.div<BadgeProps>`
   width: 10rem;
   height: 10rem;
   padding: 1rem;
+  cursor: pointer;
 
   ${({ theme, $variant }) =>
     $variant && `background-color: ${theme.variants[$variant].background}; color: ${theme.variants[$variant].color};`};

@@ -1,9 +1,21 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import envify from 'process-envify';
+import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    VitePWA({
+      manifest: {
+        name: 'NoPalco',
+        short_name: 'NoPalco',
+        display: 'standalone',
+        scope: '/',
+        start_url: '/',
+      },
+    }),
+  ],
   server: {
     watch: {
       usePolling: true,
