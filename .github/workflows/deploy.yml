@@ -44,8 +44,8 @@ jobs:
             nvm use 20
             yarn
             yarn build
-            pm2 stop cosmeticode-cms || true
-            pm2 delete cosmeticode-cms || true
+            pm2 stop nopalco-front || true
+            pm2 delete nopalco-front || true
             # Iniciar o servidor com o PM2
-            pm2 start "serve dist -s -l 5173" --name cosmeticode-cms
+            pm2 start "serve dist -s -l 5173" --name nopalco-front
             pm2 save
