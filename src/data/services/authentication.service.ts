@@ -1,4 +1,3 @@
-import { StatementRequestApi } from '@/domain/models';
 import HttpClient from '@/infra/http-client';
 
 export class AuthenticationService {
@@ -6,7 +5,7 @@ export class AuthenticationService {
 
   constructor(private httpClient: HttpClient) {}
 
-  async signIn(): Promise<StatementRequestApi[]> {
+  async signIn(): Promise<[]> {
     try {
       const response = await this.httpClient.get(`${this.baseUrl}/Authentication`);
 

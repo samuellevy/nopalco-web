@@ -10,7 +10,7 @@ export class RemoteLoadSongRequest implements LoadSongRequest {
 
   async execute(uid: string): Promise<Song> {
     console.log('chegou');
-    const url = `${import.meta.env.VITE_NOPALCO_API}${this.url}/${uid}`;
+    const url = `${window.env.API}${this.url}/${uid}`;
     const httpResponse = await this.httpClient.request({
       url,
       method: 'get',

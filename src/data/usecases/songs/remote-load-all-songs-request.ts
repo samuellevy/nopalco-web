@@ -9,7 +9,7 @@ export class RemoteLoadAllSongsRequest implements LoadAllSongsRequest {
   ) {}
 
   async execute(): Promise<LoadAllSongsRequestResult<Song[]>> {
-    const url = `${import.meta.env.VITE_NOPALCO_API}${this.url}`;
+    const url = `${window.env.API}${this.url}`;
     const httpResponse = await this.httpClient.request({
       url,
       method: 'get',

@@ -28,6 +28,6 @@ export interface SpotifyToken {
 }
 
 export interface GetArtistData {
-  getToken: () => Promise<SpotifyToken>;
+  getToken?: () => Promise<SpotifyToken>;
   execute: () => Promise<ArtistData>;
 }

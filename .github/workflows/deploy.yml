@@ -1,0 +1,51 @@
+name: Push-to-EC2
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the files
+        uses: actions/checkout@v3
+
+      - name: Copy files with SSH
+        uses: easingthemes/ssh-deploy@main
+        env:
+          SSH_PRIVATE_KEY: ${{secrets.SSH_KEY}}
+          ARGS: "-rltgoDzvO --delete"
+          SOURCE: "./"
+          REMOTE_HOST: ${{secrets.REMOTE_HOST}}
+          REMOTE_USER: ${{secrets.REMOTE_USER}}
+          TARGET: ${{secrets.TARGET_DIR}}
+          EXCLUDE: "/dist/, /node_modules/, **.env, rebuild_app.sh, watcher.sh"
+
+      - name: Transfer .env file to EC2
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{secrets.REMOTE_HOST}}
+          username: ${{secrets.REMOTE_USER}}
+          key: ${{secrets.SSH_KEY}}
+          script: |
+            echo "${{secrets.ENV_FILE_CONTENT}}" > ${{secrets.TARGET_DIR}}/public/config.js
+
+      - name: Rebuild and Restart App with PM2
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{secrets.REMOTE_HOST}}
+          username: ${{secrets.REMOTE_USER}}
+          key: ${{secrets.SSH_KEY}}
+          script: |
+            export NVM_DIR=~/.nvm
+            source ~/.nvm/nvm.sh
+            cd ${{secrets.TARGET_DIR}}
+            nvm use 20
+            yarn
+            yarn build
+            pm2 stop cosmeticode-cms || true
+            pm2 delete cosmeticode-cms || true
+            # Iniciar o servidor com o PM2
+            pm2 start "serve dist -s -l 5173" --name cosmeticode-cms
+            pm2 save

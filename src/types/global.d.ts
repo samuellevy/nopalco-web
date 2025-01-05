@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-types */
 interface Window {
-  env: {};
+  env: {
+    API: string;
+  };
 }

@@ -6,7 +6,7 @@ export class RemoteLoadAllSetlistsRequest implements LoadAllSetlistsRequest {
   constructor(private readonly httpClient: HttpClient<Setlist[]>) {}
 
   async execute(): Promise<Setlist[]> {
-    const url = `${import.meta.env.VITE_NOPALCO_API}/setlists`;
+    const url = `${window.env.API}/setlists`;
     const httpResponse = await this.httpClient.request({
       url,
       method: 'get',
