@@ -11,7 +11,7 @@ type Props = {
   loadAllSongsRequest: LoadAllSongsRequest;
 };
 
-export const SongsPage: React.FC<Props> = ({ loadAllSongsRequest }) => {
+export const SongsSmallPage: React.FC<Props> = ({ loadAllSongsRequest }) => {
   const navigate = useNavigate();
   const [loadingData, setLoadingData] = React.useState(true);
   const [songList, setSongList] = React.useState<Song[]>([]);

@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Configs, HomePage, SongPage, SongsPage } from '@/presentation/pages';
+import { HomePage, SongPage, SongsPage } from '@/presentation/pages';
 import { PrivateRoute } from './private-route';
 import AdminLayout from '@/presentation/layouts/admin/admin.layout';
 import ScrollToTop from '@/presentation/components/scrolltotop';
@@ -9,6 +9,8 @@ import { RemoteLoadSongRequest } from '@/data/usecases/songs/remote-load-song-re
 import { RemoteLoadAllSetlistsRequest } from '@/data/usecases/setlists/remote-load-all-setlists-request';
 import { RemoteLoadSetlistRequest } from '@/data/usecases/setlists/remote-load-setlist-request';
 import { SetlistPage } from '@/presentation/pages/setlists/setlist.page';
+import { SongsSmallPage } from '@/presentation/pages/songs-small/songs.page';
+import { SongSmallPage } from '@/presentation/pages/songs-small/song/song.page';
 
 export const Router: React.FC = () => {
   const axiosHttpClient = new AxiosHttpClient();
@@ -29,6 +31,12 @@ export const Router: React.FC = () => {
             <Route path="/songs" element={<SongsPage loadAllSongsRequest={loadAllSongsRequest} />} />
             <Route path="/songs/:songId" element={<SongPage loadSongRequest={loadSongRequest} />} />
             <Route path="/setlists/:setlistId" element={<SetlistPage loadSetlistRequest={loadSetlistRequest} />} />
+
+            <Route path="/songs-small" element={<SongsSmallPage loadAllSongsRequest={loadAllSongsRequest} />} />
+            <Route
+              path="/songs-small/:songId"
+              element={<SongSmallPage loadSongRequest={loadSongRequest} loadAllSongsRequest={loadAllSongsRequest} />}
+            />
           </Route>
         </Route>
       </Routes>

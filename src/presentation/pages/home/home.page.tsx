@@ -48,21 +48,20 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest }) => {
       </S.Header>
 
       <S.Content>
-        {/* <S.Section>
+        <S.Section>
           <S.SectionTitle>Próximos eventos</S.SectionTitle>
 
           <S.SectionContent>
-            <BadgeComponent.Badge $variant="darkGray">
-              <BadgeComponent.BadgeTitle>20/01</BadgeComponent.BadgeTitle>
-              <BadgeComponent.BadgeSubTitle>Festa privada na Tijuca</BadgeComponent.BadgeSubTitle>
+            <BadgeComponent.Badge $variant="darkGray" onClick={() => handleLinkClick(`songs/`)}>
+              <BadgeComponent.BadgeTitle>05/jan</BadgeComponent.BadgeTitle>
+              <BadgeComponent.BadgeSubTitle>Abertura Não Oficial do Carnaval</BadgeComponent.BadgeSubTitle>
             </BadgeComponent.Badge>
-
-            <BadgeComponent.Badge $variant="darkGray">
-              <BadgeComponent.BadgeTitle>27/01</BadgeComponent.BadgeTitle>
-              <BadgeComponent.BadgeSubTitle>Ateliê Bonifácio</BadgeComponent.BadgeSubTitle>
+            <BadgeComponent.Badge $variant="darkGray" onClick={() => handleLinkClick(`songs-small/`)}>
+              <BadgeComponent.BadgeTitle>05/jan [smartwatch]</BadgeComponent.BadgeTitle>
+              <BadgeComponent.BadgeSubTitle>Abertura Não Oficial do Carnaval</BadgeComponent.BadgeSubTitle>
             </BadgeComponent.Badge>
           </S.SectionContent>
-        </S.Section> */}
+        </S.Section>
 
         <S.Section>
           <S.SectionTitle>Setlists salvos</S.SectionTitle>

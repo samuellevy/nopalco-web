@@ -9,9 +9,9 @@ export const Badge = styled.div<BadgeProps>`
   flex-direction: column;
   justify-content: center;
   gap: 1rem;
-  border-radius: 25%;
+  border-radius: 1rem;
   box-shadow: 0 0 1rem rgba(0, 0, 0, 0.1);
-  width: 10rem;
+  width: 100%;
   height: 10rem;
   padding: 1rem;
   cursor: pointer;
@@ -21,12 +21,12 @@ export const Badge = styled.div<BadgeProps>`
 `;
 
 export const BadgeTitle = styled.h1`
-  font-size: 2rem;
+  font-size: 3rem;
   font-weight: bold;
-  text-align: center;
+  text-align: left;
 `;
 
 export const BadgeSubTitle = styled.h2`
-  font-size: 1.3rem;
+  font-size: 1.6rem;
   font-weight: 500;
 `;
