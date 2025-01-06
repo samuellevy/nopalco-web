@@ -6,6 +6,7 @@ import * as S from './song.styles';
 import { useNavigate, useParams } from 'react-router-dom';
 import { LoadSongRequest } from '@/domain/usecases/songs/load-song-request';
 import { Song } from '@/domain/models';
+import { LoadAllSongsRequest } from '@/domain/usecases';
 
 interface Content {
   block: string;
@@ -14,14 +15,27 @@ interface Content {
 
 type Props = {
   loadSongRequest: LoadSongRequest;
+  loadAllSongsRequest: LoadAllSongsRequest;
 };
 
-export const SongPage: React.FC<Props> = ({ loadSongRequest }) => {
+export const SongPage: React.FC<Props> = ({ loadSongRequest, loadAllSongsRequest }) => {
   const navigate = useNavigate();
   const { songId } = useParams<{ songId: string }>();
   const [loadingData, setLoadingData] = React.useState(true);
   const [song, setSong] = React.useState<Song>({} as Song);
   const [activeBpm, setActiveBpm] = React.useState(false);
+  const [songList, setSongList] = React.useState<Song[]>([]);
+
+  const fetchLoadAllSongsRequest = React.useCallback(async () => {
+    setLoadingData(true);
+    try {
+      const loadAllSongsRequestResult = await loadAllSongsRequest.execute();
+      setSongList(loadAllSongsRequestResult.songs);
+      setLoadingData(false);
+    } catch (error) {
+      throw new Error(error as undefined);
+    }
+  }, [loadAllSongsRequest]);
 
   const fetchLoadSongRequest = React.useCallback(async () => {
     setLoadingData(true);
@@ -39,8 +53,9 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest }) => {
   React.useEffect(() => {
     if (!loadingData) return;
 
+    fetchLoadAllSongsRequest();
     fetchLoadSongRequest();
-  }, [fetchLoadSongRequest, loadingData, song]);
+  }, [fetchLoadSongRequest, fetchLoadAllSongsRequest, loadingData, song]);
 
   function increaseTone(content: any[]): void {
     function transposeNote(note: string): string {
@@ -155,6 +170,38 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest }) => {
     navigate('/songs');
   };
 
+  const getNextItem = (id: string) => {
+    const index = songList.findIndex((item) => item.id === id);
+    if (index !== -1 && index < songList.length - 1) {
+      return songList[index + 1];
+    }
+    return null; // Retorna null se não encontrar ou se for o último item
+  };
+
+  const getPreviousItem = (id: string) => {
+    const index = songList.findIndex((item) => item.id === id);
+    if (index > 0) {
+      return songList[index - 1];
+    }
+    return null; // Retorna null se não houver anterior ou se não encontrar o id
+  };
+
+  const handleNextSongButton = (id: string) => {
+    const nextSong = getNextItem(id);
+
+    console.log(nextSong);
+    if (nextSong) {
+      window.location.href = `/songs/${nextSong.id}`;
+    }
+  };
+  const handlePreviousSongButton = (id: string) => {
+    const previousSong = getPreviousItem(id);
+    console.log(previousSong);
+    if (previousSong) {
+      window.location.href = `/songs/${previousSong.id}`;
+    }
+  };
+
   return (
     <>
       {!song && <h1>Loading</h1>}
@@ -224,7 +271,11 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest }) => {
               ))}
           </S.Content>
 
-          <S.SimpleButton onClick={handleSetlistButton}>Voltar</S.SimpleButton>
+          <S.FlexRow>
+            <S.SimpleButton onClick={handleSetlistButton}>Voltar</S.SimpleButton>
+            <S.SimpleButton onClick={() => handlePreviousSongButton(song.id)}>Anterior</S.SimpleButton>
+            <S.SimpleButton onClick={() => handleNextSongButton(song.id)}>Próxima</S.SimpleButton>
+          </S.FlexRow>
         </S.Container>
       )}
     </>
