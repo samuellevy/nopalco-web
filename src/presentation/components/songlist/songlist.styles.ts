@@ -39,17 +39,16 @@ export const ASide = styled.div`
 `;
 
 export const Thumbnail = styled.div`
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 18vw;
-  height: 18vw;
-  padding: 1rem;
+  width: 100px;
 
   img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    max-width: 85%;
+    max-height: 85%;
+    object-fit: contain;
     object-position: center;
     border-radius: 50%;
   }

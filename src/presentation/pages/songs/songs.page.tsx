@@ -59,7 +59,7 @@ export const SongsPage: React.FC<Props> = ({ loadAllSongsRequest }) => {
               <SongList.Badge $variant="darkGray" onClick={() => handleClickSong(song.id)} key={song.uid}>
                 <SongList.ASide>
                   <SongList.Thumbnail>
-                    <img src={song.imageUrl} alt="" />
+                    <img src='/assets/no-photo.png' alt="" />
                   </SongList.Thumbnail>
                 </SongList.ASide>
                 <SongList.ASide>

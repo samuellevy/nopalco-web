@@ -1,3 +1,3 @@
 window.env = {
-  API: 'http://api-nopalco.nokengo.com',
+  API: 'http://192.168.15.5:3000',
 };

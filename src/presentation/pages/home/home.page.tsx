@@ -53,12 +53,12 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest }) => {
 
           <S.SectionContent>
             <BadgeComponent.Badge $variant="darkGray" onClick={() => handleLinkClick(`songs/`)}>
-              <BadgeComponent.BadgeTitle>05/jan</BadgeComponent.BadgeTitle>
-              <BadgeComponent.BadgeSubTitle>Abertura Não Oficial do Carnaval</BadgeComponent.BadgeSubTitle>
+              <BadgeComponent.BadgeTitle>12/jan</BadgeComponent.BadgeTitle>
+              <BadgeComponent.BadgeSubTitle>JoJoe</BadgeComponent.BadgeSubTitle>
             </BadgeComponent.Badge>
             <BadgeComponent.Badge $variant="darkGray" onClick={() => handleLinkClick(`songs-small/`)}>
-              <BadgeComponent.BadgeTitle>05/jan [smartwatch]</BadgeComponent.BadgeTitle>
-              <BadgeComponent.BadgeSubTitle>Abertura Não Oficial do Carnaval</BadgeComponent.BadgeSubTitle>
+              <BadgeComponent.BadgeTitle>12/jan [smartwatch]</BadgeComponent.BadgeTitle>
+              <BadgeComponent.BadgeSubTitle>JoJoe</BadgeComponent.BadgeSubTitle>
             </BadgeComponent.Badge>
           </S.SectionContent>
         </S.Section>
