@@ -15,6 +15,7 @@ export const SongsPage: React.FC<Props> = ({ loadAllSongsRequest }) => {
   const navigate = useNavigate();
   const [loadingData, setLoadingData] = React.useState(true);
   const [songList, setSongList] = React.useState<Song[]>([]);
+  const [originalList, setSongOriginalList] = React.useState<Song[]>([]);
 
   const handleClickSong = (songId: string) => {
     navigate(`${songId}`);
@@ -25,11 +26,20 @@ export const SongsPage: React.FC<Props> = ({ loadAllSongsRequest }) => {
     try {
       const loadAllSongsRequestResult = await loadAllSongsRequest.execute();
       setSongList(loadAllSongsRequestResult.songs);
+      setSongOriginalList(loadAllSongsRequestResult.songs);
       setLoadingData(false);
     } catch (error) {
       throw new Error(error as undefined);
     }
   }, [loadAllSongsRequest]);
+
+  const handleFilter = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    const filteredSongList = originalList.filter(song => 
+      song.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(value.toLowerCase())
+    );
+    setSongList(filteredSongList);
+  }
 
   React.useEffect(() => {
     if (!loadingData) return;
@@ -46,6 +56,7 @@ export const SongsPage: React.FC<Props> = ({ loadAllSongsRequest }) => {
     <S.Container>
       <S.Header>
         <S.Title>Olá, Samuel!</S.Title>
+        <S.FormInput placeholder='Pesquisa rápida' onChange={handleFilter}/>
         <S.UserNavigation>
           <S.UserAvatar src="/assets/avatar.jpg" />
         </S.UserNavigation>

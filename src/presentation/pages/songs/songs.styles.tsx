@@ -89,3 +89,9 @@ export const BadgeSubTitle = styled.h2`
   font-size: 1.3rem;
   font-weight: 500;
 `;
+
+export const FormInput = styled.input`
+  background-color: #fff;
+  font-size: 14px;
+  padding: 10px;
+`;
