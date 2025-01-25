@@ -63,6 +63,7 @@ export const SectionContent = styled.div`
   flex-wrap: wrap;
   gap: 1rem;
   margin-top: 2rem;
+  width: 100%;
 `;
 
 export const Badge = styled.div<BadgeProps>`
