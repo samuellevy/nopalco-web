@@ -4,6 +4,9 @@ export interface SetlistItem {
   id: string;
   order: number;
   song: Song;
+  key?: string;
+  pureTitle?: string;
+  pureAuthor?: string;
 }
 
 export interface Setlist {

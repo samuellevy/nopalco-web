@@ -213,14 +213,14 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadAllSongsRequest
                 <S.Title>{song.name}</S.Title>
                 <S.Author>{song.author}</S.Author>
               </S.FlexColumn>
-              <S.Cell>
+              {/* <S.CellHeader>
                 <S.CellValue $size="1.2rem">{song.duration}</S.CellValue>
                 <S.CellLabel>DURATION</S.CellLabel>
-              </S.Cell>
+              </S.CellHeader> */}
             </S.FlexRow>
 
             <S.FlexRow>
-              <S.Cell onClick={() => setActiveBpm(!activeBpm)}>
+              <S.CellHeader onClick={() => setActiveBpm(!activeBpm)}>
                 <S.BlinkingDiv bpm={parseInt(song.bpm)} active={activeBpm}>
                   {song.bpm}
                 </S.BlinkingDiv>
@@ -228,19 +228,19 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadAllSongsRequest
                   {song.bpm}
                 </S.CellValue>
                 <S.CellLabel>BPM</S.CellLabel>
-              </S.Cell>
-              <S.Cell>
+              </S.CellHeader>
+              <S.CellHeader>
                 <S.CellValue $size="1.2rem">{song.key}</S.CellValue>
                 <S.CellLabel>
                   <MinusCircle size={22} onClick={() => decreaseTone(song.content)} />
                   KEY
                   <PlusCircle size={22} onClick={() => increaseTone(song.content)} />
                 </S.CellLabel>
-              </S.Cell>
-              <S.Cell>
+              </S.CellHeader>
+              <S.CellHeader>
                 <S.CellValue $size="1.2rem">{song.rhythm}</S.CellValue>
                 <S.CellLabel>RHYTHM</S.CellLabel>
-              </S.Cell>
+              </S.CellHeader>
               {/* <S.Cell>
                 <S.CellValue $size="1.2rem" $variant="purple">
                   {song.versions[0].name}

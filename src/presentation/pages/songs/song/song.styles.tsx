@@ -24,12 +24,21 @@ export const Container = styled.div<ContainerProps>`
   flex-direction: column;
   height: 100%;
   transition: all 0.2s ease-in-out;
-
+  @media (max-width: 350px) {
+    max-width: 290px;
+  }
+  
   ${({ minified }) => (minified ? 'transform: scale(0.8) translate(-17%, -14%);' : '')}
 `;
 
 /** Header */
-export const Header = styled.header``;
+export const Header = styled.header`
+  @media (max-width: 350px) {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+`;
 
 export const FlexColumn = styled.header`
   display: flex;
@@ -41,17 +50,26 @@ export const FlexRow = styled.header`
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  padding: 5rem 1rem;
-  height: 3rem;
+  @media (min-width: 350px) {
+    gap: 10px;
+    padding: 5rem 1rem;
+    height: 3rem;
+  }
 `;
 
 export const Title = styled.h1`
   font-size: 1.6rem;
+  @media (max-width: 350px) {
+    font-size: 2rem;
+  }
   font-weight: bold;
 `;
 
 export const Author = styled.h1`
   font-size: 1.6rem;
+  @media (max-width: 350px) {
+    font-size: 1.8rem;
+  }
   font-weight: normal;
   margin: 0.6rem 0;
   color: ${({ theme }) => theme.colors.gray};
@@ -60,7 +78,7 @@ export const Author = styled.h1`
 /** END Header */
 
 /* CELL */
-export const Cell = styled.div`
+export const CellHeader = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -68,12 +86,61 @@ export const Cell = styled.div`
   gap: 1rem;
 `;
 
-export const CellValue = styled.div<CellValueProps>`
+export const CellValueHeader = styled.div<CellValueProps>`
   background-color: ${({ theme, $variant }) => ($variant ? theme.colors[$variant] : theme.colors.grayBg)};
   width: 100%;
   text-align: center;
   padding: 1rem 1rem;
   font-size: ${({ $size }) => ($size ? $size : `1.5rem`)};
+  font-weight: bold;
+  display: ${({ hidden }) => (hidden ? 'none' : 'flex')};
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
+`;
+
+export const Cell = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  @media (min-width: 350px) {
+    gap: 1rem;
+  }
+
+  @media (max-width: 350px) {
+    border-radius: 50px;
+
+    &:nth-child(8n + 1),
+    &:nth-child(8n + 2),
+    &:nth-child(8n + 3),
+    &:nth-child(8n + 4) {
+      background-color: #ed6c5b;
+    }
+
+    &:nth-child(8n + 5),
+    &:nth-child(8n + 6),
+    &:nth-child(8n + 7),
+    &:nth-child(8n + 8) {
+      background-color: #bb86fc;
+    }
+  }
+`;
+
+export const CellValue = styled.div<CellValueProps>`
+  width: 100%;
+  text-align: center;
+  padding: 1rem 1rem;
+  font-size: ${({ $size }) => ($size ? $size : `1.5rem`)};
+  
+  @media (min-width: 350px) {
+    background-color: ${({ theme, $variant }) => ($variant ? theme.colors[$variant] : theme.colors.grayBg)};
+  }
+
+  @media (max-width: 350px) {
+    font-size: ${({ $size }) => ($size ? $size : `1.8rem`)};
+  }
+  
   font-weight: bold;
   display: ${({ hidden }) => (hidden ? 'none' : 'flex')};
   flex-direction: row;
@@ -96,7 +163,9 @@ export const Content = styled.div`
   display: flex;
   flex-direction: column;
   flex: 1;
-  padding: 1rem;
+  @media (min-width: 350px) {
+    padding: 1rem;
+  }
   overflow-y: auto;
   gap: 1.6rem;
 `;
@@ -105,12 +174,18 @@ export const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
+  @media (max-width: 350px) {
+    gap: .2rem;
+  }
 `;
 
 export const Section = styled.section`
   display: flex;
   flex-direction: column;
   width: 100%;
+  @media (max-width: 350px) {
+    margin-top: 2rem;
+  }
 `;
 
 export const SectionTitle = styled.h1<SectionTitleProps>`
@@ -167,6 +242,10 @@ export const SimpleButton = styled.button`
   outline: none;
   outline: 0;
   padding: 10px 25px;
+  @media (max-width: 350px) {
+    padding: 10px 0px;
+    width: 33%;
+  }
   text-align: center;
   transform: translateY(0);
   transition:

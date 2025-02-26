@@ -2,7 +2,7 @@ import React from 'react';
 
 import * as S from './home.styles';
 import { BadgeComponent } from '@/presentation/components/badge';
-import { SongList } from '@/presentation/components/songlist';
+// import { SongList } from '@/presentation/components/songlist';
 import { useNavigate } from 'react-router-dom';
 import { LoadAllSetlistsRequest } from '@/domain/usecases/setlists/load-all-setlists-request';
 import { Setlist } from '@/domain/models/setlist';
@@ -48,7 +48,7 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest }) => {
       </S.Header>
 
       <S.Content>
-        <S.Section>
+        {/* <S.Section>
           <S.SectionTitle>Próximos eventos</S.SectionTitle>
 
           <S.SectionContent>
@@ -61,7 +61,7 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest }) => {
               <BadgeComponent.BadgeSubTitle>JoJoe</BadgeComponent.BadgeSubTitle>
             </BadgeComponent.Badge>
           </S.SectionContent>
-        </S.Section>
+        </S.Section> */}
 
         <S.Section>
           <S.SectionTitle>Setlists salvos</S.SectionTitle>
@@ -69,13 +69,14 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest }) => {
           <S.SectionContent>
             {setlists.map((item) => (
               <BadgeComponent.Badge $variant="darkGray" onClick={() => handleLinkClick(`setlists/${item.id}`)}>
-                <BadgeComponent.BadgeSubTitle>{item.name}</BadgeComponent.BadgeSubTitle>
+                 <BadgeComponent.BadgeTitle>{item.description}</BadgeComponent.BadgeTitle>
+                 <BadgeComponent.BadgeSubTitle>{item.name}</BadgeComponent.BadgeSubTitle>
               </BadgeComponent.Badge>
             ))}
           </S.SectionContent>
         </S.Section>
 
-        <S.Section>
+        {/* <S.Section>
           <S.SectionTitle>Músicas</S.SectionTitle>
 
           <S.SectionContent>
@@ -136,7 +137,7 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest }) => {
               </SongList.ASide>
             </SongList.Badge>
           </S.SectionContent>
-        </S.Section>
+        </S.Section> */}
       </S.Content>
     </S.Container>
   );

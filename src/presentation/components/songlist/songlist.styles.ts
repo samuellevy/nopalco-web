@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 
 type BadgeProps = {
-  $variant?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'lightGray' | 'darkGray';
+  $variant?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'lightGray' | 'darkGray' | 'disabled';
 };
 
 export const Badge = styled.div<BadgeProps>`

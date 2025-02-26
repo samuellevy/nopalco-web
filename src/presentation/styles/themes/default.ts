@@ -60,8 +60,12 @@ export const defaultTheme = {
       color: '#999',
     },
     darkGray: {
-      background: '#1F1F1F',
+      background: '#444444',
       color: '#FFF',
+    },
+    disabled: {
+      background: '#1F1F1F',
+      color: '#999',
     },
   },
 };

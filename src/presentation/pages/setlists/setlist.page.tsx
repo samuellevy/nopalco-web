@@ -45,24 +45,37 @@ export const SetlistPage: React.FC<SetlistProps> = ({ loadSetlistRequest }) => {
     <S.Container>
       <S.Content>
         <S.Section>
-          <S.SectionTitle>Músicas</S.SectionTitle>
+          <S.SectionTitle>{`${setlist.name} - ${setlist.description}`}</S.SectionTitle>
           {setlist && (
             <S.SectionContent>
               {setlist.items?.map((item) => (
-                <SongList.Badge $variant="darkGray" onClick={() => handleLinkClick(`songs/${item.song.id}`)}>
-                  {/* <SongList.ASide>
-                    <SongList.Thumbnail>
-                      <img
-                        src="https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcRGCu3ETf6NPxGijCEaIvANw6fyshVbUJs42fXNSqNI0P_AmBBL"
-                        alt=""
-                      />
-                    </SongList.Thumbnail>
-                  </SongList.ASide> */}
-                  <SongList.ASide>
-                    <SongList.BadgeTitle>{item.song.name}</SongList.BadgeTitle>
-                    <SongList.BadgeSubTitle>{item.song.author}</SongList.BadgeSubTitle>
-                  </SongList.ASide>
-                </SongList.Badge>
+                <>
+                  {item.song && (
+                    <SongList.Badge $variant="darkGray" onClick={() => handleLinkClick(`songs/${item.song.id}`)}>
+                      {/* <SongList.ASide>
+                        <SongList.Thumbnail>
+                          <img
+                            src="https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcRGCu3ETf6NPxGijCEaIvANw6fyshVbUJs42fXNSqNI0P_AmBBL"
+                            alt=""
+                          />
+                        </SongList.Thumbnail>
+                      </SongList.ASide> */}
+
+                      <SongList.ASide>
+                        <SongList.BadgeTitle>{item.song.name}</SongList.BadgeTitle>
+                        <SongList.BadgeSubTitle>{item.song.author}</SongList.BadgeSubTitle>
+                      </SongList.ASide>
+                    </SongList.Badge>
+                  )}
+                   {!item.song && (
+                    <SongList.Badge $variant="disabled">
+                      <SongList.ASide>
+                        <SongList.BadgeTitle>{item.pureTitle}</SongList.BadgeTitle>
+                        {/* <SongList.BadgeTitle>{item.pureAuthor}</SongList.BadgeTitle> */}
+                      </SongList.ASide>
+                    </SongList.Badge>
+                  )}
+                </>
               ))}
               {/* 
             <SongList.Badge $variant="darkGray">
