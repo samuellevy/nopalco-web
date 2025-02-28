@@ -7,6 +7,8 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { LoadSongRequest } from '@/domain/usecases/songs/load-song-request';
 import { Song } from '@/domain/models';
 import { LoadAllSongsRequest } from '@/domain/usecases';
+import { LoadSetlistRequest } from '@/domain/usecases/setlists/load-setlist-request';
+import { SetlistItem } from '@/domain/models/setlist';
 
 interface Content {
   block: string;
@@ -16,9 +18,10 @@ interface Content {
 type Props = {
   loadSongRequest: LoadSongRequest;
   loadAllSongsRequest: LoadAllSongsRequest;
+  loadSetlistRequest: LoadSetlistRequest;
 };
 
-export const SongPage: React.FC<Props> = ({ loadSongRequest, loadAllSongsRequest }) => {
+export const SongPage: React.FC<Props> = ({ loadSongRequest, loadAllSongsRequest, loadSetlistRequest }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const setlist = searchParams.get('setlist');
@@ -27,7 +30,8 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadAllSongsRequest
   const [loadingData, setLoadingData] = React.useState(true);
   const [song, setSong] = React.useState<Song>({} as Song);
   const [activeBpm, setActiveBpm] = React.useState(false);
-  const [songList, setSongList] = React.useState<Song[]>([]);
+  const [_, setSongList] = React.useState<Song[]>([]);
+  const [setlistSongList, setSetlistSongList] = React.useState<SetlistItem[]>([]);
 
   const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
@@ -39,7 +43,7 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadAllSongsRequest
       Ab: 'G#',
       Bb: 'A#',
     };
-    
+
     if (note in FLAT_TO_SHARP_MAP) {
       note = FLAT_TO_SHARP_MAP[note];
     }
@@ -65,6 +69,20 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadAllSongsRequest
     }
   }, [loadAllSongsRequest]);
 
+  const fetchLoadSetlistsRequest = React.useCallback(async (setlistId: string) => {
+    setLoadingData(true);
+    if (setlist) {
+      try {
+        const loadSetlistsRequestResult = await loadSetlistRequest.execute(setlistId);
+        console.log(loadSetlistsRequestResult);
+        setSetlistSongList(loadSetlistsRequestResult.items);
+        setLoadingData(false);
+      } catch (error) {
+        throw new Error(error as undefined);
+      }
+    }
+  }, [loadSetlistRequest, setlist]);
+
   function getRelativeMajor(minorChord: string): string {
     const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
     const FLAT_TO_SHARP_MAP: { [key: string]: string } = {
@@ -74,31 +92,31 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadAllSongsRequest
       Ab: 'G#',
       Bb: 'A#',
     };
-  
+
     // Extrai a nota base e os modificadores
     const regex = /^([A-G][#b]?)(.*)$/;
     const match = minorChord.match(regex);
-  
+
     if (!match) return minorChord; // Se não for um acorde válido, retorna o original
-  
+
     let baseNote = match[1];
     const modifiers = match[2];
-  
+
     // Converte bemol para sustenido equivalente
     if (baseNote in FLAT_TO_SHARP_MAP) {
       baseNote = FLAT_TO_SHARP_MAP[baseNote];
     }
-  
+
     const noteIndex = NOTES.indexOf(baseNote);
     if (noteIndex === -1) return minorChord; // Se não for uma nota válida, retorna o original
-  
+
     // Calcula o relativo maior (3 semitons acima)
     const majorIndex = (noteIndex + 3) % NOTES.length;
     const majorNote = NOTES[majorIndex];
-  
+
     // Remove o 'm' do acorde menor e mantém os outros modificadores
     const newModifiers = modifiers.replace('m', '');
-  
+
     return majorNote + newModifiers;
   }
 
@@ -109,7 +127,13 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadAllSongsRequest
       // Se houver uma key na URL, transpor antes de setar o estado
       if (key) {
         const finalNewKey = isMinorChord(key) ? getRelativeMajor(key) : key;
-        const transposedContent = transposeContent(loadSongRequestResult.content, isMinorChord(loadSongRequestResult.key) ? getRelativeMajor(loadSongRequestResult.key) : loadSongRequestResult.key, finalNewKey);
+        const transposedContent = transposeContent(
+          loadSongRequestResult.content,
+          isMinorChord(loadSongRequestResult.key)
+            ? getRelativeMajor(loadSongRequestResult.key)
+            : loadSongRequestResult.key,
+          finalNewKey,
+        );
         setSong({ ...loadSongRequestResult, content: transposedContent });
       } else {
         setSong(loadSongRequestResult);
@@ -118,16 +142,16 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadAllSongsRequest
     } catch (error) {
       throw new Error(error as undefined);
     }
-  }, [loadSongRequest, key]);
+  }, [loadSongRequest, key, songId]);
 
   const transposeContent = (content: any[], currentKey: string, targetKey: string): any[] => {
     const currentIndex = getNoteIndex(currentKey);
     const targetIndex = getNoteIndex(targetKey);
-    
+
     if (currentIndex === -1 || targetIndex === -1) return content;
 
     const steps = (targetIndex - currentIndex + NOTES.length) % NOTES.length;
-    
+
     let newContent = content;
     for (let i = 0; i < steps; i++) {
       newContent = increaseTone(newContent, true);
@@ -140,7 +164,10 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadAllSongsRequest
 
     fetchLoadAllSongsRequest();
     fetchLoadSongRequest();
-  }, [fetchLoadSongRequest, fetchLoadAllSongsRequest, loadingData, song]);
+    if (setlist) {
+      fetchLoadSetlistsRequest(setlist);
+    }
+  }, [fetchLoadSongRequest, fetchLoadAllSongsRequest, loadingData, song, setlist]);
 
   function increaseTone(content: any[], returnContent = false): any[] {
     function transposeNote(note: string): string {
@@ -259,17 +286,17 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadAllSongsRequest
   };
 
   const getNextItem = (id: string) => {
-    const index = songList.findIndex((item) => item.id === id);
-    if (index !== -1 && index < songList.length - 1) {
-      return songList[index + 1];
+    const index = setlistSongList.findIndex((item) => item.song.id === id);
+    if (index !== -1 && index < setlistSongList.length - 1) {
+      return setlistSongList[index + 1];
     }
     return null; // Retorna null se não encontrar ou se for o último item
   };
 
   const getPreviousItem = (id: string) => {
-    const index = songList.findIndex((item) => item.id === id);
+    const index = setlistSongList.findIndex((item) => item.song.id === id);
     if (index > 0) {
-      return songList[index - 1];
+      return setlistSongList[index - 1];
     }
     return null; // Retorna null se não houver anterior ou se não encontrar o id
   };
@@ -279,14 +306,14 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadAllSongsRequest
 
     console.log(nextSong);
     if (nextSong) {
-      window.location.href = `/songs/${nextSong.id}`;
+      window.location.href = `/songs/${nextSong.song.id}?setlist=${setlist}&key=${nextSong.key}`;
     }
   };
   const handlePreviousSongButton = (id: string) => {
     const previousSong = getPreviousItem(id);
     console.log(previousSong);
     if (previousSong) {
-      window.location.href = `/songs/${previousSong.id}`;
+      window.location.href = `/songs/${previousSong.song.id}?setlist=${setlist}&key=${previousSong.key}`;
     }
   };
 

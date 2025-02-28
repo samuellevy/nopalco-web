@@ -31,7 +31,13 @@ export const Router: React.FC = () => {
             <Route path="/songs" element={<SongsPage loadAllSongsRequest={loadAllSongsRequest} />} />
             <Route
               path="/songs/:songId"
-              element={<SongPage loadSongRequest={loadSongRequest} loadAllSongsRequest={loadAllSongsRequest} />}
+              element={
+                <SongPage
+                  loadSongRequest={loadSongRequest}
+                  loadAllSongsRequest={loadAllSongsRequest}
+                  loadSetlistRequest={loadSetlistRequest}
+                />
+              }
             />
             <Route path="/setlists/:setlistId" element={<SetlistPage loadSetlistRequest={loadSetlistRequest} />} />
 
