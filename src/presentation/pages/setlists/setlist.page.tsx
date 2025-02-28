@@ -2,7 +2,7 @@ import React from 'react';
 
 import * as S from './setlist.styles';
 import { SongList } from '@/presentation/components/songlist';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Setlist } from '@/domain/models/setlist';
 import { LoadSetlistRequest } from '@/domain/usecases/setlists/load-setlist-request';
 
@@ -13,6 +13,8 @@ type SetlistProps = {
 export const SetlistPage: React.FC<SetlistProps> = ({ loadSetlistRequest }) => {
   const navigate = useNavigate();
   const { setlistId } = useParams<{ setlistId: string }>();
+  const [searchParams] = useSearchParams();
+  const position = searchParams.get('position') || null;
 
   const [loadingData, setLoadingData] = React.useState(true);
   const [setlist, setSetlist] = React.useState<Setlist>({} as Setlist);
@@ -31,15 +33,22 @@ export const SetlistPage: React.FC<SetlistProps> = ({ loadSetlistRequest }) => {
     }
   }, [loadSetlistRequest, setlistId]);
 
-  const handleLinkClick = (navItem: string) => {
-    navigate(`/${navItem}`);
+  const handleLinkClick = (songId: string, setlistId: string, key: string) => {
+    navigate(`/songs/${songId}?setlist=${setlistId}&key=${key}`);
   };
 
   React.useEffect(() => {
     if (!loadingData) return;
 
-    fetchLoadSetlistsRequest();
-  }, [fetchLoadSetlistsRequest, loadingData, setlist]);
+    fetchLoadSetlistsRequest().then(() => {
+      if (position) {
+        const element = document.getElementById(position);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    });
+  }, [fetchLoadSetlistsRequest, loadingData, setlist, position]);
 
   return (
     <S.Container>
@@ -51,16 +60,11 @@ export const SetlistPage: React.FC<SetlistProps> = ({ loadSetlistRequest }) => {
               {setlist.items?.map((item) => (
                 <>
                   {item.song && (
-                    <SongList.Badge $variant="darkGray" onClick={() => handleLinkClick(`songs/${item.song.id}`)}>
-                      {/* <SongList.ASide>
-                        <SongList.Thumbnail>
-                          <img
-                            src="https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcRGCu3ETf6NPxGijCEaIvANw6fyshVbUJs42fXNSqNI0P_AmBBL"
-                            alt=""
-                          />
-                        </SongList.Thumbnail>
-                      </SongList.ASide> */}
-
+                    <SongList.Badge 
+                      id={item.song.id}
+                      $variant="darkGray" 
+                      onClick={() => handleLinkClick(item.song.id, setlistId, item.key)}
+                    >
                       <SongList.ASide>
                         <SongList.BadgeTitle>{item.song.name}</SongList.BadgeTitle>
                         <SongList.BadgeSubTitle>{item.song.author}</SongList.BadgeSubTitle>

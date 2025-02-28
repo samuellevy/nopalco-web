@@ -3,7 +3,7 @@ import React from 'react';
 import { PlusCircle, MinusCircle } from 'lucide-react';
 
 import * as S from './song.styles';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { LoadSongRequest } from '@/domain/usecases/songs/load-song-request';
 import { Song } from '@/domain/models';
 import { LoadAllSongsRequest } from '@/domain/usecases';
@@ -20,11 +20,39 @@ type Props = {
 
 export const SongPage: React.FC<Props> = ({ loadSongRequest, loadAllSongsRequest }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const setlist = searchParams.get('setlist');
+  const key = searchParams.get('key') || null;
   const { songId } = useParams<{ songId: string }>();
   const [loadingData, setLoadingData] = React.useState(true);
   const [song, setSong] = React.useState<Song>({} as Song);
   const [activeBpm, setActiveBpm] = React.useState(false);
   const [songList, setSongList] = React.useState<Song[]>([]);
+
+  const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+  const getNoteIndex = (note: string): number => {
+    const FLAT_TO_SHARP_MAP: { [key: string]: string } = {
+      Db: 'C#',
+      Eb: 'D#',
+      Gb: 'F#',
+      Ab: 'G#',
+      Bb: 'A#',
+    };
+    
+    if (note in FLAT_TO_SHARP_MAP) {
+      note = FLAT_TO_SHARP_MAP[note];
+    }
+    return NOTES.indexOf(note);
+  };
+
+  function isMinorChord(chord: string): boolean {
+    // Regex para identificar acordes menores
+    // Exemplos que correspondem: Am, C#m, Dbm, Em7, Fm9
+    // Exemplos que não correspondem: A, C#, Db, E7, F9
+    const minorChordRegex = /^[A-G][#b]?m/;
+    return minorChordRegex.test(chord);
+  }
 
   const fetchLoadAllSongsRequest = React.useCallback(async () => {
     setLoadingData(true);
@@ -37,18 +65,75 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadAllSongsRequest
     }
   }, [loadAllSongsRequest]);
 
+  function getRelativeMajor(minorChord: string): string {
+    const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const FLAT_TO_SHARP_MAP: { [key: string]: string } = {
+      Db: 'C#',
+      Eb: 'D#',
+      Gb: 'F#',
+      Ab: 'G#',
+      Bb: 'A#',
+    };
+  
+    // Extrai a nota base e os modificadores
+    const regex = /^([A-G][#b]?)(.*)$/;
+    const match = minorChord.match(regex);
+  
+    if (!match) return minorChord; // Se não for um acorde válido, retorna o original
+  
+    let baseNote = match[1];
+    const modifiers = match[2];
+  
+    // Converte bemol para sustenido equivalente
+    if (baseNote in FLAT_TO_SHARP_MAP) {
+      baseNote = FLAT_TO_SHARP_MAP[baseNote];
+    }
+  
+    const noteIndex = NOTES.indexOf(baseNote);
+    if (noteIndex === -1) return minorChord; // Se não for uma nota válida, retorna o original
+  
+    // Calcula o relativo maior (3 semitons acima)
+    const majorIndex = (noteIndex + 3) % NOTES.length;
+    const majorNote = NOTES[majorIndex];
+  
+    // Remove o 'm' do acorde menor e mantém os outros modificadores
+    const newModifiers = modifiers.replace('m', '');
+  
+    return majorNote + newModifiers;
+  }
+
   const fetchLoadSongRequest = React.useCallback(async () => {
     setLoadingData(true);
     try {
       const loadSongRequestResult = await loadSongRequest.execute(songId);
-      console.log(loadSongRequestResult.content);
-      setSong(loadSongRequestResult);
+      // Se houver uma key na URL, transpor antes de setar o estado
+      if (key) {
+        const finalNewKey = isMinorChord(key) ? getRelativeMajor(key) : key;
+        const transposedContent = transposeContent(loadSongRequestResult.content, isMinorChord(loadSongRequestResult.key) ? getRelativeMajor(loadSongRequestResult.key) : loadSongRequestResult.key, finalNewKey);
+        setSong({ ...loadSongRequestResult, content: transposedContent });
+      } else {
+        setSong(loadSongRequestResult);
+      }
       setLoadingData(false);
-      // console.log(loadSongRequestResult);
     } catch (error) {
       throw new Error(error as undefined);
     }
-  }, [loadSongRequest]);
+  }, [loadSongRequest, key]);
+
+  const transposeContent = (content: any[], currentKey: string, targetKey: string): any[] => {
+    const currentIndex = getNoteIndex(currentKey);
+    const targetIndex = getNoteIndex(targetKey);
+    
+    if (currentIndex === -1 || targetIndex === -1) return content;
+
+    const steps = (targetIndex - currentIndex + NOTES.length) % NOTES.length;
+    
+    let newContent = content;
+    for (let i = 0; i < steps; i++) {
+      newContent = increaseTone(newContent, true);
+    }
+    return newContent;
+  };
 
   React.useEffect(() => {
     if (!loadingData) return;
@@ -57,7 +142,7 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadAllSongsRequest
     fetchLoadSongRequest();
   }, [fetchLoadSongRequest, fetchLoadAllSongsRequest, loadingData, song]);
 
-  function increaseTone(content: any[]): void {
+  function increaseTone(content: any[], returnContent = false): any[] {
     function transposeNote(note: string): string {
       const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
@@ -103,6 +188,9 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadAllSongsRequest
       notes: block.notes.map(transposeNotesBlock),
     }));
 
+    if (returnContent) {
+      return newContent;
+    }
     setSong((prevState) => ({ ...prevState, content: newContent }));
   }
 
@@ -167,7 +255,7 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadAllSongsRequest
   }
 
   const handleSetlistButton = () => {
-    navigate('/songs');
+    navigate(`/setlists/${setlist}?position=${songId}`);
   };
 
   const getNextItem = (id: string) => {
