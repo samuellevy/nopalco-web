@@ -69,19 +69,22 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadAllSongsRequest
     }
   }, [loadAllSongsRequest]);
 
-  const fetchLoadSetlistsRequest = React.useCallback(async (setlistId: string) => {
-    setLoadingData(true);
-    if (setlist) {
-      try {
-        const loadSetlistsRequestResult = await loadSetlistRequest.execute(setlistId);
-        console.log(loadSetlistsRequestResult);
-        setSetlistSongList(loadSetlistsRequestResult.items);
-        setLoadingData(false);
-      } catch (error) {
-        throw new Error(error as undefined);
+  const fetchLoadSetlistsRequest = React.useCallback(
+    async (setlistId: string) => {
+      setLoadingData(true);
+      if (setlist) {
+        try {
+          const loadSetlistsRequestResult = await loadSetlistRequest.execute(setlistId);
+          console.log(loadSetlistsRequestResult);
+          setSetlistSongList(loadSetlistsRequestResult.items);
+          setLoadingData(false);
+        } catch (error) {
+          throw new Error(error as undefined);
+        }
       }
-    }
-  }, [loadSetlistRequest, setlist]);
+    },
+    [loadSetlistRequest, setlist],
+  );
 
   function getRelativeMajor(minorChord: string): string {
     const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -285,35 +288,69 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadAllSongsRequest
     navigate(`/setlists/${setlist}?position=${songId}`);
   };
 
-  const getNextItem = (id: string) => {
-    const index = setlistSongList.findIndex((item) => item.song.id === id);
-    if (index !== -1 && index < setlistSongList.length - 1) {
-      return setlistSongList[index + 1];
+  const getNextItem = (actualSongId: string) => {
+    console.log(actualSongId, `nextSongId`);
+    if (setlistSongList) {
+      const actualSongIndex = setlistSongList.findIndex((item) =>
+        item.song && item.song.id === actualSongId ? item : null,
+      );
+      if (actualSongIndex !== -1 && actualSongIndex < setlistSongList.length - 1) {
+        return setlistSongList[actualSongIndex + 1];
+      }
+      return null;
+      // setlistSongList.map(item => {
+      //   console.log(item.song.id);
+      // })
     }
-    return null; // Retorna null se não encontrar ou se for o último item
+    // console.log(setlistSongList);
+    // const index = setlistSongList.findIndex((item) => item.song.id === id);
+    // if (index !== -1 && index < setlistSongList.length - 1) {
+    //   return setlistSongList[index + 1];
+    // }
+    // return null; // Retorna null se não encontrar ou se for o último item
+    return null;
   };
 
-  const getPreviousItem = (id: string) => {
-    const index = setlistSongList.findIndex((item) => item.song.id === id);
-    if (index > 0) {
-      return setlistSongList[index - 1];
+  const getPreviousItem = (actualSongId: string) => {
+    if (setlistSongList) {
+      const actualSongIndex = setlistSongList.findIndex((item) =>
+        item.song && item.song.id === actualSongId ? item : null,
+      );
+      if (actualSongIndex > 0) {
+        return setlistSongList[actualSongIndex - 1];
+      }
+      return null;
+      // setlistSongList.map(item => {
+      //   console.log(item.song.id);
+      // })
     }
+    // console.log(setlistSongList);
+    // const index = setlistSongList.findIndex((item) => item.song.id === id);
+    // if (index !== -1 && index < setlistSongList.length - 1) {
+    //   return setlistSongList[index + 1];
+    // }
+    // return null; // Retorna null se não encontrar ou se for o último item
     return null; // Retorna null se não houver anterior ou se não encontrar o id
   };
 
   const handleNextSongButton = (id: string) => {
     const nextSong = getNextItem(id);
+    console.log(nextSong, `nextSong`);
 
-    console.log(nextSong);
-    if (nextSong) {
+    if (nextSong && nextSong.song) {
       window.location.href = `/songs/${nextSong.song.id}?setlist=${setlist}&key=${nextSong.key}`;
+    } else {
+      window.location.href = `/setlists/${setlist}?position=${songId}`;
     }
+
   };
   const handlePreviousSongButton = (id: string) => {
     const previousSong = getPreviousItem(id);
     console.log(previousSong);
-    if (previousSong) {
+    if (previousSong && previousSong.song) {
       window.location.href = `/songs/${previousSong.song.id}?setlist=${setlist}&key=${previousSong.key}`;
+    } else {
+      window.location.href = `/setlists/${setlist}?position=${songId}`;
     }
   };
 
