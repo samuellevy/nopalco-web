@@ -66,7 +66,7 @@ export const SetlistPage: React.FC<SetlistProps> = ({ loadSetlistRequest }) => {
                       onClick={() => handleLinkClick(item.song.id, setlistId, item.key)}
                     >
                       <SongList.ASide>
-                        <SongList.BadgeTitle>{item.song.name}</SongList.BadgeTitle>
+                        <SongList.BadgeTitle>{item.pureTitle ? item.pureTitle : item.song.name}</SongList.BadgeTitle>
                         <SongList.BadgeSubTitle>{item.song.author}</SongList.BadgeSubTitle>
                       </SongList.ASide>
                     </SongList.Badge>

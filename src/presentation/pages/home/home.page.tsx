@@ -20,7 +20,7 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest }) => {
     setLoadingData(true);
     try {
       const loadAllSetlistsRequestResult = await loadAllSetlistsRequest.execute();
-      setSetlists(loadAllSetlistsRequestResult);
+      setSetlists(loadAllSetlistsRequestResult.reverse());
       setLoadingData(false);
     } catch (error) {
       throw new Error(error as undefined);
