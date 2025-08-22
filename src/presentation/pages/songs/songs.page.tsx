@@ -35,11 +35,15 @@ export const SongsPage: React.FC<Props> = ({ loadAllSongsRequest }) => {
 
   const handleFilter = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
-    const filteredSongList = originalList.filter(song => 
-      song.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(value.toLowerCase())
+    const filteredSongList = originalList.filter((song) =>
+      song.name
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .includes(value.toLowerCase()),
     );
     setSongList(filteredSongList);
-  }
+  };
 
   React.useEffect(() => {
     if (!loadingData) return;
@@ -56,7 +60,7 @@ export const SongsPage: React.FC<Props> = ({ loadAllSongsRequest }) => {
     <S.Container>
       <S.Header>
         <S.Title>Olá, Samuel!</S.Title>
-        <S.FormInput placeholder='Pesquisa rápida' onChange={handleFilter}/>
+        <S.FormInput placeholder="Pesquisa rápida" onChange={handleFilter} />
         <S.UserNavigation>
           <S.UserAvatar src="/assets/avatar.jpg" />
         </S.UserNavigation>
@@ -70,7 +74,7 @@ export const SongsPage: React.FC<Props> = ({ loadAllSongsRequest }) => {
               <SongList.Badge $variant="darkGray" onClick={() => handleClickSong(song.id)} key={song.uid}>
                 <SongList.ASide>
                   <SongList.Thumbnail>
-                    <img src='/assets/no-photo.png' alt="" />
+                    <img src="/assets/no-photo.png" alt="" />
                   </SongList.Thumbnail>
                 </SongList.ASide>
                 <SongList.ASide>

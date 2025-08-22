@@ -27,7 +27,7 @@ export const Container = styled.div<ContainerProps>`
   @media (max-width: 350px) {
     max-width: 290px;
   }
-  
+
   ${({ minified }) => (minified ? 'transform: scale(0.8) translate(-17%, -14%);' : '')}
 `;
 
@@ -43,6 +43,7 @@ export const Header = styled.header`
 export const FlexColumn = styled.header`
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
 `;
 
 export const FlexRow = styled.header`
@@ -55,6 +56,14 @@ export const FlexRow = styled.header`
     padding: 5rem 1rem;
     height: 3rem;
   }
+`;
+
+export const PureFlexRow = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 `;
 
 export const Title = styled.h1`
@@ -132,7 +141,7 @@ export const CellValue = styled.div<CellValueProps>`
   text-align: center;
   padding: 1rem 1rem;
   font-size: ${({ $size }) => ($size ? $size : `1.5rem`)};
-  
+
   @media (min-width: 350px) {
     background-color: ${({ theme, $variant }) => ($variant ? theme.colors[$variant] : theme.colors.grayBg)};
   }
@@ -140,12 +149,27 @@ export const CellValue = styled.div<CellValueProps>`
   @media (max-width: 350px) {
     font-size: ${({ $size }) => ($size ? $size : `1.8rem`)};
   }
-  
+
   font-weight: bold;
   display: ${({ hidden }) => (hidden ? 'none' : 'flex')};
   flex-direction: row;
   align-items: flex-start;
   justify-content: center;
+`;
+
+export const CellInputValue = styled(CellValue)`
+  padding: 0;
+`;
+
+export const CellInput = styled.input`
+  color: ${({ theme }) => theme.colors.white};
+  background-color: ${({ theme }) => theme.colors.grayBg};
+  &:focus {
+    outline: ${({ theme }) => theme.colors.primary};
+    background-color: #d0342c;
+  }
+  width: 100%;
+  padding: 1rem;
 `;
 
 export const CellLabel = styled.div`
@@ -175,7 +199,7 @@ export const Grid = styled.div`
   grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
   @media (max-width: 350px) {
-    gap: .2rem;
+    gap: 0.2rem;
   }
 `;
 
@@ -242,6 +266,37 @@ export const SimpleButton = styled.button`
   outline: none;
   outline: 0;
   padding: 10px 25px;
+  @media (max-width: 350px) {
+    padding: 10px 0px;
+    width: 33%;
+  }
+  text-align: center;
+  transform: translateY(0);
+  transition:
+    transform 150ms,
+    box-shadow 150ms;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+`;
+
+type MiniSimpleButtonProps = {
+  $backgroundColor?: string;
+};
+
+export const MiniSimpleButton = styled.button<MiniSimpleButtonProps>`
+  background-color: ${({ $backgroundColor }) => $backgroundColor || '#1f1f1f'};
+  border: 1px solid #1f1f1f;
+  border-radius: 4px;
+  box-shadow: rgba(0, 0, 0, 0.1) 0 2px 4px 0;
+  box-sizing: border-box;
+  color: #fff;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 400;
+  outline: none;
+  outline: 0;
+  padding: 10px;
   @media (max-width: 350px) {
     padding: 10px 0px;
     width: 33%;

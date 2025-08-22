@@ -9,6 +9,7 @@ import { Song } from '@/domain/models';
 import { LoadAllSongsRequest } from '@/domain/usecases';
 import { LoadSetlistRequest } from '@/domain/usecases/setlists/load-setlist-request';
 import { SetlistItem } from '@/domain/models/setlist';
+import { UpdateSongRequest } from '@/domain/usecases/songs/update-song-request';
 
 interface Content {
   block: string;
@@ -19,9 +20,10 @@ type Props = {
   loadSongRequest: LoadSongRequest;
   loadAllSongsRequest: LoadAllSongsRequest;
   loadSetlistRequest: LoadSetlistRequest;
+  updateSongRequest: UpdateSongRequest;
 };
 
-export const SongPage: React.FC<Props> = ({ loadSongRequest, loadAllSongsRequest, loadSetlistRequest }) => {
+export const SongPage: React.FC<Props> = ({ loadSongRequest, loadSetlistRequest, updateSongRequest }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const setlist = searchParams.get('setlist');
@@ -30,8 +32,9 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadAllSongsRequest
   const [loadingData, setLoadingData] = React.useState(true);
   const [song, setSong] = React.useState<Song>({} as Song);
   const [activeBpm, setActiveBpm] = React.useState(false);
-  const [_, setSongList] = React.useState<Song[]>([]);
+  // const [_, setSongList] = React.useState<Song[]>([]);
   const [setlistSongList, setSetlistSongList] = React.useState<SetlistItem[]>([]);
+  const [editMode, setEditMode] = React.useState(false);
 
   const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
@@ -58,16 +61,16 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadAllSongsRequest
     return minorChordRegex.test(chord);
   }
 
-  const fetchLoadAllSongsRequest = React.useCallback(async () => {
-    setLoadingData(true);
-    try {
-      const loadAllSongsRequestResult = await loadAllSongsRequest.execute();
-      setSongList(loadAllSongsRequestResult.songs);
-      setLoadingData(false);
-    } catch (error) {
-      throw new Error(error as undefined);
-    }
-  }, [loadAllSongsRequest]);
+  // const fetchLoadAllSongsRequest = React.useCallback(async () => {
+  //   setLoadingData(true);
+  //   try {
+  //     const loadAllSongsRequestResult = await loadAllSongsRequest.execute();
+  //     setSongList(loadAllSongsRequestResult.songs);
+  //     setLoadingData(false);
+  //   } catch (error) {
+  //     throw new Error(error as undefined);
+  //   }
+  // }, [loadAllSongsRequest]);
 
   const fetchLoadSetlistsRequest = React.useCallback(
     async (setlistId: string) => {
@@ -147,6 +150,21 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadAllSongsRequest
     }
   }, [loadSongRequest, key, songId]);
 
+  const updateSong = async () => {
+    const { content, ...rest } = song;
+
+    try {
+      const updatedSong = await updateSongRequest.execute(songId, {
+        ...rest,
+        content: JSON.stringify(content),
+      });
+      console.log('Song updated successfully:', updatedSong);
+    } catch (error) {
+      console.error('Error updating song:', error);
+      alert('Failed to update song. Please try again.');
+    }
+  };
+
   const transposeContent = (content: any[], currentKey: string, targetKey: string): any[] => {
     const currentIndex = getNoteIndex(currentKey);
     const targetIndex = getNoteIndex(targetKey);
@@ -165,12 +183,11 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadAllSongsRequest
   React.useEffect(() => {
     if (!loadingData) return;
 
-    fetchLoadAllSongsRequest();
     fetchLoadSongRequest();
     if (setlist) {
       fetchLoadSetlistsRequest(setlist);
     }
-  }, [fetchLoadSongRequest, fetchLoadAllSongsRequest, loadingData, song, setlist]);
+  }, [fetchLoadSongRequest, loadingData, song, setlist]);
 
   function increaseTone(content: any[], returnContent = false): any[] {
     function transposeNote(note: string): string {
@@ -342,8 +359,8 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadAllSongsRequest
     } else {
       window.location.href = `/setlists/${setlist}?position=${songId}`;
     }
-
   };
+
   const handlePreviousSongButton = (id: string) => {
     const previousSong = getPreviousItem(id);
     console.log(previousSong);
@@ -352,6 +369,35 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadAllSongsRequest
     } else {
       window.location.href = `/setlists/${setlist}?position=${songId}`;
     }
+  };
+
+  const handleEditButton = () => {
+    setEditMode((prevState) => !prevState);
+  };
+
+  const handleUpdateNote = (e: React.ChangeEvent<HTMLInputElement>, noteKey: number) => {
+    const { value } = e.target;
+    const updatedContent = song.content.map((section: Content) => ({
+      ...section,
+      notes: section.notes.map((note, key) => {
+        if (key === noteKey) {
+          if (value.includes(' ')) {
+            const parts = value.split(' ');
+            // Ensure tuple of two strings, fill with empty string if missing
+            return [parts[0] || '', parts[1] || ''] as [string, string];
+          }
+          return value;
+        }
+        return note;
+      }),
+    }));
+
+    setSong((prevState) => ({ ...prevState, content: updatedContent }));
+  };
+
+  const handleSaveButton = () => {
+    updateSong();
+    setEditMode(false);
   };
 
   return (
@@ -364,6 +410,15 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadAllSongsRequest
               <S.FlexColumn>
                 <S.Title>{song.name}</S.Title>
                 <S.Author>{song.author}</S.Author>
+                <S.PureFlexRow>
+                  {!editMode && <S.MiniSimpleButton onClick={handleEditButton}>Editar</S.MiniSimpleButton>}
+                  {editMode && <S.MiniSimpleButton onClick={handleEditButton}>Cancelar</S.MiniSimpleButton>}
+                  {editMode && (
+                    <S.MiniSimpleButton $backgroundColor="#D0342c" onClick={handleSaveButton}>
+                      Salvar
+                    </S.MiniSimpleButton>
+                  )}
+                </S.PureFlexRow>
               </S.FlexColumn>
               {/* <S.CellHeader>
                 <S.CellValue $size="1.2rem">{song.duration}</S.CellValue>
@@ -413,9 +468,20 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadAllSongsRequest
                     {removeAsterisksAndUnderscores(songSection.block)}
                   </S.SectionTitle>
                   <S.Grid>
-                    {songSection.notes.map((note: string, key) => (
-                      <S.Cell key={key}>
-                        <S.CellValue>{typeof note === 'string' ? note : `${note[0]} ${note[1]}`}</S.CellValue>
+                    {songSection.notes.map((note: string, noteKey) => (
+                      <S.Cell key={noteKey}>
+                        {editMode && (
+                          <S.CellInputValue>
+                            <S.CellInput
+                              type="text"
+                              value={typeof note === 'string' ? note : `${note[0]} ${note[1]}`}
+                              onChange={(e) => handleUpdateNote(e, noteKey)}
+                            />
+                          </S.CellInputValue>
+                        )}
+                        {!editMode && (
+                          <S.CellValue>{typeof note === 'string' ? note : `${note[0]} ${note[1]}`}</S.CellValue>
+                        )}
                       </S.Cell>
                     ))}
                   </S.Grid>

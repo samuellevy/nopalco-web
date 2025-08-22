@@ -1,4 +1,4 @@
 window.env = {
-  API: 'http://localhost:3000',
+  API: 'http://192.168.15.100:3000',
   // API: 'http://api-nopalco.nokengo.com',
 };
