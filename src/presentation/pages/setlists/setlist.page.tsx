@@ -57,30 +57,32 @@ export const SetlistPage: React.FC<SetlistProps> = ({ loadSetlistRequest }) => {
           <S.SectionTitle>{`${setlist.name} - ${setlist.description}`}</S.SectionTitle>
           {setlist && (
             <S.SectionContent>
-              {setlist.items?.map((item) => (
-                <>
-                  {item.song && (
-                    <SongList.Badge 
-                      id={item.song.id}
-                      $variant="darkGray" 
-                      onClick={() => handleLinkClick(item.song.id, setlistId, item.key)}
-                    >
-                      <SongList.ASide>
-                        <SongList.BadgeTitle>{item.pureTitle ? item.pureTitle : item.song.name}</SongList.BadgeTitle>
-                        <SongList.BadgeSubTitle>{item.song.author}</SongList.BadgeSubTitle>
-                      </SongList.ASide>
-                    </SongList.Badge>
-                  )}
-                   {!item.song && (
-                    <SongList.Badge $variant="disabled">
-                      <SongList.ASide>
-                        <SongList.BadgeTitle>{item.pureTitle}</SongList.BadgeTitle>
-                        {/* <SongList.BadgeTitle>{item.pureAuthor}</SongList.BadgeTitle> */}
-                      </SongList.ASide>
-                    </SongList.Badge>
-                  )}
-                </>
-              ))}
+              {setlist.items
+                ?.sort((a, b) => a.order - b.order)
+                .map((item) => (
+                  <>
+                    {item.song && (
+                      <SongList.Badge
+                        id={item.song.id}
+                        $variant="darkGray"
+                        onClick={() => handleLinkClick(item.song.id, setlistId, item.key)}
+                      >
+                        <SongList.ASide>
+                          <SongList.BadgeTitle>{item.pureTitle ? item.pureTitle : item.song.name}</SongList.BadgeTitle>
+                          <SongList.BadgeSubTitle>{item.song.author}</SongList.BadgeSubTitle>
+                        </SongList.ASide>
+                      </SongList.Badge>
+                    )}
+                    {!item.song && (
+                      <SongList.Badge $variant="disabled">
+                        <SongList.ASide>
+                          <SongList.BadgeTitle>{item.pureTitle}</SongList.BadgeTitle>
+                          {/* <SongList.BadgeTitle>{item.pureAuthor}</SongList.BadgeTitle> */}
+                        </SongList.ASide>
+                      </SongList.Badge>
+                    )}
+                  </>
+                ))}
               {/* 
             <SongList.Badge $variant="darkGray">
               <SongList.ASide>

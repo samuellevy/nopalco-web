@@ -373,14 +373,15 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadSetlistRequest,
 
   const handleEditButton = () => {
     setEditMode((prevState) => !prevState);
+    console.log(song.content);
   };
 
-  const handleUpdateNote = (e: React.ChangeEvent<HTMLInputElement>, noteKey: number) => {
+  const handleUpdateNote = (e: React.ChangeEvent<HTMLInputElement>, noteKey: number, sectionKeyChanged: number) => {
     const { value } = e.target;
-    const updatedContent = song.content.map((section: Content) => ({
+    const updatedContent = song.content.map((section: Content, sectionKey: number) => ({
       ...section,
       notes: section.notes.map((note, key) => {
-        if (key === noteKey) {
+        if (key === noteKey && sectionKey === sectionKeyChanged) {
           if (value.includes(' ')) {
             const parts = value.split(' ');
             // Ensure tuple of two strings, fill with empty string if missing
@@ -475,7 +476,7 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadSetlistRequest,
                             <S.CellInput
                               type="text"
                               value={typeof note === 'string' ? note : `${note[0]} ${note[1]}`}
-                              onChange={(e) => handleUpdateNote(e, noteKey)}
+                              onChange={(e) => handleUpdateNote(e, noteKey, keyContent)}
                             />
                           </S.CellInputValue>
                         )}

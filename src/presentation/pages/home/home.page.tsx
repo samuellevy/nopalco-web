@@ -67,12 +67,23 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest }) => {
           <S.SectionTitle>Setlists salvos</S.SectionTitle>
 
           <S.SectionContent>
-            {setlists.map((item) => (
-              <BadgeComponent.Badge $variant="darkGray" onClick={() => handleLinkClick(`setlists/${item.id}`)}>
-                 <BadgeComponent.BadgeTitle>{item.description}</BadgeComponent.BadgeTitle>
-                 <BadgeComponent.BadgeSubTitle>{item.name}</BadgeComponent.BadgeSubTitle>
-              </BadgeComponent.Badge>
-            ))}
+            {setlists
+              .sort((a, b) => {
+                const [dayA, monthA, yearA] = a.description.split('/').map(Number);
+                const [dayB, monthB, yearB] = b.description.split('/').map(Number);
+
+                const dateA = new Date(yearA, monthA - 1, dayA).getTime();
+                const dateB = new Date(yearB, monthB - 1, dayB).getTime();
+
+                return dateA - dateB;
+              })
+              .reverse()
+              .map((item) => (
+                <BadgeComponent.Badge $variant="darkGray" onClick={() => handleLinkClick(`setlists/${item.id}`)}>
+                  <BadgeComponent.BadgeTitle>{item.description.substring(0, 5)}</BadgeComponent.BadgeTitle>
+                  <BadgeComponent.BadgeSubTitle>{item.name}</BadgeComponent.BadgeSubTitle>
+                </BadgeComponent.Badge>
+              ))}
           </S.SectionContent>
         </S.Section>
 
