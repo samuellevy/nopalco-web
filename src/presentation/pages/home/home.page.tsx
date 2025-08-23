@@ -38,12 +38,23 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest }) => {
     fetchLoadAllSetlistsRequest();
   }, [fetchLoadAllSetlistsRequest, loadingData, setlists]);
 
+  const goFullscreen = () => {
+    const elem = document.documentElement;
+    if (elem.requestFullscreen) {
+      elem.requestFullscreen();
+    } else if ((elem as any).webkitRequestFullscreen) {
+      (elem as any).webkitRequestFullscreen();
+    } else if ((elem as any).msRequestFullscreen) {
+      (elem as any).msRequestFullscreen();
+    }
+  };
+
   return (
     <S.Container>
       <S.Header>
         <S.Title>Olá, Samuel!</S.Title>
         <S.UserNavigation>
-          <S.UserAvatar src="https://avatars.githubusercontent.com/u/26466516?v=4" />
+          <S.UserAvatar src="https://avatars.githubusercontent.com/u/26466516?v=4" onClick={() => goFullscreen()} />
         </S.UserNavigation>
       </S.Header>
 
