@@ -438,7 +438,7 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadSetlistRequest,
                 <S.CellLabel>BPM</S.CellLabel>
               </S.CellHeader>
               <S.CellHeader>
-                <S.CellValue $size="1.2rem">{song.key}</S.CellValue>
+                <S.CellValue $size="1.2rem">{key || song.key}</S.CellValue>
                 <S.CellLabel>
                   <MinusCircle size={22} onClick={() => decreaseTone(song.content)} />
                   KEY

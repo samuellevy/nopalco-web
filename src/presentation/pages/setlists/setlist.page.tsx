@@ -71,6 +71,9 @@ export const SetlistPage: React.FC<SetlistProps> = ({ loadSetlistRequest }) => {
                           <SongList.BadgeTitle>{item.pureTitle ? item.pureTitle : item.song.name}</SongList.BadgeTitle>
                           <SongList.BadgeSubTitle>{item.song.author}</SongList.BadgeSubTitle>
                         </SongList.ASide>
+                        <SongList.ASide>
+                          <S.BadgeKey>{item.key}</S.BadgeKey>
+                        </SongList.ASide>
                       </SongList.Badge>
                     )}
                     {!item.song && (

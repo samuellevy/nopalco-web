@@ -62,3 +62,13 @@ export const SectionContent = styled.div`
   margin-top: 2rem;
   width: 100%;
 `;
+
+export const BadgeKey = styled.div`
+  width: 30px;
+  height: 30px;
+  background-color: #4191e1;
+  border-radius: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
