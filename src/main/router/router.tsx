@@ -12,6 +12,7 @@ import { SetlistPage } from '@/presentation/pages/setlists/setlist.page';
 import { SongsSmallPage } from '@/presentation/pages/songs-small/songs.page';
 import { SongSmallPage } from '@/presentation/pages/songs-small/song/song.page';
 import { RemoteUpdateSongRequest } from '@/data/usecases/songs/remote-update-song-request';
+import { SetlistCreatePage } from '@/presentation/pages/setlists/create/setlist-create.page';
 
 export const Router: React.FC = () => {
   const axiosHttpClient = new AxiosHttpClient();
@@ -42,6 +43,7 @@ export const Router: React.FC = () => {
                 />
               }
             />
+            <Route path="/setlists/create" element={<SetlistCreatePage loadAllSongsRequest={loadAllSongsRequest} />} />
             <Route path="/setlists/:setlistId" element={<SetlistPage loadSetlistRequest={loadSetlistRequest} />} />
 
             <Route path="/songs-small" element={<SongsSmallPage loadAllSongsRequest={loadAllSongsRequest} />} />
