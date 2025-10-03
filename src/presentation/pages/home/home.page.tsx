@@ -20,7 +20,7 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest }) => {
     setLoadingData(true);
     try {
       const loadAllSetlistsRequestResult = await loadAllSetlistsRequest.execute();
-      setSetlists(loadAllSetlistsRequestResult.reverse());
+      setSetlists(loadAllSetlistsRequestResult);
       setLoadingData(false);
     } catch (error) {
       throw new Error(error as undefined);
@@ -47,6 +47,16 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest }) => {
     } else if ((elem as any).msRequestFullscreen) {
       (elem as any).msRequestFullscreen();
     }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const hour = String(date.getHours()).padStart(2, '0');
+    const minute = String(date.getMinutes()).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year} ${hour}:${minute}`;
   };
 
   return (
@@ -80,16 +90,16 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest }) => {
 
           <S.SectionContent>
             {setlists
-              .sort((a, b) => {
-                const [dayA, monthA, yearA] = a.description.split('/').map(Number);
-                const [dayB, monthB, yearB] = b.description.split('/').map(Number);
+              // .sort((a, b) => {
+              //   const [dayA, monthA, yearA] = a.description.split('/').map(Number);
+              //   const [dayB, monthB, yearB] = b.description.split('/').map(Number);
 
-                const dateA = new Date(yearA, monthA - 1, dayA).getTime();
-                const dateB = new Date(yearB, monthB - 1, dayB).getTime();
+              //   const dateA = new Date(yearA, monthA - 1, dayA).getTime();
+              //   const dateB = new Date(yearB, monthB - 1, dayB).getTime();
 
-                return dateA - dateB;
-              })
-              .reverse()
+              //   return dateA - dateB;
+              // })
+              // .reverse()
               .map((item) => (
                 <BadgeComponent.Badge
                   key={item.id}
@@ -97,7 +107,9 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest }) => {
                   onClick={() => handleLinkClick(`setlists/${item.id}`)}
                 >
                   <BadgeComponent.BadgeTitle>{item.name}</BadgeComponent.BadgeTitle>
-                  <BadgeComponent.BadgeSubTitle>{item.address}</BadgeComponent.BadgeSubTitle>
+                  <BadgeComponent.BadgeSubTitle>
+                    {item.address || 'sem endereço'} - {formatDate(item.date.toString())}
+                  </BadgeComponent.BadgeSubTitle>
                   <BadgeComponent.BadgeSubTitle>
                     {item.description.substring(0, 10).replace(/\//g, '-')}
                   </BadgeComponent.BadgeSubTitle>

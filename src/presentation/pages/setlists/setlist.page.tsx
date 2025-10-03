@@ -35,7 +35,7 @@ export const SetlistPage: React.FC<SetlistProps> = ({ loadSetlistRequest }) => {
   }, [loadSetlistRequest, setlistId]);
 
   const handleLinkClick = (songId: string, setlistId: string, key: string) => {
-    navigate(`/songs/${songId}?setlist=${setlistId}&key=${key}`);
+    navigate(`/songs/${songId}?setlist=${setlistId}&key=${encodeURIComponent(key)}`);
   };
 
   const handleCopySetlist = () => {

@@ -20,6 +20,7 @@ export const SetlistCreatePage: React.FC<Props> = ({ loadAllSongsRequest, create
   const [momentName, setMomentName] = React.useState<string>('');
   const [eventName, setEventName] = React.useState<string>('');
   const [eventDescription, setEventDescription] = React.useState<string>('');
+  const [eventDate, setEventDate] = React.useState<string>(null);
   const [eventAddress, setEventAddress] = React.useState<string>('');
   const [sendingData, setSendingData] = React.useState(false);
 
@@ -100,6 +101,7 @@ export const SetlistCreatePage: React.FC<Props> = ({ loadAllSongsRequest, create
       name: eventName,
       description: eventDescription,
       address: eventAddress,
+      date: eventDate ? new Date(eventDate) : null,
       items: selectedSongs.map((song, index) => ({
         pureTitle: song.name,
         songId: song.new ? null : song.id,
@@ -176,23 +178,32 @@ export const SetlistCreatePage: React.FC<Props> = ({ loadAllSongsRequest, create
           <S.SectionHeaderRow>
             <S.InputGroup>
               <label>Nome do evento</label>
-              <S.FormInput
+              <S.FormInputHeader
                 placeholder="Nome do evento"
                 onChange={(e) => setEventName(e.target.value)}
                 value={eventName}
+                width={10}
               />
             </S.InputGroup>
             <S.InputGroup>
-              <label>Data do evento</label>
-              <S.FormInput
+              <label>Descrição</label>
+              <S.FormInputHeader
                 placeholder="01/01/2025"
                 onChange={(e) => setEventDescription(e.target.value)}
                 value={eventDescription}
               />
             </S.InputGroup>
             <S.InputGroup>
+              <label>Data do evento</label>
+              <S.FormInputHeader
+                onChange={(e) => setEventDate(e.target.value)}
+                value={eventDate}
+                type="datetime-local"
+              />
+            </S.InputGroup>
+            <S.InputGroup>
               <label>Endereço</label>
-              <S.FormInput
+              <S.FormInputHeader
                 placeholder="Rua exemplo, 123"
                 onChange={(e) => setEventAddress(e.target.value)}
                 value={eventAddress}

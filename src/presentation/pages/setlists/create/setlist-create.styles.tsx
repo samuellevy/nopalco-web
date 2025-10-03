@@ -174,6 +174,14 @@ export const FormInput = styled.input`
   border-radius: 1rem;
 `;
 
+export const FormInputHeader = styled.input`
+  background-color: #fff;
+  max-width: 140px;
+  font-size: 14px;
+  padding: 10px 15px;
+  border-radius: 1rem;
+`;
+
 export const ASide = styled.div`
   display: flex;
   flex-direction: column;

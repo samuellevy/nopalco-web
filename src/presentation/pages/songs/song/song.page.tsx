@@ -36,7 +36,7 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadSetlistRequest,
   // const [_, setSongList] = React.useState<Song[]>([]);
   const [setlistSongList, setSetlistSongList] = React.useState<SetlistItem[]>([]);
   const [editMode, setEditMode] = React.useState(false);
-  const [sheetMusicMode, setSheetMusicMode] = React.useState(false);
+  const [sheetMusicMode] = React.useState(false);
 
   const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
@@ -378,10 +378,10 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadSetlistRequest,
     console.log(song.content);
   };
 
-  const handleToggleSheetMusicMode = () => {
-    setSheetMusicMode((prevState) => !prevState);
-    console.log(song.content);
-  };
+  // const handleToggleSheetMusicMode = () => {
+  //   setSheetMusicMode((prevState) => !prevState);
+  //   console.log(song.content);
+  // };
 
   const handleUpdateNote = (e: React.ChangeEvent<HTMLInputElement>, noteKey: number, sectionKeyChanged: number) => {
     const { value } = e.target;
@@ -401,6 +401,11 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadSetlistRequest,
     }));
 
     setSong((prevState) => ({ ...prevState, content: updatedContent }));
+  };
+
+  const handleUpdateKey = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    setSong((prevState) => ({ ...prevState, key: value }));
   };
 
   const handleAddNote = (noteKey: number) => {
@@ -455,7 +460,10 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadSetlistRequest,
                 <S.CellLabel>BPM</S.CellLabel>
               </S.CellHeader>
               <S.CellHeader>
-                <S.CellValue $size="1.2rem">{key || song.key}</S.CellValue>
+                <S.CellValue $size="1.2rem">
+                  {editMode && <S.CellInput type="text" value={song.key} onChange={(e) => handleUpdateKey(e)} />}
+                  {!editMode && (key || song.key)}
+                </S.CellValue>
                 <S.CellLabel>
                   <MinusCircle size={22} onClick={() => decreaseTone(song.content)} />
                   KEY

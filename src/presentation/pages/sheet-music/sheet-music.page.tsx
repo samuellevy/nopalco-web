@@ -32,7 +32,7 @@ const SheetMusicPage: React.FC<Props> = ({ song }) => {
     // junta todas as notas de todos os blocos
     const allNotes: string[] = [];
     song.content.forEach((block: Content) => {
-      allNotes.push(...block.notes);
+      allNotes.push(...(block.notes as string[]));
     });
 
     // substitui '%' pelo último acorde real
