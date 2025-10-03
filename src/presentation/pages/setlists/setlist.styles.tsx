@@ -50,6 +50,12 @@ export const Section = styled.section`
   align-items: flex-start;
 `;
 
+export const HeaderText = styled.div`
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+`;
+
 export const SectionTitle = styled.h1`
   font-size: 2.5rem;
   font-weight: 500;

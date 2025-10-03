@@ -52,7 +52,8 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest }) => {
   return (
     <S.Container>
       <S.Header>
-        <S.Title>Olá, Samuel!</S.Title>
+        {/* <S.Title>Olá, Samuel!</S.Title> */}
+        <S.Title>&nbsp;</S.Title>
         <S.UserNavigation>
           <S.UserAvatar src="https://avatars.githubusercontent.com/u/26466516?v=4" onClick={() => goFullscreen()} />
         </S.UserNavigation>
@@ -90,9 +91,16 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest }) => {
               })
               .reverse()
               .map((item) => (
-                <BadgeComponent.Badge $variant="darkGray" onClick={() => handleLinkClick(`setlists/${item.id}`)}>
-                  <BadgeComponent.BadgeTitle>{item.description.substring(0, 5)}</BadgeComponent.BadgeTitle>
-                  <BadgeComponent.BadgeSubTitle>{item.name}</BadgeComponent.BadgeSubTitle>
+                <BadgeComponent.Badge
+                  key={item.id}
+                  $variant="darkGray"
+                  onClick={() => handleLinkClick(`setlists/${item.id}`)}
+                >
+                  <BadgeComponent.BadgeTitle>{item.name}</BadgeComponent.BadgeTitle>
+                  <BadgeComponent.BadgeSubTitle>{item.address}</BadgeComponent.BadgeSubTitle>
+                  <BadgeComponent.BadgeSubTitle>
+                    {item.description.substring(0, 10).replace(/\//g, '-')}
+                  </BadgeComponent.BadgeSubTitle>
                 </BadgeComponent.Badge>
               ))}
           </S.SectionContent>

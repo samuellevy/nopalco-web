@@ -75,10 +75,38 @@ export const SectionHeaderRow = styled.div`
   gap: 1rem;
 `;
 
+export const SimpleButton = styled.button`
+  background-color: #06f;
+  border: 1px solid #06f;
+  border-radius: 4px;
+  box-shadow: rgba(0, 0, 0, 0.1) 0 2px 4px 0;
+  box-sizing: border-box;
+  color: #fff;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 400;
+  outline: none;
+  outline: 0;
+  padding: 10px 25px;
+  @media (max-width: 350px) {
+    padding: 10px 0px;
+    width: 33%;
+  }
+  text-align: center;
+  transform: translateY(0);
+  transition:
+    transform 150ms,
+    box-shadow 150ms;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+`;
+
 export const InputGroup = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  justify-content: flex-end;
 `;
 
 export const SectionTitle = styled.h1`

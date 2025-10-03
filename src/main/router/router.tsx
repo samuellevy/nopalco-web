@@ -13,6 +13,7 @@ import { SongsSmallPage } from '@/presentation/pages/songs-small/songs.page';
 import { SongSmallPage } from '@/presentation/pages/songs-small/song/song.page';
 import { RemoteUpdateSongRequest } from '@/data/usecases/songs/remote-update-song-request';
 import { SetlistCreatePage } from '@/presentation/pages/setlists/create/setlist-create.page';
+import { RemoteCreateSetlistRequest } from '@/data/usecases/setlists/remote-create-setlist-request';
 
 export const Router: React.FC = () => {
   const axiosHttpClient = new AxiosHttpClient();
@@ -22,6 +23,7 @@ export const Router: React.FC = () => {
   const loadAllSetlistsRequest = new RemoteLoadAllSetlistsRequest(axiosHttpClient);
   const loadSetlistRequest = new RemoteLoadSetlistRequest(axiosHttpClient);
   const updateSongRequest = new RemoteUpdateSongRequest(axiosHttpClient);
+  const createSetlistRequest = new RemoteCreateSetlistRequest(axiosHttpClient);
 
   return (
     <BrowserRouter>
@@ -43,7 +45,15 @@ export const Router: React.FC = () => {
                 />
               }
             />
-            <Route path="/setlists/create" element={<SetlistCreatePage loadAllSongsRequest={loadAllSongsRequest} />} />
+            <Route
+              path="/setlists/create"
+              element={
+                <SetlistCreatePage
+                  loadAllSongsRequest={loadAllSongsRequest}
+                  createSetlistRequest={createSetlistRequest}
+                />
+              }
+            />
             <Route path="/setlists/:setlistId" element={<SetlistPage loadSetlistRequest={loadSetlistRequest} />} />
 
             <Route path="/songs-small" element={<SongsSmallPage loadAllSongsRequest={loadAllSongsRequest} />} />
@@ -51,6 +61,7 @@ export const Router: React.FC = () => {
               path="/songs-small/:songId"
               element={<SongSmallPage loadSongRequest={loadSongRequest} loadAllSongsRequest={loadAllSongsRequest} />}
             />
+            {/* <Route path="/sheet-music" element={<SheetMusicPage />} /> */}
           </Route>
         </Route>
       </Routes>

@@ -13,5 +13,7 @@ export interface Setlist {
   id: string;
   name: string;
   description: string;
+  address: string;
+  date?: Date;
   items: SetlistItem[];
 }

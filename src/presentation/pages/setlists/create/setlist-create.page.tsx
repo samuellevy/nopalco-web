@@ -5,12 +5,14 @@ import { LoadAllSongsRequest } from '@/domain/usecases';
 import { Song } from '@/domain/models';
 import Loader from '@/presentation/components/loader/loader';
 import { ArrowDownUp, Check, X } from 'lucide-react';
+import { CreateSetlistDTO, CreateSetlistRequest } from '@/domain/usecases/setlists/create-setlist-request';
 
 type Props = {
   loadAllSongsRequest: LoadAllSongsRequest;
+  createSetlistRequest?: CreateSetlistRequest;
 };
 
-export const SetlistCreatePage: React.FC<Props> = ({ loadAllSongsRequest }) => {
+export const SetlistCreatePage: React.FC<Props> = ({ loadAllSongsRequest, createSetlistRequest }) => {
   const [loadingData, setLoadingData] = React.useState(true);
   const [songList, setSongList] = React.useState<Song[]>([]);
   const [originalList, setSongOriginalList] = React.useState<Song[]>([]);
@@ -18,6 +20,8 @@ export const SetlistCreatePage: React.FC<Props> = ({ loadAllSongsRequest }) => {
   const [momentName, setMomentName] = React.useState<string>('');
   const [eventName, setEventName] = React.useState<string>('');
   const [eventDescription, setEventDescription] = React.useState<string>('');
+  const [eventAddress, setEventAddress] = React.useState<string>('');
+  const [sendingData, setSendingData] = React.useState(false);
 
   function gerarHashCrypto(tamanho = 16): string {
     const array = new Uint8Array(tamanho);
@@ -90,6 +94,39 @@ export const SetlistCreatePage: React.FC<Props> = ({ loadAllSongsRequest }) => {
     setMomentName('');
   };
 
+  const handleCreateSetlist = async () => {
+    setSendingData(true);
+    const payload: CreateSetlistDTO = {
+      name: eventName,
+      description: eventDescription,
+      address: eventAddress,
+      items: selectedSongs.map((song, index) => ({
+        pureTitle: song.name,
+        songId: song.new ? null : song.id,
+        order: `${index + 1}`,
+        key: song.key,
+      })),
+    };
+
+    console.log(payload, 'payload');
+
+    try {
+      const createSetlistResponse = await createSetlistRequest?.execute(payload);
+      alert('Setlist criada com sucesso!');
+      window.location.href = `/setlists/${createSetlistResponse.id}`;
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSendingData(true);
+    }
+
+    console.log({
+      eventName,
+      eventDescription,
+      selectedSongs,
+    });
+  };
+
   React.useEffect(() => {
     if (!loadingData) return;
     if (songList && songList.length > 0) return;
@@ -152,6 +189,19 @@ export const SetlistCreatePage: React.FC<Props> = ({ loadAllSongsRequest }) => {
                 onChange={(e) => setEventDescription(e.target.value)}
                 value={eventDescription}
               />
+            </S.InputGroup>
+            <S.InputGroup>
+              <label>Endereço</label>
+              <S.FormInput
+                placeholder="Rua exemplo, 123"
+                onChange={(e) => setEventAddress(e.target.value)}
+                value={eventAddress}
+              />
+            </S.InputGroup>
+            <S.InputGroup>
+              <S.SimpleButton disabled={sendingData} onClick={() => handleCreateSetlist()}>
+                {sendingData ? 'Salvando...' : 'Salvar'}
+              </S.SimpleButton>
             </S.InputGroup>
           </S.SectionHeaderRow>
           <S.SectionContent>

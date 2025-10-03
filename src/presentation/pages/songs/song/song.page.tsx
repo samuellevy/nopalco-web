@@ -10,6 +10,7 @@ import { LoadAllSongsRequest } from '@/domain/usecases';
 import { LoadSetlistRequest } from '@/domain/usecases/setlists/load-setlist-request';
 import { SetlistItem } from '@/domain/models/setlist';
 import { UpdateSongRequest } from '@/domain/usecases/songs/update-song-request';
+import SheetMusicPage from '../../sheet-music/sheet-music.page';
 
 interface Content {
   block: string;
@@ -30,11 +31,12 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadSetlistRequest,
   const key = searchParams.get('key') || null;
   const { songId } = useParams<{ songId: string }>();
   const [loadingData, setLoadingData] = React.useState(true);
-  const [song, setSong] = React.useState<Song>({} as Song);
+  const [song, setSong] = React.useState<Song>(null);
   const [activeBpm, setActiveBpm] = React.useState(false);
   // const [_, setSongList] = React.useState<Song[]>([]);
   const [setlistSongList, setSetlistSongList] = React.useState<SetlistItem[]>([]);
   const [editMode, setEditMode] = React.useState(false);
+  const [sheetMusicMode, setSheetMusicMode] = React.useState(false);
 
   const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
@@ -376,6 +378,11 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadSetlistRequest,
     console.log(song.content);
   };
 
+  const handleToggleSheetMusicMode = () => {
+    setSheetMusicMode((prevState) => !prevState);
+    console.log(song.content);
+  };
+
   const handleUpdateNote = (e: React.ChangeEvent<HTMLInputElement>, noteKey: number, sectionKeyChanged: number) => {
     const { value } = e.target;
     const updatedContent = song.content.map((section: Content, sectionKey: number) => ({
@@ -396,6 +403,15 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadSetlistRequest,
     setSong((prevState) => ({ ...prevState, content: updatedContent }));
   };
 
+  const handleAddNote = (noteKey: number) => {
+    // preciso adicionar uma nova nota vazia após a notaKey
+    const updatedContent = song.content.map((section: Content) => ({
+      ...section,
+      notes: section.notes.flatMap((note, key) => (key === noteKey ? [note, ''] : [note])),
+    }));
+    setSong((prevState) => ({ ...prevState, content: updatedContent }));
+  };
+
   const handleSaveButton = () => {
     updateSong();
     setEditMode(false);
@@ -412,6 +428,7 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadSetlistRequest,
                 <S.Title>{song.name}</S.Title>
                 <S.Author>{song.author}</S.Author>
                 <S.PureFlexRow>
+                  {!editMode && <S.MiniSimpleButton onClick={handleEditButton}>Partitura</S.MiniSimpleButton>}
                   {!editMode && <S.MiniSimpleButton onClick={handleEditButton}>Editar</S.MiniSimpleButton>}
                   {editMode && <S.MiniSimpleButton onClick={handleEditButton}>Cancelar</S.MiniSimpleButton>}
                   {editMode && (
@@ -458,37 +475,42 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadSetlistRequest,
             </S.FlexRow>
           </S.Header>
 
-          <S.Content>
-            {song.content &&
-              song.content.map((songSection: Content, keyContent) => (
-                <S.Section key={`content-${keyContent}`}>
-                  <S.SectionTitle
-                    $isBold={isStringBetweenAsterisks(songSection.block)}
-                    $isUnderline={isStringBetweenUnderscores(songSection.block)}
-                  >
-                    {removeAsterisksAndUnderscores(songSection.block)}
-                  </S.SectionTitle>
-                  <S.Grid>
-                    {songSection.notes.map((note: string, noteKey) => (
-                      <S.Cell key={noteKey}>
-                        {editMode && (
-                          <S.CellInputValue>
-                            <S.CellInput
-                              type="text"
-                              value={typeof note === 'string' ? note : `${note[0]} ${note[1]}`}
-                              onChange={(e) => handleUpdateNote(e, noteKey, keyContent)}
-                            />
-                          </S.CellInputValue>
-                        )}
-                        {!editMode && (
-                          <S.CellValue>{typeof note === 'string' ? note : `${note[0]} ${note[1]}`}</S.CellValue>
-                        )}
-                      </S.Cell>
-                    ))}
-                  </S.Grid>
-                </S.Section>
-              ))}
-          </S.Content>
+          {!sheetMusicMode && (
+            <S.Content>
+              {song.content &&
+                song.content.map((songSection: Content, keyContent) => (
+                  <S.Section key={`content-${keyContent}`}>
+                    <S.SectionTitle
+                      $isBold={isStringBetweenAsterisks(songSection.block)}
+                      $isUnderline={isStringBetweenUnderscores(songSection.block)}
+                    >
+                      {removeAsterisksAndUnderscores(songSection.block)}
+                    </S.SectionTitle>
+                    <S.Grid>
+                      {songSection.notes.map((note: string, noteKey) => (
+                        <S.Cell key={noteKey}>
+                          {editMode && (
+                            <S.CellInputValue>
+                              <S.CellInput
+                                type="text"
+                                value={typeof note === 'string' ? note : `${note[0]} ${note[1]}`}
+                                onChange={(e) => handleUpdateNote(e, noteKey, keyContent)}
+                                onDoubleClick={() => handleAddNote(noteKey)}
+                              />
+                            </S.CellInputValue>
+                          )}
+                          {!editMode && (
+                            <S.CellValue>{typeof note === 'string' ? note : `${note[0]} ${note[1]}`}</S.CellValue>
+                          )}
+                        </S.Cell>
+                      ))}
+                    </S.Grid>
+                  </S.Section>
+                ))}
+            </S.Content>
+          )}
+
+          {sheetMusicMode && song && <SheetMusicPage song={song} />}
 
           <S.FlexRow>
             <S.SimpleButton onClick={handleSetlistButton}>Voltar</S.SimpleButton>

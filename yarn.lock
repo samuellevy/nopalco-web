@@ -7309,6 +7309,11 @@ v8-to-istanbul@^9.0.1:
     "@types/istanbul-lib-coverage" "^2.0.1"
     convert-source-map "^1.6.0"
 
+vexflow@^5.0.0:
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/vexflow/-/vexflow-5.0.0.tgz#4307c84979657c6f733facd1aed60c99be56ed88"
+  integrity sha512-rjB7TV4ygKE5Fl3W5OlG+0dHv22CFufUJdMG6oNgvcn0zp34u+sOboZsadQXnF1O3tZ3myXThaUIaLkJlpNM2Q==
+
 vite-plugin-pwa@^0.20.5:
   version "0.20.5"
   resolved "https://registry.yarnpkg.com/vite-plugin-pwa/-/vite-plugin-pwa-0.20.5.tgz#437dca4a9bff650dc9c84ea3d7d3ac230b5985e0"

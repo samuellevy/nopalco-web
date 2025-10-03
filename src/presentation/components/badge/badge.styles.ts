@@ -9,11 +9,11 @@ export const Badge = styled.div<BadgeProps>`
   flex-direction: column;
   justify-content: center;
   gap: 1rem;
-  border-radius: 1rem;
+  border-radius: 0.5rem;
   box-shadow: 0 0 1rem rgba(0, 0, 0, 0.1);
   width: 100%;
   height: 10rem;
-  padding: 1rem;
+  padding: 0 1.5rem;
   cursor: pointer;
 
   ${({ theme, $variant }) =>
@@ -21,7 +21,7 @@ export const Badge = styled.div<BadgeProps>`
 `;
 
 export const BadgeTitle = styled.h1`
-  font-size: 3rem;
+  font-size: 2.5rem;
   font-weight: bold;
   text-align: left;
 `;

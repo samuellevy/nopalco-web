@@ -5,6 +5,7 @@ import { SongList } from '@/presentation/components/songlist';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Setlist } from '@/domain/models/setlist';
 import { LoadSetlistRequest } from '@/domain/usecases/setlists/load-setlist-request';
+import { MessageCircle } from 'lucide-react';
 
 type SetlistProps = {
   loadSetlistRequest: LoadSetlistRequest;
@@ -37,6 +38,23 @@ export const SetlistPage: React.FC<SetlistProps> = ({ loadSetlistRequest }) => {
     navigate(`/songs/${songId}?setlist=${setlistId}&key=${key}`);
   };
 
+  const handleCopySetlist = () => {
+    // convert setlist to text
+    let text = `Setlist: ${setlist.name}\nData: ${setlist.description}\n\n`;
+    setlist.items
+      ?.sort((a, b) => a.order - b.order)
+      .forEach((item, index) => {
+        if (item.song) {
+          text += `${index + 1}. ${item.pureTitle ? item.pureTitle : item.song.name} - ${item.song.author} [${
+            item.key
+          }]\n`;
+        } else {
+          text += `${index + 1}. ${item.pureTitle}\n`;
+        }
+      });
+    navigator.clipboard.writeText(text);
+  };
+
   React.useEffect(() => {
     if (!loadingData) return;
 
@@ -54,7 +72,10 @@ export const SetlistPage: React.FC<SetlistProps> = ({ loadSetlistRequest }) => {
     <S.Container>
       <S.Content>
         <S.Section>
-          <S.SectionTitle>{`${setlist.name} - ${setlist.description}`}</S.SectionTitle>
+          <S.HeaderText>
+            <S.SectionTitle>{`${setlist.name} - ${setlist.description}`}</S.SectionTitle>
+            <MessageCircle onClick={() => handleCopySetlist()} />
+          </S.HeaderText>
           {setlist && (
             <S.SectionContent>
               {setlist.items
