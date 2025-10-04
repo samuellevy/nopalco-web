@@ -49,7 +49,8 @@ export const SetlistPage: React.FC<SetlistProps> = ({ loadSetlistRequest }) => {
             item.key
           }]\n`;
         } else {
-          text += `${index + 1}. ${item.pureTitle}\n`;
+          text += `${index + 1}. ${item.pureTitle} `;
+          text += `[${item.key}]\n`;
         }
       });
     navigator.clipboard.writeText(text);
@@ -103,6 +104,11 @@ export const SetlistPage: React.FC<SetlistProps> = ({ loadSetlistRequest }) => {
                           <SongList.BadgeTitle>{item.pureTitle}</SongList.BadgeTitle>
                           {/* <SongList.BadgeTitle>{item.pureAuthor}</SongList.BadgeTitle> */}
                         </SongList.ASide>
+                        {item.key && (
+                          <SongList.ASide>
+                            <S.BadgeKey>{item.key}</S.BadgeKey>
+                          </SongList.ASide>
+                        )}
                       </SongList.Badge>
                     )}
                   </>

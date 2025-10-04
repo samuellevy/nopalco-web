@@ -86,8 +86,6 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest }) => {
         </S.Section> */}
 
         <S.Section>
-          <S.SectionTitle>Setlists salvos</S.SectionTitle>
-
           <S.SectionContent>
             {setlists
               // .sort((a, b) => {

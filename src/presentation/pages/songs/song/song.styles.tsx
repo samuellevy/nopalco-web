@@ -6,7 +6,7 @@ type BadgeProps = {
 
 type CellValueProps = {
   $size?: string;
-  $variant?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'lightGray' | 'purple';
+  $variant?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'lightGray' | 'purple' | 'lucide';
   hidden?: boolean;
 };
 

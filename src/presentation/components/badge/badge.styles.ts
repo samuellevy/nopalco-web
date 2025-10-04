@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 
 type BadgeProps = {
-  $variant?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'lightGray' | 'darkGray';
+  $variant?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'lightGray' | 'darkGray' | 'lucide';
 };
 
 export const Badge = styled.div<BadgeProps>`
@@ -13,7 +13,7 @@ export const Badge = styled.div<BadgeProps>`
   box-shadow: 0 0 1rem rgba(0, 0, 0, 0.1);
   width: 100%;
   height: 10rem;
-  padding: 0 1.5rem;
+  padding: 1.5rem;
   cursor: pointer;
 
   ${({ theme, $variant }) =>
@@ -21,12 +21,12 @@ export const Badge = styled.div<BadgeProps>`
 `;
 
 export const BadgeTitle = styled.h1`
-  font-size: 2.5rem;
+  font-size: 1.5rem;
   font-weight: bold;
   text-align: left;
 `;
 
 export const BadgeSubTitle = styled.h2`
-  font-size: 1.6rem;
+  font-size: 1.2rem;
   font-weight: 500;
 `;

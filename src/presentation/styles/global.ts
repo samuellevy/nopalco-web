@@ -2,15 +2,19 @@ import { createGlobalStyle } from 'styled-components';
 
 export const GlobalStyles = createGlobalStyle`
     * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-        list-style: none;
-        text-decoration: none;
-        border: none;
-        background: transparent;
-        text-align: inherit;
-        outline: none;
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      text-decoration: none;
+      border: none;
+      background: transparent;
+      text-align: inherit;
+      outline: none;
+      font-family: "Noto Sans", sans-serif;
+      font-optical-sizing: auto;
+      font-weight: 100;
+      font-style: normal;
     }
 
     a, a:visited, a:hover, a:active {
@@ -19,8 +23,8 @@ export const GlobalStyles = createGlobalStyle`
     }
 
     html {
-        font-size: 62.5%;
-        font-family: 'Ubuntu', sans-serif;
+      font-size: 62.5%;
+
     }
 
     :focus {
@@ -28,10 +32,10 @@ export const GlobalStyles = createGlobalStyle`
     }
 
     body {
-        background-color: ${({ theme }) => theme.colors.black};
-        color: ${({ theme }) => theme.colors.text};
-        font-family: ${({ theme }) => theme.font.default};
-        font-size: ${({ theme }) => theme.font.sizes.medium};
+      background-color: ${({ theme }) => theme.variants.lucide.screenBackground};
+      color: ${({ theme }) => theme.colors.text};
+      font-family: ${({ theme }) => theme.font.default};
+      font-size: ${({ theme }) => theme.font.sizes.medium};
     }
 
     &::-moz-focus-inner {

@@ -5,6 +5,7 @@ export const Container = styled.div`
   flex-direction: column;
   height: 100%;
   margin-bottom: 10rem;
+  /* background-color: #161618; */
 `;
 
 /** Header */

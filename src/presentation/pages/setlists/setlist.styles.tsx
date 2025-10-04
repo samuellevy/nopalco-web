@@ -70,11 +70,13 @@ export const SectionContent = styled.div`
 `;
 
 export const BadgeKey = styled.div`
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
   background-color: #4191e1;
   border-radius: 25px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-weight: bold;
+  color: #fff;
 `;

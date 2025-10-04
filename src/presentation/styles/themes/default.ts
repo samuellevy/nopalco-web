@@ -63,8 +63,13 @@ export const defaultTheme = {
       background: '#444444',
       color: '#FFF',
     },
+    lucide: {
+      background: '#1b1b1f',
+      color: '#161618',
+      screenBackground: '#1b1b1f',
+    },
     disabled: {
-      background: '#1F1F1F',
+      background: '#161618',
       color: '#999',
     },
   },
