@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React from 'react';
-import { PlusCircle, MinusCircle } from 'lucide-react';
+import { PlusCircle, MinusCircle, Search } from 'lucide-react';
 
 import * as S from './song.styles';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -11,6 +11,7 @@ import { LoadSetlistRequest } from '@/domain/usecases/setlists/load-setlist-requ
 import { SetlistItem } from '@/domain/models/setlist';
 import { UpdateSongRequest } from '@/domain/usecases/songs/update-song-request';
 import SheetMusicPage from '../../sheet-music/sheet-music.page';
+import { ModalSongsListComponent } from '@/presentation/components/modal-song-list/modal-song-list.component';
 
 interface Content {
   block: string;
@@ -24,7 +25,12 @@ type Props = {
   updateSongRequest: UpdateSongRequest;
 };
 
-export const SongPage: React.FC<Props> = ({ loadSongRequest, loadSetlistRequest, updateSongRequest }) => {
+export const SongPage: React.FC<Props> = ({
+  loadSongRequest,
+  loadSetlistRequest,
+  updateSongRequest,
+  loadAllSongsRequest,
+}) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const setlist = searchParams.get('setlist');
@@ -37,6 +43,7 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadSetlistRequest,
   const [setlistSongList, setSetlistSongList] = React.useState<SetlistItem[]>([]);
   const [editMode, setEditMode] = React.useState(false);
   const [sheetMusicMode] = React.useState(false);
+  const [modalSongsOpen, setModalSongsOpen] = React.useState(false);
 
   const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
@@ -422,6 +429,11 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadSetlistRequest,
     setEditMode(false);
   };
 
+  const handleClickSong = (songId: string) => {
+    window.location.href = `/songs/${songId}?setlist=${setlist}`;
+    setModalSongsOpen(false);
+  };
+
   return (
     <>
       {!song && <h1>Loading</h1>}
@@ -527,6 +539,17 @@ export const SongPage: React.FC<Props> = ({ loadSongRequest, loadSetlistRequest,
           </S.FlexRow>
         </S.Container>
       )}
+
+      <S.RightSideActions>
+        <Search onClick={() => setModalSongsOpen(true)} />
+      </S.RightSideActions>
+
+      <ModalSongsListComponent
+        loadAllSongsRequest={loadAllSongsRequest}
+        modalSongsOpen={modalSongsOpen}
+        setModalSongsOpen={setModalSongsOpen}
+        handleClickSong={handleClickSong}
+      />
     </>
   );
 };

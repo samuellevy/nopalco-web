@@ -54,7 +54,12 @@ export const Router: React.FC = () => {
                 />
               }
             />
-            <Route path="/setlists/:setlistId" element={<SetlistPage loadSetlistRequest={loadSetlistRequest} />} />
+            <Route
+              path="/setlists/:setlistId"
+              element={
+                <SetlistPage loadSetlistRequest={loadSetlistRequest} loadAllSongsRequest={loadAllSongsRequest} />
+              }
+            />
 
             <Route path="/songs-small" element={<SongsSmallPage loadAllSongsRequest={loadAllSongsRequest} />} />
             <Route

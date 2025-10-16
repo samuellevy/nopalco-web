@@ -342,3 +342,9 @@ export const BlinkingDiv = styled.div<BlinkingDivProps>`
   background-color: #ff6347; /* Tomate */
   animation: ${blink} ${({ bpm }) => calculateDuration(bpm)}s infinite;
 `;
+
+export const RightSideActions = styled.div`
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+`;
