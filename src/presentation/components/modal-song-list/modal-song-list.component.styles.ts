@@ -31,6 +31,7 @@ export const ModalSongList = styled.div<{ $open: boolean }>`
   top: 0;
   right: 0;
   width: 400px;
+  max-width: 100%;
   height: 100%;
   background-color: ${({ theme }) => theme.variants.lucide.screenBackground};
   z-index: 1000;
