@@ -159,8 +159,8 @@ export const SongPage: React.FC<Props> = ({
     }
   }, [loadSongRequest, key, songId]);
 
-  const updateSong = async () => {
-    const { content, ...rest } = song;
+  const updateSong = async (tempSong: Song) => {
+    const { content, ...rest } = tempSong;
 
     try {
       const updatedSong = await updateSongRequest.execute(songId, {
@@ -236,6 +236,7 @@ export const SongPage: React.FC<Props> = ({
     }
 
     function transposeNotesBlock(notesBlock: string): string {
+      // console.log(notesBlock, `notesBlock`);
       return notesBlock.split(' ').map(transposeNote).join(' ');
     }
 
@@ -283,7 +284,11 @@ export const SongPage: React.FC<Props> = ({
     }
 
     function transposeNotesBlock(notesBlock: string): string {
-      return notesBlock.split(' ').map(transposeNote).join(' ');
+      console.log(notesBlock, `notesBlock`);
+      if (Array.isArray(notesBlock)) {
+        return notesBlock.map(transposeNote).join(' ');
+      }
+      return typeof notesBlock === 'string' && notesBlock.split(' ').map(transposeNote).join(' ');
     }
 
     const newContent = content.map((block) => ({
@@ -424,8 +429,22 @@ export const SongPage: React.FC<Props> = ({
     setSong((prevState) => ({ ...prevState, content: updatedContent }));
   };
 
-  const handleSaveButton = () => {
-    updateSong();
+  const handleSaveButton = async () => {
+    // remover de songs tudo o que for string vazia
+    const cleanedContent = song.content.map((section: Content) => ({
+      ...section,
+      notes: section.notes.filter((note) => {
+        if (typeof note === 'string') {
+          return note.trim() !== '';
+        } else if (Array.isArray(note)) {
+          return note[0].trim() !== '' || note[1].trim() !== '';
+        }
+        return true;
+      }),
+    }));
+    const tempSong = { ...song, content: cleanedContent };
+    setSong((prevState) => ({ ...prevState, content: cleanedContent }));
+    await updateSong(tempSong);
     setEditMode(false);
   };
 
@@ -463,7 +482,7 @@ export const SongPage: React.FC<Props> = ({
 
             <S.FlexRow>
               <S.CellHeader onClick={() => setActiveBpm(!activeBpm)}>
-                <S.BlinkingDiv bpm={parseInt(song.bpm)} active={activeBpm}>
+                <S.BlinkingDiv bpm={parseInt(song.bpm)} $active={activeBpm}>
                   {song.bpm}
                 </S.BlinkingDiv>
                 <S.CellValue $size="1.2rem" hidden={activeBpm}>
@@ -508,7 +527,7 @@ export const SongPage: React.FC<Props> = ({
                     </S.SectionTitle>
                     <S.Grid>
                       {songSection.notes.map((note: string, noteKey) => (
-                        <S.Cell key={noteKey}>
+                        <S.Cell key={`${note}-${noteKey}`}>
                           {editMode && (
                             <S.CellInputValue>
                               <S.CellInput

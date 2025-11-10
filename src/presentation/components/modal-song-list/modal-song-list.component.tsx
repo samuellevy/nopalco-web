@@ -65,8 +65,8 @@ export const ModalSongsListComponent: React.FC<ModalSongsProps> = ({
           </S.ModalClose>
         </S.ModalSongListHeader>
 
-        {songList.map((song: Song) => (
-          <SongList.Badge $variant="darkGray" onClick={() => handleClickSong(song.id)} key={song.uid}>
+        {songList.map((song: Song, key: number) => (
+          <SongList.Badge key={`${song.id}-${key}`} $variant="darkGray" onClick={() => handleClickSong(song.id)}>
             <SongList.ASide>
               <SongList.Thumbnail>
                 <img src="/assets/no-photo.png" alt="" />

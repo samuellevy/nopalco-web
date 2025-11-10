@@ -143,7 +143,7 @@ export const CellValue = styled.div<CellValueProps>`
   font-size: ${({ $size }) => ($size ? $size : `1.5rem`)};
 
   @media (min-width: 350px) {
-    background-color: ${({ theme, $variant }) => ($variant ? theme.colors[$variant] : theme.colors.grayBg)};
+    background-color: ${({ theme, $variant }) => ($variant ? theme.colors[$variant] : '#2f2f2f')};
   }
 
   @media (max-width: 350px) {
@@ -313,7 +313,7 @@ export const MiniSimpleButton = styled.button<MiniSimpleButtonProps>`
 
 interface BlinkingDivProps {
   bpm: number;
-  active?: boolean;
+  $active?: boolean;
 }
 
 // Função que converte BPM para duração da animação (em segundos)
@@ -335,7 +335,7 @@ export const BlinkingDiv = styled.div<BlinkingDivProps>`
   padding: 1rem 1rem;
   font-size: 1.2rem;
   font-weight: bold;
-  display: ${({ active }) => (active ? 'flex' : 'none')};
+  display: ${({ $active }) => ($active ? 'flex' : 'none')};
   flex-direction: row;
   align-items: flex-start;
   justify-content: center;
