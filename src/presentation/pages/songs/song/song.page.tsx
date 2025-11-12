@@ -527,7 +527,7 @@ export const SongPage: React.FC<Props> = ({
                     </S.SectionTitle>
                     <S.Grid>
                       {songSection.notes.map((note: string, noteKey) => (
-                        <S.Cell key={`${note}-${noteKey}`}>
+                        <S.Cell key={`${noteKey}`}>
                           {editMode && (
                             <S.CellInputValue>
                               <S.CellInput
