@@ -5,6 +5,26 @@ export const Container = styled.div`
   flex-direction: column;
   height: 100%;
   color: #ffffff;
+  filter: invert(1);
+  /* min-width: 1200px; */
+  width: 100%;
+  overflow-x: auto;
+
+  .osmd {
+    fill: tomato !important;
+
+    .vf-tabnote {
+      rect {
+        stroke: #e4e4e0 !important;
+        fill: #e4e4e0 !important;
+        background-color: #e4e4e0 !important;
+      }
+      text {
+        fill: #000;
+        stroke: #000;
+      }
+    }
+  }
 `;
 
 export const SheetBox = styled.div`

@@ -203,6 +203,13 @@ export const Grid = styled.div`
   }
 `;
 
+export const FullGridItem = styled.div`
+  grid-column: 1 / -1;
+  @media (max-width: 350px) {
+    display: none;
+  }
+`;
+
 export const Section = styled.section`
   display: flex;
   flex-direction: column;
@@ -282,10 +289,11 @@ export const SimpleButton = styled.button`
 
 type MiniSimpleButtonProps = {
   $backgroundColor?: string;
+  $active?: boolean;
 };
 
 export const MiniSimpleButton = styled.button<MiniSimpleButtonProps>`
-  background-color: ${({ $backgroundColor }) => $backgroundColor || '#1f1f1f'};
+  background-color: ${({ $backgroundColor, $active }) => ($active ? '#ff6347' : $backgroundColor || '#1f1f1f')};
   border: 1px solid #1f1f1f;
   border-radius: 4px;
   box-shadow: rgba(0, 0, 0, 0.1) 0 2px 4px 0;

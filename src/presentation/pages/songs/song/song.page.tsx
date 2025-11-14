@@ -16,6 +16,7 @@ import { ModalSongsListComponent } from '@/presentation/components/modal-song-li
 interface Content {
   block: string;
   notes: (string | [string, string])[];
+  score: string;
 }
 
 type Props = {
@@ -42,10 +43,22 @@ export const SongPage: React.FC<Props> = ({
   // const [_, setSongList] = React.useState<Song[]>([]);
   const [setlistSongList, setSetlistSongList] = React.useState<SetlistItem[]>([]);
   const [editMode, setEditMode] = React.useState(false);
-  const [sheetMusicMode] = React.useState(false);
+  const [sheetMusicMode, setSheetMusicMode] = React.useState(true);
+  const [chordsMusicMode] = React.useState(true);
   const [modalSongsOpen, setModalSongsOpen] = React.useState(false);
 
   const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+  const goFullscreen = () => {
+    const elem = document.documentElement;
+    if (elem.requestFullscreen) {
+      elem.requestFullscreen();
+    } else if ((elem as any).webkitRequestFullscreen) {
+      (elem as any).webkitRequestFullscreen();
+    } else if ((elem as any).msRequestFullscreen) {
+      (elem as any).msRequestFullscreen();
+    }
+  };
 
   const getNoteIndex = (note: string): number => {
     const FLAT_TO_SHARP_MAP: { [key: string]: string } = {
@@ -390,10 +403,10 @@ export const SongPage: React.FC<Props> = ({
     console.log(song.content);
   };
 
-  // const handleToggleSheetMusicMode = () => {
-  //   setSheetMusicMode((prevState) => !prevState);
-  //   console.log(song.content);
-  // };
+  const handleToggleSheetMusicMode = () => {
+    setSheetMusicMode((prevState) => !prevState);
+    console.log(song.content);
+  };
 
   const handleUpdateNote = (e: React.ChangeEvent<HTMLInputElement>, noteKey: number, sectionKeyChanged: number) => {
     const { value } = e.target;
@@ -461,10 +474,14 @@ export const SongPage: React.FC<Props> = ({
           <S.Header>
             <S.FlexRow>
               <S.FlexColumn>
-                <S.Title>{song.name}</S.Title>
+                <S.Title onDoubleClick={() => goFullscreen()}>{song.name}</S.Title>
                 <S.Author>{song.author}</S.Author>
                 <S.PureFlexRow>
-                  {!editMode && <S.MiniSimpleButton onClick={handleEditButton}>Partitura</S.MiniSimpleButton>}
+                  {!editMode && (
+                    <S.MiniSimpleButton onClick={handleToggleSheetMusicMode} $active={sheetMusicMode}>
+                      Partitura
+                    </S.MiniSimpleButton>
+                  )}
                   {!editMode && <S.MiniSimpleButton onClick={handleEditButton}>Editar</S.MiniSimpleButton>}
                   {editMode && <S.MiniSimpleButton onClick={handleEditButton}>Cancelar</S.MiniSimpleButton>}
                   {editMode && (
@@ -514,7 +531,7 @@ export const SongPage: React.FC<Props> = ({
             </S.FlexRow>
           </S.Header>
 
-          {!sheetMusicMode && (
+          {chordsMusicMode && (
             <S.Content>
               {song.content &&
                 song.content.map((songSection: Content, keyContent) => (
@@ -526,23 +543,29 @@ export const SongPage: React.FC<Props> = ({
                       {removeAsterisksAndUnderscores(songSection.block)}
                     </S.SectionTitle>
                     <S.Grid>
-                      {songSection.notes.map((note: string, noteKey) => (
-                        <S.Cell key={`${noteKey}`}>
-                          {editMode && (
-                            <S.CellInputValue>
-                              <S.CellInput
-                                type="text"
-                                value={typeof note === 'string' ? note : `${note[0]} ${note[1]}`}
-                                onChange={(e) => handleUpdateNote(e, noteKey, keyContent)}
-                                onDoubleClick={() => handleAddNote(noteKey)}
-                              />
-                            </S.CellInputValue>
-                          )}
-                          {!editMode && (
-                            <S.CellValue>{typeof note === 'string' ? note : `${note[0]} ${note[1]}`}</S.CellValue>
-                          )}
-                        </S.Cell>
-                      ))}
+                      {songSection.score ? (
+                        <S.FullGridItem hidden={!sheetMusicMode}>
+                          <SheetMusicPage sheet={songSection.score} />
+                        </S.FullGridItem>
+                      ) : null}
+                      {!songSection.score &&
+                        songSection.notes.map((note: string, noteKey) => (
+                          <S.Cell key={`${noteKey}`}>
+                            {editMode && (
+                              <S.CellInputValue>
+                                <S.CellInput
+                                  type="text"
+                                  value={typeof note === 'string' ? note : `${note[0]} ${note[1]}`}
+                                  onChange={(e) => handleUpdateNote(e, noteKey, keyContent)}
+                                  onDoubleClick={() => handleAddNote(noteKey)}
+                                />
+                              </S.CellInputValue>
+                            )}
+                            {!editMode && (
+                              <S.CellValue>{typeof note === 'string' ? note : `${note[0]} ${note[1]}`}</S.CellValue>
+                            )}
+                          </S.Cell>
+                        ))}
                     </S.Grid>
                   </S.Section>
                 ))}
