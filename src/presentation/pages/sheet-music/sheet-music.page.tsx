@@ -29,7 +29,7 @@ const SheetMusicPage: React.FC<Props> = ({ sheet }) => {
 
     osmdRef.current = osmd;
 
-    osmd.load(`/scores/${sheet}`).then(() => osmd.render());
+    osmd.load(`/assets/scores/${sheet}`).then(() => osmd.render());
   }, [sheet]);
 
   return (
