@@ -8,7 +8,7 @@ type Props = {
   sheet?: string;
 };
 
-const SheetMusicPage: React.FC<Props> = ({ song, sheet }) => {
+const SheetMusicPage: React.FC<Props> = ({ sheet }) => {
   const ref = useRef<HTMLDivElement>(null);
   const osmdRef = useRef<OpenSheetMusicDisplay | null>(null);
 
