@@ -46,6 +46,7 @@ export const SongPage: React.FC<Props> = ({
   const [sheetMusicMode, setSheetMusicMode] = React.useState(true);
   const [chordsMusicMode] = React.useState(true);
   const [modalSongsOpen, setModalSongsOpen] = React.useState(false);
+  const [isSplitted, setIsSplitted] = React.useState(false);
 
   const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
@@ -403,6 +404,10 @@ export const SongPage: React.FC<Props> = ({
     console.log(song.content);
   };
 
+  const toggleSplit = () => {
+    setIsSplitted((prevState) => !prevState);
+  };
+
   const handleToggleSheetMusicMode = () => {
     setSheetMusicMode((prevState) => !prevState);
     console.log(song.content);
@@ -484,6 +489,11 @@ export const SongPage: React.FC<Props> = ({
                   )}
                   {!editMode && <S.MiniSimpleButton onClick={handleEditButton}>Editar</S.MiniSimpleButton>}
                   {editMode && <S.MiniSimpleButton onClick={handleEditButton}>Cancelar</S.MiniSimpleButton>}
+                  {!editMode && (
+                    <S.MiniSimpleButton onClick={toggleSplit} $active={isSplitted}>
+                      Split
+                    </S.MiniSimpleButton>
+                  )}
                   {editMode && (
                     <S.MiniSimpleButton $backgroundColor="#D0342c" onClick={handleSaveButton}>
                       Salvar
@@ -532,10 +542,10 @@ export const SongPage: React.FC<Props> = ({
           </S.Header>
 
           {chordsMusicMode && (
-            <S.Content>
+            <S.Content className={isSplitted ? 'splitted' : ''}>
               {song.content &&
                 song.content.map((songSection: Content, keyContent) => (
-                  <S.Section key={`content-${keyContent}`}>
+                  <S.Section className={isSplitted ? 'splitted' : ''} key={`content-${keyContent}`}>
                     <S.SectionTitle
                       $isBold={isStringBetweenAsterisks(songSection.block)}
                       $isUnderline={isStringBetweenUnderscores(songSection.block)}

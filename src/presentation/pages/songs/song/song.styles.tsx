@@ -187,11 +187,25 @@ export const Content = styled.div`
   display: flex;
   flex-direction: column;
   flex: 1;
+
   @media (min-width: 350px) {
     padding: 1rem;
   }
   overflow-y: auto;
   gap: 1.6rem;
+
+  &.splitted {
+    zoom: 0.8;
+    display: unset;
+    flex-direction: column;
+    flex: 1;
+    column-count: 3; /* duas colunas */
+    column-gap: 2rem; /* espaço entre colunas */
+    padding: 1rem;
+    flex: 1;
+    overflow-y: auto;
+    gap: 1.6rem;
+  }
 `;
 
 export const Grid = styled.div`
@@ -214,6 +228,10 @@ export const Section = styled.section`
   display: flex;
   flex-direction: column;
   width: 100%;
+  &.splitted {
+    break-inside: avoid; /* impede quebrar uma section */
+    margin-bottom: 2rem;
+  }
   @media (max-width: 350px) {
     margin-top: 2rem;
   }
