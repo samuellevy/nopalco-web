@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React from 'react';
-import { PlusCircle, MinusCircle, Search } from 'lucide-react';
+import { PlusCircle, MinusCircle, Search, File } from 'lucide-react';
 
 import * as S from './song.styles';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -46,6 +46,7 @@ export const SongPage: React.FC<Props> = ({
   const [sheetMusicMode, setSheetMusicMode] = React.useState(true);
   const [chordsMusicMode] = React.useState(true);
   const [modalSongsOpen, setModalSongsOpen] = React.useState(false);
+  const [, setModalSetlistOpen] = React.useState(false);
   const [isSplitted, setIsSplitted] = React.useState(false);
 
   const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -383,7 +384,7 @@ export const SongPage: React.FC<Props> = ({
     console.log(nextSong, `nextSong`);
 
     if (nextSong && nextSong.song) {
-      window.location.href = `/songs/${nextSong.song.id}?setlist=${setlist}&key=${nextSong.key}`;
+      window.location.href = `/songs/${nextSong.song.id}?setlist=${setlist}&key=${encodeURIComponent(nextSong.key)}`;
     } else {
       window.location.href = `/setlists/${setlist}?position=${songId}`;
     }
@@ -393,7 +394,9 @@ export const SongPage: React.FC<Props> = ({
     const previousSong = getPreviousItem(id);
     console.log(previousSong);
     if (previousSong && previousSong.song) {
-      window.location.href = `/songs/${previousSong.song.id}?setlist=${setlist}&key=${previousSong.key}`;
+      window.location.href = `/songs/${previousSong.song.id}?setlist=${setlist}&key=${encodeURIComponent(
+        previousSong.key,
+      )}`;
     } else {
       window.location.href = `/setlists/${setlist}?position=${songId}`;
     }
@@ -593,6 +596,7 @@ export const SongPage: React.FC<Props> = ({
       )}
 
       <S.RightSideActions>
+        <File style={{ display: 'none' }} onClick={() => setModalSetlistOpen(true)} />
         <Search onClick={() => setModalSongsOpen(true)} />
       </S.RightSideActions>
 

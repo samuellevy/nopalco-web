@@ -13,7 +13,7 @@ const SheetMusicPage: React.FC<Props> = ({ sheet }) => {
   const osmdRef = useRef<OpenSheetMusicDisplay | null>(null);
 
   useEffect(() => {
-    if (!ref.current || osmdRef.current) return; // ✅ evita duplicar
+    if (!ref.current || osmdRef.current || !sheet) return; // ✅ evita duplicar
 
     const osmd = new OpenSheetMusicDisplay(ref.current, {
       autoResize: true,

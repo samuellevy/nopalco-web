@@ -86,7 +86,7 @@ export const BadgeKey = styled.div`
 export const RightSideActions = styled.div`
   position: fixed;
   top: 1rem;
-  right: 1rem;
+  right: 2rem;
 `;
 
 export const FlexRow = styled.header`

@@ -372,5 +372,7 @@ export const BlinkingDiv = styled.div<BlinkingDivProps>`
 export const RightSideActions = styled.div`
   position: fixed;
   top: 1rem;
-  right: 1rem;
+  right: 2rem;
+  gap: 0.5rem;
+  display: flex;
 `;
