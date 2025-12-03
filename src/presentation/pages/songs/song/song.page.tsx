@@ -420,7 +420,7 @@ export const SongPage: React.FC<Props> = ({
     const { value } = e.target;
     const updatedContent = song.content.map((section: Content, sectionKey: number) => ({
       ...section,
-      notes: section.notes.map((note, key) => {
+      notes: section.notes?.map((note, key) => {
         if (key === noteKey && sectionKey === sectionKeyChanged) {
           if (value.includes(' ')) {
             const parts = value.split(' ');
@@ -445,7 +445,7 @@ export const SongPage: React.FC<Props> = ({
     // preciso adicionar uma nova nota vazia após a notaKey
     const updatedContent = song.content.map((section: Content) => ({
       ...section,
-      notes: section.notes.flatMap((note, key) => (key === noteKey ? [note, ''] : [note])),
+      notes: section.notes?.flatMap((note, key) => (key === noteKey ? [note, ''] : [note])),
     }));
     setSong((prevState) => ({ ...prevState, content: updatedContent }));
   };
@@ -454,7 +454,7 @@ export const SongPage: React.FC<Props> = ({
     // remover de songs tudo o que for string vazia
     const cleanedContent = song.content.map((section: Content) => ({
       ...section,
-      notes: section.notes.filter((note) => {
+      notes: section.notes?.filter((note) => {
         if (typeof note === 'string') {
           return note.trim() !== '';
         } else if (Array.isArray(note)) {
