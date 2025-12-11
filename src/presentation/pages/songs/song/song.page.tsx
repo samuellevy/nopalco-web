@@ -250,8 +250,10 @@ export const SongPage: React.FC<Props> = ({
       return transposedNote + modifiers; // Retorna a nota transposta junto com os modificadores
     }
 
-    function transposeNotesBlock(notesBlock: string): string {
-      // console.log(notesBlock, `notesBlock`);
+    function transposeNotesBlock(notesBlock: string | [string, string]): string | [string, string] {
+      if (Array.isArray(notesBlock)) {
+        return [transposeNote(notesBlock[0]), transposeNote(notesBlock[1])];
+      }
       return notesBlock.split(' ').map(transposeNote).join(' ');
     }
 
@@ -298,12 +300,13 @@ export const SongPage: React.FC<Props> = ({
       return transposedNote + modifiers;
     }
 
-    function transposeNotesBlock(notesBlock: string): string {
-      console.log(notesBlock, `notesBlock`);
+    function transposeNotesBlock(notesBlock: string | [string, string]): string | [string, string] {
       if (Array.isArray(notesBlock)) {
-        return notesBlock.map(transposeNote).join(' ');
+        // Se for array, transpõe cada elemento
+        return [transposeNote(notesBlock[0]), transposeNote(notesBlock[1])];
       }
-      return typeof notesBlock === 'string' && notesBlock.split(' ').map(transposeNote).join(' ');
+      // Se for string, divide por espaço, transpõe cada nota e junta novamente
+      return notesBlock.split(' ').map(transposeNote).join(' ');
     }
 
     const newContent = content.map((block) => ({
@@ -422,11 +425,7 @@ export const SongPage: React.FC<Props> = ({
       ...section,
       notes: section.notes?.map((note, key) => {
         if (key === noteKey && sectionKey === sectionKeyChanged) {
-          if (value.includes(' ')) {
-            const parts = value.split(' ');
-            // Ensure tuple of two strings, fill with empty string if missing
-            return [parts[0] || '', parts[1] || ''] as [string, string];
-          }
+          // Just return the value as-is, letting the backend handle the format
           return value;
         }
         return note;
