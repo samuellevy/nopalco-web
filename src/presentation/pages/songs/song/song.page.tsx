@@ -213,6 +213,12 @@ export const SongPage: React.FC<Props> = ({
     }
   }, [fetchLoadSongRequest, loadingData, song, setlist]);
 
+  React.useEffect(() => {
+    if (song) {
+      document.title = `${song.name} - NoPalco`;
+    }
+  }, [song]);
+
   function increaseTone(content: any[], returnContent = false): any[] {
     function transposeNote(note: string): string {
       const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];

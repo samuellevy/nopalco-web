@@ -83,6 +83,12 @@ export const SetlistPage: React.FC<SetlistProps> = ({ loadSetlistRequest, loadAl
     //fetchLoadAllSongsRequest();
   }, [fetchLoadSetlistsRequest, loadingData, setlist, position]);
 
+  React.useEffect(() => {
+    if (setlist && setlist.name) {
+      document.title = `${setlist.name} - NoPalco`;
+    }
+  }, [setlist]);
+
   return (
     <>
       <S.Container>
