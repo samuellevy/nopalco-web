@@ -446,6 +446,29 @@ export const SongPage: React.FC<Props> = ({
     setSong((prevState) => ({ ...prevState, key: value }));
   };
 
+  const handleUpdateSectionTitle = (e: React.ChangeEvent<HTMLInputElement>, sectionIndex: number) => {
+    const { value } = e.target;
+    const updatedContent = song.content.map((section: Content, index: number) =>
+      index === sectionIndex ? { ...section, block: value } : section,
+    );
+    setSong((prevState) => ({ ...prevState, content: updatedContent }));
+  };
+
+  const handleRemoveSection = (sectionIndex: number) => {
+    const updatedContent = song.content.filter((_, index: number) => index !== sectionIndex);
+    setSong((prevState) => ({ ...prevState, content: updatedContent }));
+  };
+
+  const handleAddSection = () => {
+    const newSection: Content = {
+      block: 'Nova Seção',
+      notes: ['%', '%', '%', '%'],
+      score: '',
+    };
+    const updatedContent = [...song.content, newSection];
+    setSong((prevState) => ({ ...prevState, content: updatedContent }));
+  };
+
   const handleAddNote = (noteKey: number) => {
     // preciso adicionar uma nova nota vazia após a notaKey
     const updatedContent = song.content.map((section: Content) => ({
@@ -503,9 +526,14 @@ export const SongPage: React.FC<Props> = ({
                     </S.MiniSimpleButton>
                   )}
                   {editMode && (
-                    <S.MiniSimpleButton $backgroundColor="#D0342c" onClick={handleSaveButton}>
-                      Salvar
-                    </S.MiniSimpleButton>
+                    <>
+                      <S.MiniSimpleButton $backgroundColor="#008000" onClick={handleAddSection}>
+                        + Seção
+                      </S.MiniSimpleButton>
+                      <S.MiniSimpleButton $backgroundColor="#D0342c" onClick={handleSaveButton}>
+                        Salvar
+                      </S.MiniSimpleButton>
+                    </>
                   )}
                 </S.PureFlexRow>
               </S.FlexColumn>
@@ -554,12 +582,42 @@ export const SongPage: React.FC<Props> = ({
               {song.content &&
                 song.content.map((songSection: Content, keyContent) => (
                   <S.Section className={isSplitted ? 'splitted' : ''} key={`content-${keyContent}`}>
-                    <S.SectionTitle
-                      $isBold={isStringBetweenAsterisks(songSection.block)}
-                      $isUnderline={isStringBetweenUnderscores(songSection.block)}
-                    >
-                      {removeAsterisksAndUnderscores(songSection.block)}
-                    </S.SectionTitle>
+                    {editMode ? (
+                      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '10px' }}>
+                        <S.CellInput
+                          type="text"
+                          value={songSection.block}
+                          onChange={(e) => handleUpdateSectionTitle(e, keyContent)}
+                          style={{
+                            flex: 1,
+                            padding: '8px',
+                            fontSize: '1.2em',
+                            fontWeight: 'bold',
+                          }}
+                        />
+                        <button
+                          onClick={() => handleRemoveSection(keyContent)}
+                          style={{
+                            padding: '6px 12px',
+                            backgroundColor: '#CF142b',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                          }}
+                        >
+                          Remover
+                        </button>
+                      </div>
+                    ) : (
+                      <S.SectionTitle
+                        $isBold={isStringBetweenAsterisks(songSection.block)}
+                        $isUnderline={isStringBetweenUnderscores(songSection.block)}
+                      >
+                        {removeAsterisksAndUnderscores(songSection.block)}
+                      </S.SectionTitle>
+                    )}
                     <S.Grid>
                       {songSection.score ? (
                         <S.FullGridItem hidden={!sheetMusicMode}>
