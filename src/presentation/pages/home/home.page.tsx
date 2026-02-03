@@ -49,8 +49,9 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest }) => {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+  const formatDate = (dateString: any) => {
+    if (!dateString) return '';
+    const date = new Date(dateString.toString());
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const hour = String(date.getHours()).padStart(2, '0');
@@ -106,7 +107,7 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest }) => {
                 >
                   <BadgeComponent.BadgeTitle>{item.name}</BadgeComponent.BadgeTitle>
                   <BadgeComponent.BadgeSubTitle>
-                    {item.address || 'sem endereço'} - {formatDate(item.date.toString())}
+                    {item.address || 'sem endereço'} - {formatDate(item.date)}
                   </BadgeComponent.BadgeSubTitle>
                   <BadgeComponent.BadgeSubTitle>
                     {item.description.substring(0, 10).replace(/\//g, '-')}

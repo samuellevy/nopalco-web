@@ -81,6 +81,22 @@ export const BadgeKey = styled.div`
   justify-content: center;
   font-weight: bold;
   color: #fff;
+
+  input {
+    height: 40px;
+    width: 100%;
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: #ffffff;
+    padding: 5px 2px;
+    text-align: center;
+
+    &:focus {
+      outline: ${({ theme }) => theme.colors.primary};
+      background-color: #ae682f;
+      border-radius: 25px;
+    }
+  }
 `;
 
 export const RightSideActions = styled.div`

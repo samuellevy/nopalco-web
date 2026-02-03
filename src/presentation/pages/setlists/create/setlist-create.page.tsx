@@ -23,6 +23,8 @@ export const SetlistCreatePage: React.FC<Props> = ({ loadAllSongsRequest, create
   const [eventDate, setEventDate] = React.useState<string>(null);
   const [eventAddress, setEventAddress] = React.useState<string>('');
   const [sendingData, setSendingData] = React.useState(false);
+  const [draggedIndex, setDraggedIndex] = React.useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = React.useState<number | null>(null);
 
   function gerarHashCrypto(tamanho = 16): string {
     const array = new Uint8Array(tamanho);
@@ -93,6 +95,37 @@ export const SetlistCreatePage: React.FC<Props> = ({ loadAllSongsRequest, create
       },
     ]);
     setMomentName('');
+  };
+
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+
+  const handleDragOver = (index: number, e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOverIndex(index);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = (dropIndex: number, e: React.DragEvent) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    const newSelectedSongs = [...selectedSongs];
+    const draggedSong = newSelectedSongs[draggedIndex];
+    newSelectedSongs.splice(draggedIndex, 1);
+    newSelectedSongs.splice(dropIndex, 0, draggedSong);
+
+    setSelectedSongs(newSelectedSongs);
+    setDraggedIndex(null);
+    setDragOverIndex(null);
   };
 
   const handleCreateSetlist = async () => {
@@ -226,6 +259,27 @@ export const SetlistCreatePage: React.FC<Props> = ({ loadAllSongsRequest, create
                 $variant="darkGray"
                 $selected={!!selectedSongs.find((a) => a.id === song.id)}
                 key={`selected-song-${song.id}`}
+                draggable
+                onDragStart={() => handleDragStart(selectedSongs.findIndex((a) => a.id === song.id))}
+                onDragOver={(e) =>
+                  handleDragOver(
+                    selectedSongs.findIndex((a) => a.id === song.id),
+                    e,
+                  )
+                }
+                onDragLeave={handleDragLeave}
+                onDrop={(e) =>
+                  handleDrop(
+                    selectedSongs.findIndex((a) => a.id === song.id),
+                    e,
+                  )
+                }
+                style={{
+                  opacity: draggedIndex === selectedSongs.findIndex((a) => a.id === song.id) ? 0.5 : 1,
+                  backgroundColor:
+                    dragOverIndex === selectedSongs.findIndex((a) => a.id === song.id) ? '#f0f0f0' : undefined,
+                  cursor: 'grab',
+                }}
               >
                 {/* <S.ASide>
                   <SongList.Thumbnail>
@@ -250,7 +304,7 @@ export const SetlistCreatePage: React.FC<Props> = ({ loadAllSongsRequest, create
                   <i onClick={() => handleClickSong(song)} style={{ backgroundColor: '#CF142b' }}>
                     <X size={15} />
                   </i>
-                  <i>
+                  <i style={{ cursor: 'grab' }}>
                     <ArrowDownUp size={15} />
                   </i>
                 </S.ASideButtons>
