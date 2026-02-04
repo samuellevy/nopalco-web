@@ -31,6 +31,7 @@ export const UserAvatar = styled.img`
 export const UserNavigation = styled.nav`
   display: flex;
   align-items: center;
+  gap: 1rem;
 `;
 
 /** Header */
@@ -62,4 +63,16 @@ export const SectionContent = styled.div`
   gap: 1rem;
   margin-top: 2rem;
   width: 100%;
+`;
+
+export const Button = styled.button`
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: white;
+
+  &:hover {
+    opacity: 0.6;
+  }
 `;

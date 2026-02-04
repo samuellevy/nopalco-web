@@ -30,6 +30,7 @@ export const UserAvatar = styled.img`
 export const UserNavigation = styled.nav`
   display: flex;
   align-items: center;
+  gap: 1rem;
 `;
 
 /** Header */
@@ -101,7 +102,7 @@ export const BadgeKey = styled.div`
 
 export const RightSideActions = styled.div`
   position: fixed;
-  top: 1rem;
+  top: 2rem;
   right: 2rem;
 `;
 
@@ -143,4 +144,16 @@ export const SimpleButton = styled.button`
   user-select: none;
   -webkit-user-select: none;
   touch-action: manipulation;
+`;
+
+export const Button = styled.button`
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: white;
+
+  &:hover {
+    opacity: 0.6;
+  }
 `;

@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React from 'react';
-import { PlusCircle, MinusCircle, Search, File } from 'lucide-react';
+import { PlusCircle, MinusCircle, Search } from 'lucide-react';
 
 import * as S from './song.styles';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -12,6 +12,7 @@ import { SetlistItem } from '@/domain/models/setlist';
 import { UpdateSongRequest } from '@/domain/usecases/songs/update-song-request';
 import SheetMusicPage from '../../sheet-music/sheet-music.page';
 import { ModalSongsListComponent } from '@/presentation/components/modal-song-list/modal-song-list.component';
+import FullscreenButtonComponent from '@/presentation/components/fullscreen-button/fullscreen-button.component';
 
 interface Content {
   block: string;
@@ -46,7 +47,6 @@ export const SongPage: React.FC<Props> = ({
   const [sheetMusicMode, setSheetMusicMode] = React.useState(true);
   const [chordsMusicMode] = React.useState(true);
   const [modalSongsOpen, setModalSongsOpen] = React.useState(false);
-  const [, setModalSetlistOpen] = React.useState(false);
   const [isSplitted, setIsSplitted] = React.useState(false);
 
   const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -265,7 +265,7 @@ export const SongPage: React.FC<Props> = ({
 
     const newContent = content.map((block) => ({
       ...block,
-      notes: block.notes.map(transposeNotesBlock),
+      notes: block.notes ? block.notes.map(transposeNotesBlock) : block.notes,
     }));
 
     if (returnContent) {
@@ -317,7 +317,7 @@ export const SongPage: React.FC<Props> = ({
 
     const newContent = content.map((block) => ({
       ...block,
-      notes: block.notes.map(transposeNotesBlock),
+      notes: block.notes ? block.notes.map(transposeNotesBlock) : block.notes,
     }));
 
     setSong((prevState) => ({ ...prevState, content: newContent }));
@@ -659,8 +659,13 @@ export const SongPage: React.FC<Props> = ({
       )}
 
       <S.RightSideActions>
-        <File style={{ display: 'none' }} onClick={() => setModalSetlistOpen(true)} />
-        <Search onClick={() => setModalSongsOpen(true)} />
+        <S.UserNavigation>
+          <FullscreenButtonComponent />
+          <S.Button onClick={() => setModalSongsOpen(true)}>
+            <Search />
+          </S.Button>
+        </S.UserNavigation>
+        {/* <Search onClick={() => setModalSongsOpen(true)} /> */}
       </S.RightSideActions>
 
       <ModalSongsListComponent

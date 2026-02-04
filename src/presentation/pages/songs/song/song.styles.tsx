@@ -371,8 +371,26 @@ export const BlinkingDiv = styled.div<BlinkingDivProps>`
 
 export const RightSideActions = styled.div`
   position: fixed;
-  top: 1rem;
+  top: 2rem;
   right: 2rem;
   gap: 0.5rem;
   display: flex;
+`;
+
+export const UserNavigation = styled.nav`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+`;
+
+export const Button = styled.button`
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: white;
+
+  &:hover {
+    opacity: 0.6;
+  }
 `;

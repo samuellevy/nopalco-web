@@ -34,7 +34,12 @@ export const Router: React.FC = () => {
 
         <Route path="/" element={<PrivateRoute />}>
           <Route path="/" element={<AdminLayout />}>
-            <Route path="/" element={<HomePage loadAllSetlistsRequest={loadAllSetlistsRequest} />} />
+            <Route
+              path="/"
+              element={
+                <HomePage loadAllSetlistsRequest={loadAllSetlistsRequest} loadAllSongsRequest={loadAllSongsRequest} />
+              }
+            />
             <Route path="/songs" element={<SongsPage loadAllSongsRequest={loadAllSongsRequest} />} />
             <Route
               path="/songs/:songId"

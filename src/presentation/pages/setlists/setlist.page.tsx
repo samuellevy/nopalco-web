@@ -9,6 +9,7 @@ import { MessageCircle, Search, Edit2, Check, X } from 'lucide-react';
 import { LoadAllSongsRequest } from '@/domain/usecases';
 import { ModalSongsListComponent } from '@/presentation/components/modal-song-list/modal-song-list.component';
 import { UpdateSetlistRequest } from '@/domain/usecases/setlists/update-setlist-request';
+import FullscreenButtonComponent from '@/presentation/components/fullscreen-button/fullscreen-button.component';
 
 type SetlistProps = {
   loadSetlistRequest: LoadSetlistRequest;
@@ -134,20 +135,17 @@ export const SetlistPage: React.FC<SetlistProps> = ({
       const updatedItems = editableItems.map((item, index) => ({
         pureTitle: item.pureTitle || item.song?.name || '',
         songId: item.song?.id || null,
-        key: item.key,
+        key: item.key || '',
         order: index + 1,
-        id: item.id,
-        song: item.song,
       }));
 
-      const updatedSetlist = { ...setlist, items: updatedItems };
-      await updateSetlistRequest?.execute(setlistId, updatedSetlist);
+      await updateSetlistRequest?.execute(setlistId, { ...setlist, items: updatedItems });
 
       setShowSavedModal(true);
-      setTimeout(() => {
+      setTimeout(async () => {
+        await fetchLoadSetlistsRequest();
         setShowSavedModal(false);
         setIsEditMode(false);
-        setSetlist({ ...setlist, items: updatedItems });
       }, 2000);
     } catch (error) {
       console.error('Erro ao salvar setlist:', error);
@@ -346,7 +344,13 @@ export const SetlistPage: React.FC<SetlistProps> = ({
       </S.Container>
 
       <S.RightSideActions>
-        <Search onClick={() => setModalSongsOpen(true)} />
+        <S.UserNavigation>
+          <FullscreenButtonComponent />
+          <S.Button onClick={() => setModalSongsOpen(true)}>
+            <Search />
+          </S.Button>
+        </S.UserNavigation>
+        {/* <Search onClick={() => setModalSongsOpen(true)} /> */}
       </S.RightSideActions>
 
       <ModalSongsListComponent

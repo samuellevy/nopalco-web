@@ -6,15 +6,21 @@ import { BadgeComponent } from '@/presentation/components/badge';
 import { useNavigate } from 'react-router-dom';
 import { LoadAllSetlistsRequest } from '@/domain/usecases/setlists/load-all-setlists-request';
 import { Setlist } from '@/domain/models/setlist';
+import { ModalSongsListComponent } from '@/presentation/components/modal-song-list/modal-song-list.component';
+import { LoadAllSongsRequest } from '@/domain/usecases';
+import FullscreenButtonComponent from '@/presentation/components/fullscreen-button/fullscreen-button.component';
+import { Search } from 'lucide-react';
 
 type HomeProps = {
   loadAllSetlistsRequest: LoadAllSetlistsRequest;
+  loadAllSongsRequest: LoadAllSongsRequest;
 };
 
-export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest }) => {
+export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest, loadAllSongsRequest }) => {
   const navigate = useNavigate();
   const [loadingData, setLoadingData] = React.useState(true);
   const [setlists, setSetlists] = React.useState<Setlist[]>([]);
+  const [modalSongsOpen, setModalSongsOpen] = React.useState(false);
 
   const fetchLoadAllSetlistsRequest = React.useCallback(async () => {
     setLoadingData(true);
@@ -31,23 +37,17 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest }) => {
     navigate(`/${navItem}`);
   };
 
+  const handleClickSong = (songId: string) => {
+    window.location.href = `/songs/${songId}`;
+    setModalSongsOpen(false);
+  };
+
   React.useEffect(() => {
     if (!loadingData) return;
     if (setlists && setlists.length > 0) return;
 
     fetchLoadAllSetlistsRequest();
   }, [fetchLoadAllSetlistsRequest, loadingData, setlists]);
-
-  const goFullscreen = () => {
-    const elem = document.documentElement;
-    if (elem.requestFullscreen) {
-      elem.requestFullscreen();
-    } else if ((elem as any).webkitRequestFullscreen) {
-      (elem as any).webkitRequestFullscreen();
-    } else if ((elem as any).msRequestFullscreen) {
-      (elem as any).msRequestFullscreen();
-    }
-  };
 
   const formatDate = (dateString: any) => {
     if (!dateString) return '';
@@ -66,7 +66,10 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest }) => {
         {/* <S.Title>Olá, Samuel!</S.Title> */}
         <S.Title>&nbsp;</S.Title>
         <S.UserNavigation>
-          <S.UserAvatar src="https://avatars.githubusercontent.com/u/26466516?v=4" onClick={() => goFullscreen()} />
+          <FullscreenButtonComponent />
+          <S.Button onClick={() => setModalSongsOpen(true)}>
+            <Search />
+          </S.Button>
         </S.UserNavigation>
       </S.Header>
 
@@ -109,9 +112,7 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest }) => {
                   <BadgeComponent.BadgeSubTitle>
                     {item.address || 'sem endereço'} - {formatDate(item.date)}
                   </BadgeComponent.BadgeSubTitle>
-                  <BadgeComponent.BadgeSubTitle>
-                    {item.description.substring(0, 10).replace(/\//g, '-')}
-                  </BadgeComponent.BadgeSubTitle>
+                  <BadgeComponent.BadgeSubTitle>{item.description.replace(/\//g, '-')}</BadgeComponent.BadgeSubTitle>
                 </BadgeComponent.Badge>
               ))}
           </S.SectionContent>
@@ -180,6 +181,13 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest }) => {
           </S.SectionContent>
         </S.Section> */}
       </S.Content>
+
+      <ModalSongsListComponent
+        loadAllSongsRequest={loadAllSongsRequest}
+        modalSongsOpen={modalSongsOpen}
+        setModalSongsOpen={setModalSongsOpen}
+        handleClickSong={handleClickSong}
+      />
     </S.Container>
   );
 };

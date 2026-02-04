@@ -1,6 +1,6 @@
 export interface SetlistUpdateDTO {
-  name: string;
-  description: string;
+  name?: string;
+  description?: string;
   address?: string;
   date?: string | Date;
   items?: {
