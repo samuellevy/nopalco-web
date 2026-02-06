@@ -343,6 +343,10 @@ export const SongPage: React.FC<Props> = ({
     navigate(`/setlists/${setlist}?position=${songId}`);
   };
 
+  const handleHomeButton = () => {
+    navigate(`/`);
+  };
+
   const getNextItem = (actualSongId: string) => {
     console.log(actualSongId, `nextSongId`);
     if (setlistSongList) {
@@ -651,6 +655,7 @@ export const SongPage: React.FC<Props> = ({
           {sheetMusicMode && song && <SheetMusicPage song={song} />}
 
           <S.FlexRow>
+            <S.SimpleButton onClick={handleHomeButton}>Home</S.SimpleButton>
             <S.SimpleButton onClick={handleSetlistButton}>Voltar</S.SimpleButton>
             <S.SimpleButton onClick={() => handlePreviousSongButton(song.id)}>Anterior</S.SimpleButton>
             <S.SimpleButton onClick={() => handleNextSongButton(song.id)}>Próxima</S.SimpleButton>
