@@ -1,6 +1,7 @@
 export interface Content {
   block: string;
   notes: (string | [string, string])[];
+  obs?: string;
 }
 
 export interface Song {

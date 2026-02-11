@@ -15,6 +15,8 @@ import { RemoteUpdateSongRequest } from '@/data/usecases/songs/remote-update-son
 import { SetlistCreatePage } from '@/presentation/pages/setlists/create/setlist-create.page';
 import { RemoteCreateSetlistRequest } from '@/data/usecases/setlists/remote-create-setlist-request';
 import { RemoteUpdateSetlistRequest } from '@/data/usecases/setlists/remote-update-setlist-request';
+import { CreateSongPage } from '@/presentation/pages/songs/song/create/song.page';
+import { RemoteCreateSongRequest } from '@/data/usecases/songs/remote-create-song-request';
 
 export const Router: React.FC = () => {
   const axiosHttpClient = new AxiosHttpClient();
@@ -26,6 +28,7 @@ export const Router: React.FC = () => {
   const updateSongRequest = new RemoteUpdateSongRequest(axiosHttpClient);
   const createSetlistRequest = new RemoteCreateSetlistRequest(axiosHttpClient);
   const updateSetlistRequest = new RemoteUpdateSetlistRequest(axiosHttpClient);
+  const createSongRequest = new RemoteCreateSongRequest(axiosHttpClient);
 
   return (
     <BrowserRouter>
@@ -41,6 +44,7 @@ export const Router: React.FC = () => {
               }
             />
             <Route path="/songs" element={<SongsPage loadAllSongsRequest={loadAllSongsRequest} />} />
+            <Route path="/songs/create" element={<CreateSongPage createSongRequest={createSongRequest} />} />
             <Route
               path="/songs/:songId"
               element={

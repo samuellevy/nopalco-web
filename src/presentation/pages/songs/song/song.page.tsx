@@ -18,6 +18,7 @@ interface Content {
   block: string;
   notes: (string | [string, string])[];
   score: string;
+  obs?: string;
 }
 
 type Props = {
@@ -458,6 +459,14 @@ export const SongPage: React.FC<Props> = ({
     setSong((prevState) => ({ ...prevState, content: updatedContent }));
   };
 
+  const handleUpdateSectionObs = (e: React.ChangeEvent<HTMLInputElement>, sectionIndex: number) => {
+    const { value } = e.target;
+    const updatedContent = song.content.map((section: Content, index: number) =>
+      index === sectionIndex ? { ...section, obs: value } : section,
+    );
+    setSong((prevState) => ({ ...prevState, content: updatedContent }));
+  };
+
   const handleRemoveSection = (sectionIndex: number) => {
     const updatedContent = song.content.filter((_, index: number) => index !== sectionIndex);
     setSong((prevState) => ({ ...prevState, content: updatedContent }));
@@ -599,6 +608,17 @@ export const SongPage: React.FC<Props> = ({
                             fontWeight: 'bold',
                           }}
                         />
+                        <S.CellInput
+                          type="text"
+                          value={songSection.obs || ''}
+                          onChange={(e) => handleUpdateSectionObs(e, keyContent)}
+                          style={{
+                            flex: 1,
+                            padding: '8px',
+                            fontSize: '1.2em',
+                            fontWeight: 'bold',
+                          }}
+                        />
                         <button
                           onClick={() => handleRemoveSection(keyContent)}
                           style={{
@@ -615,12 +635,15 @@ export const SongPage: React.FC<Props> = ({
                         </button>
                       </div>
                     ) : (
-                      <S.SectionTitle
-                        $isBold={isStringBetweenAsterisks(songSection.block)}
-                        $isUnderline={isStringBetweenUnderscores(songSection.block)}
-                      >
-                        {removeAsterisksAndUnderscores(songSection.block)}
-                      </S.SectionTitle>
+                      <>
+                        <S.SectionTitle
+                          $isBold={isStringBetweenAsterisks(songSection.block)}
+                          $isUnderline={isStringBetweenUnderscores(songSection.block)}
+                        >
+                          {removeAsterisksAndUnderscores(songSection.block)}
+                        </S.SectionTitle>
+                        <S.SectionObs>{songSection.obs || ''}</S.SectionObs>
+                      </>
                     )}
                     <S.Grid>
                       {songSection.score ? (

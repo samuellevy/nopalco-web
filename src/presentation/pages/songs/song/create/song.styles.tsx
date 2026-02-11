@@ -54,7 +54,6 @@ export const FlexRow = styled.header`
   @media (min-width: 350px) {
     gap: 10px;
     padding: 5rem 1rem;
-    height: 3rem;
   }
 `;
 
@@ -277,10 +276,9 @@ export const BadgeSubTitle = styled.h2`
   font-weight: 500;
 `;
 
-export const SimpleButton = styled.button`
+export const SimpleButton = styled.button<BadgeProps>`
   margin: 20px 0;
   background-color: #06f;
-  border: 1px solid #06f;
   border-radius: 4px;
   box-shadow: rgba(0, 0, 0, 0.1) 0 2px 4px 0;
   box-sizing: border-box;
@@ -303,6 +301,9 @@ export const SimpleButton = styled.button`
   user-select: none;
   -webkit-user-select: none;
   touch-action: manipulation;
+
+  ${({ theme, $variant }) =>
+    $variant && `background-color: ${theme.variants[$variant].background}; color: ${theme.variants[$variant].color};`};
 `;
 
 type MiniSimpleButtonProps = {
@@ -393,17 +394,4 @@ export const Button = styled.button`
   &:hover {
     opacity: 0.6;
   }
-`;
-
-export const SectionObs = styled.div`
-  font-size: 1.1rem;
-  color: #818183;
-  margin-top: 0.5rem;
-  color: #ffa500;
-  position: absolute;
-  right: 2.4rem;
-  font-weight: bold;
-  max-width: 60%;
-  overflow: auto;
-  max-height: 30px;
 `;
