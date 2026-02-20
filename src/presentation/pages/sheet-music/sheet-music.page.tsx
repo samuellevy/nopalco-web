@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
 import { Song } from '@/domain/models';
 import { Container } from './sheet-music.page.styles';
@@ -11,30 +11,59 @@ type Props = {
 const SheetMusicPage: React.FC<Props> = ({ sheet }) => {
   const ref = useRef<HTMLDivElement>(null);
   const osmdRef = useRef<OpenSheetMusicDisplay | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!ref.current || osmdRef.current || !sheet) return; // ✅ evita duplicar
+    if (!sheet) return;
 
-    const osmd = new OpenSheetMusicDisplay(ref.current, {
-      autoResize: true,
-      backend: 'svg',
-      drawTitle: false,
-      drawComposer: false,
-    });
+    setError(null);
 
-    osmd.setOptions({
-      drawPartNames: false, // remove nome lateral
-      drawPartAbbreviations: false,
-    });
+    fetch(`/assets/scores/${sheet}`, { method: 'HEAD' })
+      .then((response) => {
+        if (!response.ok) {
+          setError('Sheet music not found.');
+          return;
+        }
 
-    osmdRef.current = osmd;
+        if (!ref.current || osmdRef.current) return;
 
-    osmd.load(`/assets/scores/${sheet}`).then(() => osmd.render());
+        const osmd = new OpenSheetMusicDisplay(ref.current, {
+          autoResize: true,
+          backend: 'svg',
+          drawTitle: false,
+          drawComposer: false,
+        });
+
+        osmd.setOptions({
+          drawPartNames: false, // remove nome lateral
+          drawPartAbbreviations: false,
+        });
+
+        osmdRef.current = osmd;
+
+        osmd
+          .load(`/assets/scores/${sheet}`)
+          .then(() => {
+            setError(null);
+            osmd.render();
+          })
+          .catch((err) => {
+            setError('Failed to load sheet music.');
+            console.error(err);
+          });
+      })
+      .catch(() => {
+        setError('Failed to check sheet music.');
+      });
   }, [sheet]);
 
   return (
     <Container>
-      <div className="osmd" ref={ref}></div>
+      {error ? (
+        <div style={{ color: 'red', textAlign: 'center', padding: '20px', display: 'none' }}>{error}</div>
+      ) : (
+        <div className="osmd" ref={ref}></div>
+      )}
     </Container>
   );
 };
