@@ -180,6 +180,7 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest, loadAllS
             </SongList.Badge>
           </S.SectionContent>
         </S.Section> */}
+        <>v5.0.0</>
       </S.Content>
 
       <ModalSongsListComponent
