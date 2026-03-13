@@ -1,26 +1,26 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import envify from 'process-envify';
-import { VitePWA } from 'vite-plugin-pwa';
+// import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
   plugins: [
     react(),
-    VitePWA({
-      registerType: 'autoUpdate',
-      workbox: {
-        cleanupOutdatedCaches: true,
-        skipWaiting: true,
-        clientsClaim: true,
-      },
-      manifest: {
-        name: 'NoPalco',
-        short_name: 'NoPalco',
-        display: 'standalone',
-        scope: '/',
-        start_url: '/',
-      },
-    }),
+    // VitePWA({
+    //   registerType: 'autoUpdate',
+    //   workbox: {
+    //     cleanupOutdatedCaches: true,
+    //     skipWaiting: true,
+    //     clientsClaim: true,
+    //   },
+    //   manifest: {
+    //     name: 'NoPalco',
+    //     short_name: 'NoPalco',
+    //     display: 'standalone',
+    //     scope: '/',
+    //     start_url: '/',
+    //   },
+    // }),
   ],
   server: {
     watch: {
