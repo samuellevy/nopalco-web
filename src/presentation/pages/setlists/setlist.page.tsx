@@ -240,6 +240,28 @@ export const SetlistPage: React.FC<SetlistProps> = ({
     }
   }, [songParam, keyParam, setlist]);
 
+  React.useEffect(() => {
+    if (!songParam) {
+      setSetlistItemOpened(null);
+    }
+  }, [songParam]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const song = params.get('song');
+      if (!song) {
+        setSetlistItemOpened(null);
+      } else if (setlist && setlist.items) {
+        const setlistItem = setlist.items.find((item) => item.song?.id === song);
+        setSetlistItemOpened(setlistItem || null);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [setlist]);
+
   return (
     <>
       {!setlistItemOpened && (
