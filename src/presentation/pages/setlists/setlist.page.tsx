@@ -46,6 +46,8 @@ export const SetlistPage: React.FC<SetlistProps> = ({
 
   const [setlistItemOpened, setSetlistItemOpened] = React.useState<SetlistItem | null>(null);
 
+  console.log('update');
+
   const fetchLoadSetlistsRequest = React.useCallback(async () => {
     setLoadingData(true);
     if (setlistId) {
