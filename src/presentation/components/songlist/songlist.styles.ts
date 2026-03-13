@@ -45,6 +45,7 @@ export const BadgeSubTitle = styled.h2`
 export const ASide = styled.div`
   display: flex;
   flex-direction: column;
+  justify-content: space-around;
 `;
 
 export const Thumbnail = styled.div`

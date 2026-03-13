@@ -3,29 +3,36 @@ import React, { useEffect } from 'react';
 import * as S from './setlist.styles';
 import { SongList } from '@/presentation/components/songlist';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { Setlist } from '@/domain/models/setlist';
+import { Setlist, SetlistItem } from '@/domain/models/setlist';
 import { LoadSetlistRequest } from '@/domain/usecases/setlists/load-setlist-request';
 import { MessageCircle, Search, Edit2, Check, X } from 'lucide-react';
 import { LoadAllSongsRequest } from '@/domain/usecases';
 import { ModalSongsListComponent } from '@/presentation/components/modal-song-list/modal-song-list.component';
 import { UpdateSetlistRequest } from '@/domain/usecases/setlists/update-setlist-request';
 import FullscreenButtonComponent from '@/presentation/components/fullscreen-button/fullscreen-button.component';
+import { SongComponent } from '@/presentation/components/song-component/song.component';
+import { Song } from '@/domain/models';
+import { UpdateSongRequest } from '@/domain/usecases/songs/update-song-request';
 
 type SetlistProps = {
   loadSetlistRequest: LoadSetlistRequest;
   loadAllSongsRequest: LoadAllSongsRequest;
   updateSetlistRequest?: UpdateSetlistRequest;
+  updateSongRequest?: UpdateSongRequest;
 };
 
 export const SetlistPage: React.FC<SetlistProps> = ({
   loadSetlistRequest,
   loadAllSongsRequest,
   updateSetlistRequest,
+  updateSongRequest,
 }) => {
   const navigate = useNavigate();
   const { setlistId } = useParams<{ setlistId: string }>();
   const [searchParams] = useSearchParams();
   const position = searchParams.get('position') || null;
+  const songParam = searchParams.get('song') || null;
+  const keyParam = searchParams.get('key') || null;
 
   const [loadingData, setLoadingData] = React.useState(true);
   const [modalSongsOpen, setModalSongsOpen] = React.useState(false);
@@ -36,6 +43,8 @@ export const SetlistPage: React.FC<SetlistProps> = ({
   const [dragOverIndex, setDragOverIndex] = React.useState<number | null>(null);
   const [showSavedModal, setShowSavedModal] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
+
+  const [setlistItemOpened, setSetlistItemOpened] = React.useState<SetlistItem | null>(null);
 
   const fetchLoadSetlistsRequest = React.useCallback(async () => {
     setLoadingData(true);
@@ -50,8 +59,12 @@ export const SetlistPage: React.FC<SetlistProps> = ({
     }
   }, [loadSetlistRequest, setlistId]);
 
-  const handleLinkClick = (songId: string, setlistId: string, key: string) => {
-    navigate(`/songs/${songId}?setlist=${setlistId}&key=${encodeURIComponent(key)}`);
+  const handleLinkClick = (setlistItem: SetlistItem) => {
+    // navigate(`/songs/${songId}?setlist=${setlistId}&key=${encodeURIComponent(key)}`);
+    setSetlistItemOpened(setlistItem);
+    // add ?songId=${song.id} to URL without reloading the page
+    window.history.pushState({}, '', `/setlists/${setlistId}?song=${setlistItem.song?.id}&key=${setlistItem.key}`);
+    // console.log(setlistItem.song);
   };
 
   const handleCopySetlist = () => {
@@ -105,6 +118,11 @@ export const SetlistPage: React.FC<SetlistProps> = ({
     setDragOverIndex(null);
   };
 
+  const backToSetlist = () => {
+    setSetlistItemOpened(null);
+    window.history.pushState({}, '', `/setlists/${setlistId}`);
+  };
+
   const handleDrop = (dropIndex: number, e: React.DragEvent) => {
     e.preventDefault();
     if (draggedIndex === null || draggedIndex === dropIndex) {
@@ -155,6 +173,30 @@ export const SetlistPage: React.FC<SetlistProps> = ({
     }
   };
 
+  const handleNextSongButton = () => {
+    if (!setlistItemOpened) return;
+
+    const currentIndex = setlist.items?.findIndex((item) => item.id === setlistItemOpened.id);
+    if (currentIndex === undefined || currentIndex === -1 || currentIndex === setlist.items!.length - 1) return;
+
+    const nextItem = setlist.items![currentIndex + 1];
+    if (nextItem.song) {
+      handleLinkClick(nextItem);
+    }
+  };
+
+  const handlePreviousSongButton = () => {
+    if (!setlistItemOpened) return;
+
+    const currentIndex = setlist.items?.findIndex((item) => item.id === setlistItemOpened.id);
+    if (currentIndex === undefined || currentIndex <= 0) return;
+
+    const previousItem = setlist.items![currentIndex - 1];
+    if (previousItem.song) {
+      handleLinkClick(previousItem);
+    }
+  };
+
   useEffect(() => {
     if (!loadingData) return;
 
@@ -176,105 +218,143 @@ export const SetlistPage: React.FC<SetlistProps> = ({
     }
   }, [setlist]);
 
+  useEffect(() => {
+    if (setlist && songParam) {
+      // console.log(songParam, `songParam`);
+      const setlistItem = setlist.items?.find((item) => item.song?.id === songParam);
+
+      if (setlistItem) {
+        setSetlistItemOpened(setlistItem);
+      }
+
+      if (keyParam) {
+        setSetlistItemOpened((prev) => (prev ? { ...prev, key: keyParam } : prev));
+      }
+      // else {
+      //   // If song not found in setlist, ensure we are back to the main setlist view
+      //   setSetlistItemOpened(null);
+      //   window.history.pushState({}, '', `/setlists/${setlistId}`);
+      // }
+    }
+  }, [songParam, keyParam, setlist]);
+
   return (
     <>
-      <S.Container>
-        <S.Content>
-          <S.Section>
-            <S.HeaderText>
-              <S.SectionTitle>{`${setlist.name} - ${setlist.description}`}</S.SectionTitle>
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                <MessageCircle onClick={() => handleCopySetlist()} style={{ cursor: 'pointer' }} />
-                {!isEditMode ? (
-                  <button
-                    onClick={handleEditMode}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '5px',
-                      padding: '8px 12px',
-                      border: 'none',
-                      borderRadius: '4px',
-                      backgroundColor: '#008000',
-                      color: '#fff',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <Edit2 size={16} />
-                    Editar
-                  </button>
-                ) : (
-                  <>
-                    <button
-                      onClick={handleSaveSetlist}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '5px',
-                        padding: '8px 12px',
-                        border: 'none',
-                        borderRadius: '4px',
-                        backgroundColor: `${isSaving ? '#6c757d' : '#28a745'}`,
-                        color: '#fff',
-                        cursor: 'pointer',
-                      }}
-                      disabled={isSaving}
-                    >
-                      <Check size={16} />
-                      {isSaving ? 'Salvando...' : 'Salvar'}
-                    </button>
-                    <button
-                      onClick={handleCancelEdit}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '5px',
-                        padding: '8px 12px',
-                        border: 'none',
-                        borderRadius: '4px',
-                        backgroundColor: '#CF142b',
-                        color: '#fff',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <X size={16} />
-                      Cancelar
-                    </button>
-                  </>
-                )}
-              </div>
-            </S.HeaderText>
-            {setlist && (
-              <S.SectionContent>
-                {(isEditMode ? editableItems : setlist.items)
-                  ?.sort((a, b) => (isEditMode ? 0 : a.order - b.order))
-                  .map((item, index) => (
-                    <React.Fragment key={item.id || index}>
-                      {item.song && (
-                        <SongList.Badge
-                          id={item.song.id}
-                          $variant="darkGray"
-                          onClick={() => !isEditMode && handleLinkClick(item.song.id, setlistId, item.key)}
-                          draggable={isEditMode}
-                          onDragStart={() => isEditMode && handleDragStart(index)}
-                          onDragOver={(e) => isEditMode && handleDragOver(index, e)}
-                          onDragLeave={handleDragLeave}
-                          onDrop={(e) => isEditMode && handleDrop(index, e)}
+      {!setlistItemOpened && (
+        <>
+          <S.Container>
+            <S.Content>
+              <S.Section>
+                <S.HeaderText>
+                  <S.SectionTitle>{`${setlist.name} - ${setlist.description}`}</S.SectionTitle>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <MessageCircle onClick={() => handleCopySetlist()} style={{ cursor: 'pointer' }} />
+                    {!isEditMode ? (
+                      <button
+                        onClick={handleEditMode}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '5px',
+                          padding: '8px 12px',
+                          border: 'none',
+                          borderRadius: '4px',
+                          backgroundColor: '#008000',
+                          color: '#fff',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <Edit2 size={16} />
+                        Editar
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          onClick={handleSaveSetlist}
                           style={{
-                            opacity: isEditMode && draggedIndex === index ? 0.5 : 1,
-                            backgroundColor: isEditMode && dragOverIndex === index ? '#f0f0f0' : undefined,
-                            cursor: isEditMode ? 'grab' : 'pointer',
-                            pointerEvents: isEditMode ? 'auto' : 'auto',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            padding: '8px 12px',
+                            border: 'none',
+                            borderRadius: '4px',
+                            backgroundColor: `${isSaving ? '#6c757d' : '#28a745'}`,
+                            color: '#fff',
+                            cursor: 'pointer',
+                          }}
+                          disabled={isSaving}
+                        >
+                          <Check size={16} />
+                          {isSaving ? 'Salvando...' : 'Salvar'}
+                        </button>
+                        <button
+                          onClick={handleCancelEdit}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            padding: '8px 12px',
+                            border: 'none',
+                            borderRadius: '4px',
+                            backgroundColor: '#CF142b',
+                            color: '#fff',
+                            cursor: 'pointer',
                           }}
                         >
-                          <SongList.ASide>
-                            <SongList.BadgeTitle>
-                              {item.pureTitle ? item.pureTitle : item.song.name}
-                            </SongList.BadgeTitle>
-                            <SongList.BadgeSubTitle>{item.song.author}</SongList.BadgeSubTitle>
-                          </SongList.ASide>
-                          <SongList.ASide>
-                            <S.BadgeKey>
+                          <X size={16} />
+                          Cancelar
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </S.HeaderText>
+                {setlist && (
+                  <S.SectionContent>
+                    {(isEditMode ? editableItems : setlist.items)
+                      ?.sort((a, b) => (isEditMode ? 0 : a.order - b.order))
+                      .map((item, index) => (
+                        <React.Fragment key={item.id || index}>
+                          {item.song && (
+                            <SongList.Badge
+                              id={item.song.id}
+                              $variant="darkGray"
+                              onClick={() => !isEditMode && handleLinkClick(item)}
+                              draggable={isEditMode}
+                              onDragStart={() => isEditMode && handleDragStart(index)}
+                              onDragOver={(e) => isEditMode && handleDragOver(index, e)}
+                              onDragLeave={handleDragLeave}
+                              onDrop={(e) => isEditMode && handleDrop(index, e)}
+                              style={{
+                                opacity: isEditMode && draggedIndex === index ? 0.5 : 1,
+                                backgroundColor: isEditMode && dragOverIndex === index ? '#f0f0f0' : undefined,
+                                cursor: isEditMode ? 'grab' : 'pointer',
+                                pointerEvents: isEditMode ? 'auto' : 'auto',
+                              }}
+                            >
+                              <SongList.ASide>
+                                <SongList.BadgeTitle>
+                                  {item.pureTitle ? item.pureTitle : item.song.name}
+                                </SongList.BadgeTitle>
+                                <SongList.BadgeSubTitle>{item.song.author}</SongList.BadgeSubTitle>
+                              </SongList.ASide>
+                              <SongList.ASide>
+                                <S.BadgeKey>
+                                  {isEditMode && (
+                                    <input
+                                      type="text"
+                                      value={item.key}
+                                      onChange={(e) => handleUpdateItemKey(index, e.target.value)}
+                                      style={{
+                                        padding: '4px 8px',
+                                        border: '1px solid #ccc',
+                                        borderRadius: '4px',
+                                        fontSize: '14px',
+                                      }}
+                                    />
+                                  )}
+                                  {!isEditMode && item.key}
+                                </S.BadgeKey>
+                                {/* <S.BadgeSinger>
                               {isEditMode && (
                                 <input
                                   type="text"
@@ -288,39 +368,39 @@ export const SetlistPage: React.FC<SetlistProps> = ({
                                   }}
                                 />
                               )}
-                              {!isEditMode && item.key}
-                            </S.BadgeKey>
-                          </SongList.ASide>
-                        </SongList.Badge>
-                      )}
-                      {!item.song && (
-                        <SongList.Badge
-                          $variant="disabled"
-                          draggable={isEditMode}
-                          onDragStart={() => isEditMode && handleDragStart(index)}
-                          onDragOver={(e) => isEditMode && handleDragOver(index, e)}
-                          onDragLeave={handleDragLeave}
-                          onDrop={(e) => isEditMode && handleDrop(index, e)}
-                          style={{
-                            opacity: isEditMode && draggedIndex === index ? 0.5 : 1,
-                            backgroundColor: isEditMode && dragOverIndex === index ? '#f0f0f0' : undefined,
-                            cursor: isEditMode ? 'grab' : 'default',
-                          }}
-                        >
-                          <SongList.ASide>
-                            <SongList.BadgeTitle>{item.pureTitle}</SongList.BadgeTitle>
-                            {/* <SongList.BadgeTitle>{item.pureAuthor}</SongList.BadgeTitle> */}
-                          </SongList.ASide>
-                          {item.key && (
-                            <SongList.ASide>
-                              <S.BadgeKey>{item.key}</S.BadgeKey>
-                            </SongList.ASide>
+                              {!isEditMode && 'Marcella Caldeira'}
+                            </S.BadgeSinger> */}
+                              </SongList.ASide>
+                            </SongList.Badge>
                           )}
-                        </SongList.Badge>
-                      )}
-                    </React.Fragment>
-                  ))}
-                {/* 
+                          {!item.song && (
+                            <SongList.Badge
+                              $variant="disabled"
+                              draggable={isEditMode}
+                              onDragStart={() => isEditMode && handleDragStart(index)}
+                              onDragOver={(e) => isEditMode && handleDragOver(index, e)}
+                              onDragLeave={handleDragLeave}
+                              onDrop={(e) => isEditMode && handleDrop(index, e)}
+                              style={{
+                                opacity: isEditMode && draggedIndex === index ? 0.5 : 1,
+                                backgroundColor: isEditMode && dragOverIndex === index ? '#f0f0f0' : undefined,
+                                cursor: isEditMode ? 'grab' : 'default',
+                              }}
+                            >
+                              <SongList.ASide>
+                                <SongList.BadgeTitle>{item.pureTitle}</SongList.BadgeTitle>
+                                {/* <SongList.BadgeTitle>{item.pureAuthor}</SongList.BadgeTitle> */}
+                              </SongList.ASide>
+                              {item.key && (
+                                <SongList.ASide>
+                                  <S.BadgeKey>{item.key}</S.BadgeKey>
+                                </SongList.ASide>
+                              )}
+                            </SongList.Badge>
+                          )}
+                        </React.Fragment>
+                      ))}
+                    {/* 
             <SongList.Badge $variant="darkGray">
               <SongList.ASide>
                 <SongList.Thumbnail>
@@ -333,63 +413,85 @@ export const SetlistPage: React.FC<SetlistProps> = ({
                 <SongList.BadgeSubTitle>Luedji Luna</SongList.BadgeSubTitle>
               </SongList.ASide>
             </SongList.Badge> */}
-              </S.SectionContent>
-            )}
-          </S.Section>
-        </S.Content>
+                  </S.SectionContent>
+                )}
+              </S.Section>
+            </S.Content>
 
-        <S.FlexRow>
-          <S.SimpleButton onClick={handleGoToHome}>Voltar</S.SimpleButton>
-        </S.FlexRow>
-      </S.Container>
+            <S.FlexRow>
+              <S.SimpleButton onClick={handleGoToHome}>Voltar</S.SimpleButton>
+            </S.FlexRow>
+          </S.Container>
 
-      <S.RightSideActions>
-        <S.UserNavigation>
-          <FullscreenButtonComponent />
-          <S.Button onClick={() => setModalSongsOpen(true)}>
-            <Search />
-          </S.Button>
-        </S.UserNavigation>
-        {/* <Search onClick={() => setModalSongsOpen(true)} /> */}
-      </S.RightSideActions>
+          <S.RightSideActions>
+            <S.UserNavigation>
+              <FullscreenButtonComponent />
+              <S.Button onClick={() => setModalSongsOpen(true)}>
+                <Search />
+              </S.Button>
+            </S.UserNavigation>
+            {/* <Search onClick={() => setModalSongsOpen(true)} /> */}
+          </S.RightSideActions>
 
-      <ModalSongsListComponent
-        loadAllSongsRequest={loadAllSongsRequest}
-        modalSongsOpen={modalSongsOpen}
-        setModalSongsOpen={setModalSongsOpen}
-        handleClickSong={handleClickSong}
-      />
+          <ModalSongsListComponent
+            loadAllSongsRequest={loadAllSongsRequest}
+            modalSongsOpen={modalSongsOpen}
+            setModalSongsOpen={setModalSongsOpen}
+            handleClickSong={handleClickSong}
+          />
 
-      {showSavedModal && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: '#fff',
-              padding: '30px',
-              borderRadius: '8px',
-              textAlign: 'center',
-              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-              maxWidth: '400px',
-            }}
-          >
-            <Check size={48} color="#008000" style={{ margin: '0 auto 20px' }} />
-            <h2 style={{ margin: '0 0 10px', fontSize: '20px', fontWeight: 'bold' }}>Setlist salva com sucesso!</h2>
-            <p style={{ margin: 0, color: '#666' }}>As alterações foram salvas na setlist.</p>
-          </div>
-        </div>
+          {showSavedModal && (
+            <div
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 9999,
+              }}
+            >
+              <div
+                style={{
+                  backgroundColor: '#fff',
+                  padding: '30px',
+                  borderRadius: '8px',
+                  textAlign: 'center',
+                  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                  maxWidth: '400px',
+                }}
+              >
+                <Check size={48} color="#008000" style={{ margin: '0 auto 20px' }} />
+                <h2 style={{ margin: '0 0 10px', fontSize: '20px', fontWeight: 'bold' }}>Setlist salva com sucesso!</h2>
+                <p style={{ margin: 0, color: '#666' }}>As alterações foram salvas na setlist.</p>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+      {setlistItemOpened && (
+        <SongComponent
+          data={
+            {
+              ...setlistItemOpened.song,
+              content:
+                typeof setlistItemOpened.song.content === 'string'
+                  ? JSON.parse(setlistItemOpened.song.content)
+                  : setlistItemOpened.song.content,
+            } as Song
+          }
+          dataKey={setlistItemOpened.key}
+          loadAllSongsRequest={loadAllSongsRequest}
+          loadSetlistRequest={loadSetlistRequest}
+          updateSongRequest={updateSongRequest}
+          handleSetlistButton={() => backToSetlist()}
+          handleNextSongButton={handleNextSongButton}
+          handlePreviousSongButton={handlePreviousSongButton}
+        />
       )}
     </>
   );

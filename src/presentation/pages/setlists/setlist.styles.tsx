@@ -100,6 +100,32 @@ export const BadgeKey = styled.div`
   }
 `;
 
+export const BadgeSinger = styled.div`
+  background-color: #4191e1;
+  border-radius: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #fff;
+  padding: 2px 10px;
+  font-size: 1rem;
+
+  input {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #ffffff;
+    /* padding: 5px 10px; */
+    text-align: center;
+
+    &:focus {
+      outline: ${({ theme }) => theme.colors.primary};
+      background-color: #ae682f;
+      border-radius: 25px;
+    }
+  }
+`;
+
 export const RightSideActions = styled.div`
   position: fixed;
   top: 2rem;

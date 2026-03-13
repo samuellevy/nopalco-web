@@ -1,6 +1,6 @@
 export const defaultTheme = {
   colors: {
-    primary: '#FF7C02',
+    primary: '#0066ff',
     secondary: '#fff',
 
     naturalGray: '#B2B2B2',
@@ -32,7 +32,7 @@ export const defaultTheme = {
 
   variants: {
     primary: {
-      background: '#FF7C02',
+      background: '#0066ff',
       color: '#fff',
     },
     secondary: {

@@ -72,6 +72,7 @@ export const Router: React.FC = () => {
                   loadSetlistRequest={loadSetlistRequest}
                   loadAllSongsRequest={loadAllSongsRequest}
                   updateSetlistRequest={updateSetlistRequest}
+                  updateSongRequest={updateSongRequest}
                 />
               }
             />

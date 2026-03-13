@@ -2,17 +2,17 @@
 import React from 'react';
 import { PlusCircle, MinusCircle, Search } from 'lucide-react';
 
-import * as S from './song.styles';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { LoadSongRequest } from '@/domain/usecases/songs/load-song-request';
+import * as S from './song.component.styles';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Song } from '@/domain/models';
 import { LoadAllSongsRequest } from '@/domain/usecases';
 import { LoadSetlistRequest } from '@/domain/usecases/setlists/load-setlist-request';
 import { SetlistItem } from '@/domain/models/setlist';
 import { UpdateSongRequest } from '@/domain/usecases/songs/update-song-request';
-import SheetMusicPage from '../../sheet-music/sheet-music.page';
 import { ModalSongsListComponent } from '@/presentation/components/modal-song-list/modal-song-list.component';
 import FullscreenButtonComponent from '@/presentation/components/fullscreen-button/fullscreen-button.component';
+import SheetMusicPage from '@/presentation/pages/sheet-music/sheet-music.page';
+import { ButtonComponent } from '../button/button';
 
 interface Content {
   block: string;
@@ -22,32 +22,37 @@ interface Content {
 }
 
 type Props = {
-  loadSongRequest: LoadSongRequest;
+  data: Song;
+  dataKey: string | null;
   loadAllSongsRequest: LoadAllSongsRequest;
   loadSetlistRequest: LoadSetlistRequest;
   updateSongRequest: UpdateSongRequest;
+  setlistSongList?: SetlistItem[];
+  handleSetlistButton: () => void;
+  handleNextSongButton: (id: string) => void;
+  handlePreviousSongButton: (id: string) => void;
 };
 
-export const SongPage: React.FC<Props> = ({
-  loadSongRequest,
-  loadSetlistRequest,
+export const SongComponent: React.FC<Props> = ({
+  data,
+  dataKey,
   updateSongRequest,
   loadAllSongsRequest,
+  handleSetlistButton,
+  handleNextSongButton,
+  handlePreviousSongButton,
 }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const setlist = searchParams.get('setlist');
-  const key = searchParams.get('key') || null;
-  const { songId } = useParams<{ songId: string }>();
-  const [loadingData, setLoadingData] = React.useState(true);
-  const [song, setSong] = React.useState<Song>(null);
+  const key = dataKey || null;
   const [activeBpm, setActiveBpm] = React.useState(false);
-  const [setlistSongList, setSetlistSongList] = React.useState<SetlistItem[]>([]);
   const [editMode, setEditMode] = React.useState(false);
   const [sheetMusicMode, setSheetMusicMode] = React.useState(true);
   const [chordsMusicMode] = React.useState(true);
   const [modalSongsOpen, setModalSongsOpen] = React.useState(false);
   const [isSplitted, setIsSplitted] = React.useState(false);
+  const [song, setSong] = React.useState<Song>(null as unknown as Song);
 
   const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
@@ -81,22 +86,6 @@ export const SongPage: React.FC<Props> = ({
     const minorChordRegex = /^[A-G][#b]?m/;
     return minorChordRegex.test(chord);
   }
-  const fetchLoadSetlistsRequest = React.useCallback(
-    async (setlistId: string) => {
-      setLoadingData(true);
-      if (setlist) {
-        try {
-          const loadSetlistsRequestResult = await loadSetlistRequest.execute(setlistId);
-          console.log(loadSetlistsRequestResult);
-          setSetlistSongList(loadSetlistsRequestResult.items);
-          setLoadingData(false);
-        } catch (error) {
-          throw new Error(error as undefined);
-        }
-      }
-    },
-    [loadSetlistRequest, setlist],
-  );
 
   function getRelativeMajor(minorChord: string): string {
     const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -132,34 +121,11 @@ export const SongPage: React.FC<Props> = ({
     return majorNote + newModifiers;
   }
 
-  const fetchLoadSongRequest = React.useCallback(async () => {
-    setLoadingData(true);
-    try {
-      const loadSongRequestResult = await loadSongRequest.execute(songId);
-      if (key) {
-        const finalNewKey = isMinorChord(key) ? getRelativeMajor(key) : key;
-        const transposedContent = transposeContent(
-          loadSongRequestResult.content,
-          isMinorChord(loadSongRequestResult.key)
-            ? getRelativeMajor(loadSongRequestResult.key)
-            : loadSongRequestResult.key,
-          finalNewKey,
-        );
-        setSong({ ...loadSongRequestResult, content: transposedContent });
-      } else {
-        setSong(loadSongRequestResult);
-      }
-      setLoadingData(false);
-    } catch (error) {
-      throw new Error(error as undefined);
-    }
-  }, [loadSongRequest, key, songId]);
-
   const updateSong = async (tempSong: Song) => {
     const { content, ...rest } = tempSong;
 
     try {
-      const updatedSong = await updateSongRequest.execute(songId, {
+      const updatedSong = await updateSongRequest.execute(song.id, {
         ...rest,
         content: JSON.stringify(content),
       });
@@ -186,19 +152,17 @@ export const SongPage: React.FC<Props> = ({
   };
 
   React.useEffect(() => {
-    if (!loadingData) return;
+    if (data) {
+      document.title = `${data.name} - NoPalco`;
+      // console.log(key, `key`);
+      // console.log(data, `data`);
 
-    fetchLoadSongRequest();
-    if (setlist) {
-      fetchLoadSetlistsRequest(setlist);
+      const transposedContent = key
+        ? transposeContent(data.content, isMinorChord(data.key) ? getRelativeMajor(data.key) : data.key, key)
+        : data.content;
+      setSong({ ...data, content: transposedContent });
     }
-  }, [fetchLoadSongRequest, loadingData, song, setlist]);
-
-  React.useEffect(() => {
-    if (song) {
-      document.title = `${song.name} - NoPalco`;
-    }
-  }, [song]);
+  }, [data, key]);
 
   function increaseTone(content: any[], returnContent = false): any[] {
     function transposeNote(note: string): string {
@@ -320,85 +284,81 @@ export const SongPage: React.FC<Props> = ({
     return str.replace(/^[*_]+|[*_]+$/g, '');
   }
 
-  const handleSetlistButton = () => {
-    navigate(`/setlists/${setlist}?position=${songId}`);
-  };
-
   const handleHomeButton = () => {
     navigate(`/`);
   };
 
-  const getNextItem = (actualSongId: string) => {
-    console.log(actualSongId, `nextSongId`);
-    if (setlistSongList) {
-      const actualSongIndex = setlistSongList.findIndex((item) =>
-        item.song && item.song.id === actualSongId ? item : null,
-      );
-      if (actualSongIndex !== -1 && actualSongIndex < setlistSongList.length - 1) {
-        return setlistSongList[actualSongIndex + 1];
-      }
-      return null;
-      // setlistSongList.map(item => {
-      //   console.log(item.song.id);
-      // })
-    }
-    // console.log(setlistSongList);
-    // const index = setlistSongList.findIndex((item) => item.song.id === id);
-    // if (index !== -1 && index < setlistSongList.length - 1) {
-    //   return setlistSongList[index + 1];
-    // }
-    // return null; // Retorna null se não encontrar ou se for o último item
-    return null;
-  };
+  // const getNextItem = (actualSongId: string) => {
+  //   console.log(actualSongId, `nextSongId`);
+  //   if (setlistSongList) {
+  //     const actualSongIndex = setlistSongList.findIndex((item) =>
+  //       item.song && item.song.id === actualSongId ? item : null,
+  //     );
+  //     if (actualSongIndex !== -1 && actualSongIndex < setlistSongList.length - 1) {
+  //       return setlistSongList[actualSongIndex + 1];
+  //     }
+  //     return null;
+  //     // setlistSongList.map(item => {
+  //     //   console.log(item.song.id);
+  //     // })
+  //   }
+  //   // console.log(setlistSongList);
+  //   // const index = setlistSongList.findIndex((item) => item.song.id === id);
+  //   // if (index !== -1 && index < setlistSongList.length - 1) {
+  //   //   return setlistSongList[index + 1];
+  //   // }
+  //   // return null; // Retorna null se não encontrar ou se for o último item
+  //   return null;
+  // };
 
-  const getPreviousItem = (actualSongId: string) => {
-    if (setlistSongList) {
-      const actualSongIndex = setlistSongList.findIndex((item) =>
-        item.song && item.song.id === actualSongId ? item : null,
-      );
-      if (actualSongIndex > 0) {
-        return setlistSongList[actualSongIndex - 1];
-      }
-      return null;
-      // setlistSongList.map(item => {
-      //   console.log(item.song.id);
-      // })
-    }
-    // console.log(setlistSongList);
-    // const index = setlistSongList.findIndex((item) => item.song.id === id);
-    // if (index !== -1 && index < setlistSongList.length - 1) {
-    //   return setlistSongList[index + 1];
-    // }
-    // return null; // Retorna null se não encontrar ou se for o último item
-    return null; // Retorna null se não houver anterior ou se não encontrar o id
-  };
+  // const getPreviousItem = (actualSongId: string) => {
+  //   if (setlistSongList) {
+  //     const actualSongIndex = setlistSongList.findIndex((item) =>
+  //       item.song && item.song.id === actualSongId ? item : null,
+  //     );
+  //     if (actualSongIndex > 0) {
+  //       return setlistSongList[actualSongIndex - 1];
+  //     }
+  //     return null;
+  //     // setlistSongList.map(item => {
+  //     //   console.log(item.song.id);
+  //     // })
+  //   }
+  //   // console.log(setlistSongList);
+  //   // const index = setlistSongList.findIndex((item) => item.song.id === id);
+  //   // if (index !== -1 && index < setlistSongList.length - 1) {
+  //   //   return setlistSongList[index + 1];
+  //   // }
+  //   // return null; // Retorna null se não encontrar ou se for o último item
+  //   return null; // Retorna null se não houver anterior ou se não encontrar o id
+  // };
 
-  const handleNextSongButton = (id: string) => {
-    const nextSong = getNextItem(id);
-    console.log(nextSong, `nextSong`);
+  // const handleNextSongButton = (id: string) => {
+  //   const nextSong = getNextItem(id);
+  //   console.log(nextSong, `nextSong`);
 
-    if (nextSong && nextSong.song) {
-      window.location.href = `/songs/${nextSong.song.id}?setlist=${setlist}&key=${encodeURIComponent(nextSong.key)}`;
-    } else {
-      window.location.href = `/setlists/${setlist}?position=${songId}`;
-    }
-  };
+  //   if (nextSong && nextSong.song) {
+  //     // window.location.href = `/songs/${nextSong.song.id}?setlist=${setlist}&key=${encodeURIComponent(nextSong.key)}`;
+  //   } else {
+  //     // window.location.href = `/setlists/${setlist}?position=${songId}`;
+  //   }
+  // };
 
-  const handlePreviousSongButton = (id: string) => {
-    const previousSong = getPreviousItem(id);
-    console.log(previousSong);
-    if (previousSong && previousSong.song) {
-      window.location.href = `/songs/${previousSong.song.id}?setlist=${setlist}&key=${encodeURIComponent(
-        previousSong.key,
-      )}`;
-    } else {
-      window.location.href = `/setlists/${setlist}?position=${songId}`;
-    }
-  };
+  // const handlePreviousSongButton = (id: string) => {
+  //   const previousSong = getPreviousItem(id);
+  //   console.log(previousSong);
+  //   if (previousSong && previousSong.song) {
+  //     window.location.href = `/songs/${previousSong.song.id}?setlist=${setlist}&key=${encodeURIComponent(
+  //       previousSong.key,
+  //     )}`;
+  //   } else {
+  //     window.location.href = `/setlists/${setlist}?position=${songId}`;
+  //   }
+  // };
 
   const handleEditButton = () => {
     setEditMode((prevState) => !prevState);
-    console.log(song.content);
+    // console.log(song.content);
   };
 
   const toggleSplit = () => {
@@ -407,7 +367,7 @@ export const SongPage: React.FC<Props> = ({
 
   const handleToggleSheetMusicMode = () => {
     setSheetMusicMode((prevState) => !prevState);
-    console.log(song.content);
+    // console.log(song.content);
   };
 
   const handleUpdateNote = (e: React.ChangeEvent<HTMLInputElement>, noteKey: number, sectionKeyChanged: number) => {
@@ -538,7 +498,7 @@ export const SongPage: React.FC<Props> = ({
 
             <S.FlexRow>
               <S.CellHeader onClick={() => setActiveBpm(!activeBpm)}>
-                <S.BlinkingDiv bpm={parseInt(song.bpm)} $active={activeBpm}>
+                <S.BlinkingDiv bpm={parseInt(song.bpm || '0')} $active={activeBpm}>
                   {song.bpm}
                 </S.BlinkingDiv>
                 <S.CellValue $size="1.2rem" hidden={activeBpm}>
@@ -658,10 +618,18 @@ export const SongPage: React.FC<Props> = ({
           {sheetMusicMode && song && <SheetMusicPage song={song} />}
 
           <S.FlexRow>
-            <S.SimpleButton onClick={handleHomeButton}>Home</S.SimpleButton>
-            <S.SimpleButton onClick={handleSetlistButton}>Voltar</S.SimpleButton>
-            <S.SimpleButton onClick={() => handlePreviousSongButton(song.id)}>Anterior</S.SimpleButton>
-            <S.SimpleButton onClick={() => handleNextSongButton(song.id)}>Próxima</S.SimpleButton>
+            <ButtonComponent $variant="secondary" onClick={handleSetlistButton}>
+              Setlist
+            </ButtonComponent>
+            <ButtonComponent $variant="primary" onClick={() => handlePreviousSongButton(song.id)}>
+              Anterior
+            </ButtonComponent>
+            <ButtonComponent $variant="primary" onClick={() => handleNextSongButton(song.id)}>
+              Próxima
+            </ButtonComponent>
+            <ButtonComponent $variant="danger" onClick={handleHomeButton}>
+              Sair
+            </ButtonComponent>
           </S.FlexRow>
         </S.Container>
       )}
