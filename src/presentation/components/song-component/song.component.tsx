@@ -157,8 +157,10 @@ export const SongComponent: React.FC<Props> = ({
       // console.log(key, `key`);
       // console.log(data, `data`);
 
+      const finalNewKey = isMinorChord(key) ? getRelativeMajor(key) : key;
+
       const transposedContent = key
-        ? transposeContent(data.content, isMinorChord(data.key) ? getRelativeMajor(data.key) : data.key, key)
+        ? transposeContent(data.content, isMinorChord(data.key) ? getRelativeMajor(data.key) : data.key, finalNewKey)
         : data.content;
       setSong({ ...data, content: transposedContent });
     }
