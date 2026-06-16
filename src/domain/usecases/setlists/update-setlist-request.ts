@@ -8,6 +8,7 @@ export interface SetlistUpdateDTO {
     songId: string;
     order: number;
     key?: string;
+    singerId?: string;
     pureTitle?: string;
   }[];
 }

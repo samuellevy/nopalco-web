@@ -1,6 +1,9 @@
+import { Singer } from './setlist';
+
 export interface Content {
   block: string;
   notes: (string | [string, string])[];
+  score?: string;
   obs?: string;
 }
 
@@ -15,5 +18,7 @@ export interface Song {
   duration?: string;
   imageUrl?: string;
   content?: Content[];
+  lyrics?: string;
   new?: boolean;
+  singers?: Singer[];
 }

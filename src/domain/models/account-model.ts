@@ -1,8 +1,6 @@
 export type AccountModel = {
-  tokenType: string;
-  expiresIn: string;
-  refreshToken: string;
-  idToken: string;
+  access_token: string;
+  name: string;
+  username: string;
   scopes: string[];
-  nomeUsuario: string;
 };

@@ -3,18 +3,16 @@ import { AuthenticationParams } from '@/domain/usecases';
 
 export const mockAuthentication = (): AuthenticationParams => {
   return {
-    user: 'johndoe@gmail.com',
+    username: 'johndoe@gmail.com',
     password: 'AnyPassword123',
   };
 };
 
 export const mockAccountModel = (): AccountModel => {
   return {
-    tokenType: 'bearer',
-    expiresIn: '1808787',
-    refreshToken: '29567e3f97445d60e8',
-    idToken: 'eyJhbGciOiJSUz',
+    access_token: 'mocked_access_token',
+    name: 'John Doe',
+    username: 'johndoe@gmail.com',
     scopes: ['openid'],
-    nomeUsuario: null,
   };
 };

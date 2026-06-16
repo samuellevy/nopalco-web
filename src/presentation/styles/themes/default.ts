@@ -17,8 +17,12 @@ export const defaultTheme = {
 
     black: '#000000',
     white: '#FFFFFF',
+    text: '#FFFFFF',
     grayBg: '#1f1f1f',
     purple: '#BB86FC',
+
+    surface: '#1e2028',
+    disabled: '#12161d',
   },
 
   font: {
@@ -71,6 +75,10 @@ export const defaultTheme = {
     disabled: {
       background: '#161618',
       color: '#999',
+    },
+    purple: {
+      background: '#8B5CF6',
+      color: '#FFF',
     },
   },
 };

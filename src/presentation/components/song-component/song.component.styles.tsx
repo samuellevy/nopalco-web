@@ -1,5 +1,19 @@
 import styled, { keyframes } from 'styled-components';
 
+const COLORS = {
+  bg: '#0F1117',
+  card: '#171B26',
+  cardHover: '#1D2232',
+
+  border: 'rgba(255,255,255,.06)',
+
+  primary: '#8B5CF6',
+  primaryLight: '#A78BFA',
+
+  text: '#F8FAFC',
+  textSecondary: '#94A3B8',
+};
+
 type BadgeProps = {
   $variant?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'lightGray';
 };
@@ -24,6 +38,7 @@ export const Container = styled.div<ContainerProps>`
   flex-direction: column;
   height: 100%;
   transition: all 0.2s ease-in-out;
+  background: radial-gradient(circle at top right, rgba(139, 92, 246, 0.08), transparent 30%), #0f1117;
   @media (max-width: 350px) {
     max-width: 290px;
   }
@@ -33,6 +48,10 @@ export const Container = styled.div<ContainerProps>`
 
 /** Header */
 export const Header = styled.header`
+  padding: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 1rem;
+
   @media (max-width: 350px) {
     display: flex;
     flex-direction: column;
@@ -58,6 +77,17 @@ export const FlexRow = styled.header`
   }
 `;
 
+export const FlexGap = styled.header`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  @media (min-width: 350px) {
+    gap: 10px;
+    padding: 5rem 1rem;
+    height: 3rem;
+  }
+`;
+
 export const PureFlexRow = styled.div`
   display: flex;
   flex-direction: row;
@@ -67,7 +97,10 @@ export const PureFlexRow = styled.div`
 `;
 
 export const Title = styled.h1`
-  font-size: 1.6rem;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #f8fafc;
+
   @media (max-width: 350px) {
     font-size: 2rem;
   }
@@ -75,7 +108,9 @@ export const Title = styled.h1`
 `;
 
 export const Author = styled.h1`
-  font-size: 1.6rem;
+  color: #94a3b8;
+  font-size: 1.5rem;
+
   @media (max-width: 350px) {
     font-size: 1.8rem;
   }
@@ -141,9 +176,10 @@ export const CellValue = styled.div<CellValueProps>`
   text-align: center;
   padding: 1rem 1rem;
   font-size: ${({ $size }) => ($size ? $size : `1.5rem`)};
+  border-radius: 10px;
 
   @media (min-width: 350px) {
-    background-color: ${({ theme, $variant }) => ($variant ? theme.colors[$variant] : '#2f2f2f')};
+    background-color: ${({ theme, $variant }) => ($variant ? theme.colors[$variant] : COLORS.card)};
   }
 
   @media (max-width: 350px) {
@@ -228,6 +264,8 @@ export const Section = styled.section`
   display: flex;
   flex-direction: column;
   width: 100%;
+  border-left: 3px solid ${COLORS.primary};
+  padding-left: 1rem;
   &.splitted {
     break-inside: avoid; /* impede quebrar uma section */
     margin-bottom: 2rem;
@@ -236,13 +274,27 @@ export const Section = styled.section`
     margin-top: 2rem;
   }
 `;
-
 export const SectionTitle = styled.h1<SectionTitleProps>`
   font-size: 1.5rem;
   margin-bottom: 1.2rem;
   color: ${({ theme, $isBold }) => ($isBold ? theme.colors.white : theme.colors.gray)};
   font-weight: ${({ $isBold }) => ($isBold ? 'bold' : 'normal')};
-  text-decoration: ${({ $isUnderline }) => ($isUnderline ? 'underline' : 'normal')};
+  text-decoration: ${({ $isUnderline }) => ($isUnderline ? 'underline' : 'none')};
+
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  span {
+    flex-shrink: 0;
+    color: ${COLORS.primaryLight};
+  }
+
+  &::after {
+    content: '';
+    flex: 1;
+    border-top: 1px dashed ${COLORS.primary};
+  }
 `;
 
 export const SectionContent = styled.div`
@@ -311,9 +363,11 @@ type MiniSimpleButtonProps = {
 };
 
 export const MiniSimpleButton = styled.button<MiniSimpleButtonProps>`
-  background-color: ${({ $backgroundColor, $active }) => ($active ? '#ff6347' : $backgroundColor || '#1f1f1f')};
-  border: 1px solid #1f1f1f;
-  border-radius: 4px;
+  display: flex;
+  gap: 5px;
+  background-color: ${({ $backgroundColor, $active }) => ($active ? COLORS.primary : $backgroundColor || COLORS.card)};
+  border: 1px solid ${COLORS.border};
+  border-radius: 10px;
   box-shadow: rgba(0, 0, 0, 0.1) 0 2px 4px 0;
   box-sizing: border-box;
   color: #fff;
@@ -322,7 +376,9 @@ export const MiniSimpleButton = styled.button<MiniSimpleButtonProps>`
   font-weight: 400;
   outline: none;
   outline: 0;
-  padding: 10px;
+  padding: 7px 15px;
+  justify-content: center;
+  align-items: center;
   @media (max-width: 350px) {
     padding: 10px 0px;
     width: 33%;
@@ -347,10 +403,10 @@ const calculateDuration = (bpm: number) => 60 / bpm;
 
 // Definindo a animação de piscar
 const blink = keyframes`
-  0% { background-color: #ff6347; }   /* Tomate */
-  49.9% { background-color: #1f1f1f; } /* Tomate */
-  50% { background-color: #1f1f1f; }     /* Branco */
-  100% { background-color: #1f1f1f; }     /* Branco */
+  0% { background-color: ${COLORS.primary}; }   /* Tomate */
+  49.9% { background-color: ${COLORS.card}; } /* Tomate */
+  50% { background-color: ${COLORS.card}; }     /* Branco */
+  100% { background-color: ${COLORS.card}; }     /* Branco */
 `;
 
 // Componente estilizado com animação dinâmica
@@ -365,7 +421,7 @@ export const BlinkingDiv = styled.div<BlinkingDivProps>`
   flex-direction: row;
   align-items: flex-start;
   justify-content: center;
-  background-color: #ff6347; /* Tomate */
+  background-color: ${COLORS.primary}; /* Tomate */
   animation: ${blink} ${({ bpm }) => calculateDuration(bpm)}s infinite;
 `;
 
@@ -396,14 +452,23 @@ export const Button = styled.button`
 `;
 
 export const SectionObs = styled.div`
-  font-size: 1.1rem;
-  color: #818183;
-  margin-top: 0.5rem;
-  color: #ffa500;
+  font-size: 1.2rem;
   position: absolute;
   right: 2.4rem;
   font-weight: bold;
   max-width: 60%;
   overflow: auto;
   max-height: 30px;
+  padding: 0.2rem 1rem;
+  border-radius: 10px;
+  background-color: ${COLORS.card};
+`;
+
+export const LyricsBox = styled.div`
+  background-color: #000;
+  padding: 2rem;
+  border-radius: 10px;
+  white-space: pre-wrap;
+  font-size: 1.8rem;
+  color: #fff;
 `;

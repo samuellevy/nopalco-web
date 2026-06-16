@@ -1,10 +1,17 @@
 import { Song } from './song';
 
+export interface Singer {
+  id: string;
+  name: string;
+  key?: string;
+}
+
 export interface SetlistItem {
   id: string;
   order: number;
   song: Song;
   key?: string;
+  singer?: Singer;
   pureTitle?: string;
   pureAuthor?: string;
 }

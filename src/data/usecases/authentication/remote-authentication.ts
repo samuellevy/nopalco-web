@@ -13,7 +13,10 @@ export class RemoteAuthentication implements Authentication {
     const httpResponse = await this.httpPostClient.request({
       method: 'post',
       url: this.url,
-      body: params,
+      body: {
+        username: params.username,
+        password: params.password,
+      },
     });
 
     switch (httpResponse.statusCode) {

@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React from 'react';
-import { PlusCircle, MinusCircle, Search } from 'lucide-react';
+import { PlusCircle, MinusCircle, Search, Music4, Text } from 'lucide-react';
 
 import * as S from './song.component.styles';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -17,7 +17,7 @@ import { ButtonComponent } from '../button/button';
 interface Content {
   block: string;
   notes: (string | [string, string])[];
-  score: string;
+  score?: string;
   obs?: string;
 }
 
@@ -49,6 +49,7 @@ export const SongComponent: React.FC<Props> = ({
   const [activeBpm, setActiveBpm] = React.useState(false);
   const [editMode, setEditMode] = React.useState(false);
   const [sheetMusicMode, setSheetMusicMode] = React.useState(true);
+  const [lyricsMode, setLyricsMode] = React.useState(false);
   const [chordsMusicMode] = React.useState(true);
   const [modalSongsOpen, setModalSongsOpen] = React.useState(false);
   const [isSplitted, setIsSplitted] = React.useState(false);
@@ -372,6 +373,11 @@ export const SongComponent: React.FC<Props> = ({
     // console.log(song.content);
   };
 
+  const handleToggleLyricsMode = () => {
+    setLyricsMode((prevState) => !prevState);
+    // console.log(song.content);
+  };
+
   const handleUpdateNote = (e: React.ChangeEvent<HTMLInputElement>, noteKey: number, sectionKeyChanged: number) => {
     const { value } = e.target;
     const updatedContent = song.content.map((section: Content, sectionKey: number) => ({
@@ -470,7 +476,12 @@ export const SongComponent: React.FC<Props> = ({
                 <S.PureFlexRow>
                   {!editMode && (
                     <S.MiniSimpleButton onClick={handleToggleSheetMusicMode} $active={sheetMusicMode}>
-                      Partitura
+                      <Music4 size={15} /> Partitura
+                    </S.MiniSimpleButton>
+                  )}
+                  {!editMode && (
+                    <S.MiniSimpleButton onClick={handleToggleLyricsMode} $active={lyricsMode}>
+                      <Text size={15} /> Letra
                     </S.MiniSimpleButton>
                   )}
                   {!editMode && <S.MiniSimpleButton onClick={handleEditButton}>Editar</S.MiniSimpleButton>}
@@ -498,41 +509,43 @@ export const SongComponent: React.FC<Props> = ({
               </S.CellHeader> */}
             </S.FlexRow>
 
-            <S.FlexRow>
-              <S.CellHeader onClick={() => setActiveBpm(!activeBpm)}>
-                <S.BlinkingDiv bpm={parseInt(song.bpm || '0')} $active={activeBpm}>
-                  {song.bpm}
-                </S.BlinkingDiv>
-                <S.CellValue $size="1.2rem" hidden={activeBpm}>
-                  {song.bpm}
-                </S.CellValue>
-                <S.CellLabel>BPM</S.CellLabel>
-              </S.CellHeader>
-              <S.CellHeader>
-                <S.CellValue $size="1.2rem">
-                  {editMode && <S.CellInput type="text" value={song.key} onChange={(e) => handleUpdateKey(e)} />}
-                  {!editMode && (key || song.key)}
-                </S.CellValue>
-                <S.CellLabel>
-                  <MinusCircle size={22} onClick={() => decreaseTone(song.content)} />
-                  KEY
-                  <PlusCircle size={22} onClick={() => increaseTone(song.content)} />
-                </S.CellLabel>
-              </S.CellHeader>
-              <S.CellHeader>
-                <S.CellValue $size="1.2rem">{song.rhythm}</S.CellValue>
-                <S.CellLabel>RHYTHM</S.CellLabel>
-              </S.CellHeader>
-              {/* <S.Cell>
+            {!lyricsMode && (
+              <S.FlexRow>
+                <S.CellHeader onClick={() => setActiveBpm(!activeBpm)}>
+                  <S.BlinkingDiv bpm={parseInt(song.bpm || '0')} $active={activeBpm}>
+                    {song.bpm}
+                  </S.BlinkingDiv>
+                  <S.CellValue $size="1.2rem" hidden={activeBpm}>
+                    {song.bpm}
+                  </S.CellValue>
+                  <S.CellLabel>BPM</S.CellLabel>
+                </S.CellHeader>
+                <S.CellHeader>
+                  <S.CellValue $size="1.2rem">
+                    {editMode && <S.CellInput type="text" value={song.key} onChange={(e) => handleUpdateKey(e)} />}
+                    {!editMode && (key || song.key)}
+                  </S.CellValue>
+                  <S.CellLabel>
+                    <MinusCircle size={22} onClick={() => decreaseTone(song.content)} />
+                    KEY
+                    <PlusCircle size={22} onClick={() => increaseTone(song.content)} />
+                  </S.CellLabel>
+                </S.CellHeader>
+                <S.CellHeader>
+                  <S.CellValue $size="1.2rem">{song.rhythm}</S.CellValue>
+                  <S.CellLabel>RHYTHM</S.CellLabel>
+                </S.CellHeader>
+                {/* <S.Cell>
                 <S.CellValue $size="1.2rem" $variant="purple">
                   {song.versions[0].name}
                 </S.CellValue>
                 <S.CellLabel>VERSION</S.CellLabel>
               </S.Cell> */}
-            </S.FlexRow>
+              </S.FlexRow>
+            )}
           </S.Header>
 
-          {chordsMusicMode && (
+          {!lyricsMode && chordsMusicMode && (
             <S.Content className={isSplitted ? 'splitted' : ''}>
               {song.content &&
                 song.content.map((songSection: Content, keyContent) => (
@@ -582,9 +595,9 @@ export const SongComponent: React.FC<Props> = ({
                           $isBold={isStringBetweenAsterisks(songSection.block)}
                           $isUnderline={isStringBetweenUnderscores(songSection.block)}
                         >
-                          {removeAsterisksAndUnderscores(songSection.block)}
+                          <span>{removeAsterisksAndUnderscores(songSection.block)}</span>
                         </S.SectionTitle>
-                        <S.SectionObs>{songSection.obs || ''}</S.SectionObs>
+                        {songSection.obs && <S.SectionObs>{songSection.obs}</S.SectionObs>}
                       </>
                     )}
                     <S.Grid>
@@ -618,21 +631,22 @@ export const SongComponent: React.FC<Props> = ({
           )}
 
           {sheetMusicMode && song && <SheetMusicPage song={song} />}
+          {lyricsMode && song && <S.LyricsBox>{song.lyrics}</S.LyricsBox>}
 
-          <S.FlexRow>
-            <ButtonComponent $variant="secondary" onClick={handleSetlistButton}>
+          <S.FlexGap>
+            <ButtonComponent $variant="purple" onClick={handleSetlistButton}>
               Setlist
             </ButtonComponent>
-            <ButtonComponent $variant="primary" onClick={() => handlePreviousSongButton(song.id)}>
+            <ButtonComponent $variant="purple" onClick={() => handlePreviousSongButton(song.id)}>
               Anterior
             </ButtonComponent>
-            <ButtonComponent $variant="primary" onClick={() => handleNextSongButton(song.id)}>
+            <ButtonComponent $variant="purple" onClick={() => handleNextSongButton(song.id)}>
               Próxima
             </ButtonComponent>
-            <ButtonComponent $variant="danger" onClick={handleHomeButton}>
+            <ButtonComponent $variant="purple" onClick={handleHomeButton}>
               Sair
             </ButtonComponent>
-          </S.FlexRow>
+          </S.FlexGap>
         </S.Container>
       )}
 

@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { HomePage, SongPage, SongsPage } from '@/presentation/pages';
+import { HomePage, SongPage, SongsPage, LoginPage } from '@/presentation/pages';
 import { PrivateRoute } from './private-route';
 import AdminLayout from '@/presentation/layouts/admin/admin.layout';
 import ScrollToTop from '@/presentation/components/scrolltotop';
@@ -33,6 +33,7 @@ export const Router: React.FC = () => {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/login" element={<LoginPage />} />
         {/* <Route path="/" element={<Configs />} /> */}
 
         <Route path="/" element={<PrivateRoute />}>

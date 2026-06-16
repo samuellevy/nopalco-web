@@ -17,7 +17,7 @@ export const SongsPage: React.FC<Props> = ({ loadAllSongsRequest }) => {
   const [songList, setSongList] = React.useState<Song[]>([]);
   const [originalList, setSongOriginalList] = React.useState<Song[]>([]);
 
-  const handleClickSong = (songId: string) => {
+  const handleClickSong = (songId: string | undefined) => {
     navigate(`${songId}`);
   };
 

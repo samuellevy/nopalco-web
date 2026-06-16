@@ -12,7 +12,6 @@ export const Container = styled.div`
 
 export const ContentWrapper = styled.div`
   width: 100%;
-  padding: 0 1.5rem;
 `;
 
 export const NavContainer = styled.div`

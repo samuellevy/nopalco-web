@@ -33,8 +33,8 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest, loadAllS
     }
   }, [loadAllSetlistsRequest]);
 
-  const handleLinkClick = (setlist: Setlist) => {
-    navigate(`/setlists/${setlist.id}`, { state: { setlist } });
+  const handleLinkClick = (navItem: string) => {
+    navigate(`/${navItem}`);
   };
 
   const handleClickSong = (songId: string) => {
@@ -103,7 +103,11 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest, loadAllS
               // })
               // .reverse()
               .map((item) => (
-                <BadgeComponent.Badge key={item.id} $variant="darkGray" onClick={() => handleLinkClick(item)}>
+                <BadgeComponent.Badge
+                  key={item.id}
+                  $variant="darkGray"
+                  onClick={() => handleLinkClick(`setlists/${item.id}`)}
+                >
                   <BadgeComponent.BadgeTitle>{item.name}</BadgeComponent.BadgeTitle>
                   <BadgeComponent.BadgeSubTitle>
                     {item.address || 'sem endereço'} - {formatDate(item.date)}

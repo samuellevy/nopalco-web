@@ -1,14 +1,25 @@
 import styled from 'styled-components';
 
 type BadgeProps = {
-  $variant?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'lightGray' | 'darkGray' | 'lucide';
+  $variant?:
+    | 'primary'
+    | 'secondary'
+    | 'success'
+    | 'danger'
+    | 'warning'
+    | 'info'
+    | 'lightGray'
+    | 'darkGray'
+    | 'lucide'
+    | 'purple'
+    | 'disabled';
 };
 
 export const ButtonComponent = styled.button<BadgeProps>`
   margin: 20px 0;
   background-color: #06f;
   border: none;
-  border-radius: 4px;
+  border-radius: 15px;
   box-shadow: rgba(0, 0, 0, 0.1) 0 2px 4px 0;
   box-sizing: border-box;
   color: #fff;
@@ -17,7 +28,7 @@ export const ButtonComponent = styled.button<BadgeProps>`
   font-weight: 400;
   outline: none;
   outline: 0;
-  padding: 10px 25px;
+  padding: 7px 20px;
   @media (max-width: 350px) {
     padding: 10px 0px;
     width: 33%;
