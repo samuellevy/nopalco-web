@@ -22,5 +22,6 @@ export interface Setlist {
   description: string;
   address: string;
   date?: Date;
+  order?: number;
   items: SetlistItem[];
 }

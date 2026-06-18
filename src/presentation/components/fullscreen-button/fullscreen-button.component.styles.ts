@@ -6,6 +6,9 @@ export const Button = styled.button`
   padding: 0;
   cursor: pointer;
   color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &:hover {
     opacity: 0.6;

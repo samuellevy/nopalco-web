@@ -4,13 +4,14 @@ import * as S from './setlist.styles';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Setlist, SetlistItem } from '@/domain/models/setlist';
 import { LoadSetlistRequest } from '@/domain/usecases/setlists/load-setlist-request';
-import { MessageCircle, Edit2, Check, X, GripVertical, Upload, Download, Printer } from 'lucide-react';
+import { MessageCircle, Edit2, Check, X, GripVertical, Upload, Download, Printer, DoorOpen } from 'lucide-react';
 import { LoadAllSongsRequest } from '@/domain/usecases';
 import { ModalSongsListComponent } from '@/presentation/components/modal-song-list/modal-song-list.component';
 import { UpdateSetlistRequest } from '@/domain/usecases/setlists/update-setlist-request';
 import { SongComponent } from '@/presentation/components/song-component/song.component';
 import { Song } from '@/domain/models';
 import { UpdateSongRequest } from '@/domain/usecases/songs/update-song-request';
+import FullscreenButtonComponent from '@/presentation/components/fullscreen-button/fullscreen-button.component';
 
 type SetlistProps = {
   loadSetlistRequest: LoadSetlistRequest;
@@ -237,6 +238,10 @@ export const SetlistPage: React.FC<SetlistProps> = ({
     }
   };
 
+  const handleBackToHome = () => {
+    navigate('/');
+  };
+
   useEffect(() => {
     if (!loadingData) return;
 
@@ -314,6 +319,9 @@ export const SetlistPage: React.FC<SetlistProps> = ({
                 <S.IconButton title="Copiar setlist" onClick={() => handleCopySetlist()}>
                   <MessageCircle size={18} />
                 </S.IconButton>
+                <S.IconButton>
+                  <FullscreenButtonComponent />
+                </S.IconButton>
                 {!isEditMode ? (
                   <S.PrimaryButton onClick={handleEditMode}>
                     <Edit2 size={16} />
@@ -331,6 +339,10 @@ export const SetlistPage: React.FC<SetlistProps> = ({
                     </S.DangerButton>
                   </>
                 )}
+                <S.Button onClick={handleBackToHome}>
+                  <DoorOpen size={16} />
+                  Sair
+                </S.Button>
               </S.ActionGroup>
             </S.PageHeader>
 

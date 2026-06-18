@@ -512,14 +512,6 @@ export const Button = styled.button`
   cursor: pointer;
   color: white;
 
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 600;
-  border-radius: 16px;
-  padding: 0.9rem 1.2rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
   &:hover {
     opacity: 0.6;
   }

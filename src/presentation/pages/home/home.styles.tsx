@@ -5,7 +5,7 @@ export const Container = styled.div`
   flex-direction: column;
   height: 100%;
   margin-bottom: 10rem;
-  /* background-color: #161618; */
+  background: radial-gradient(circle at top right, rgba(139, 92, 246, 0.08), transparent 30%), #0f1117;
 `;
 
 /** Header */
