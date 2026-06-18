@@ -280,7 +280,7 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest, loadAllS
         </DS.Sidebar> */}
       </DS.SetlistGrid>
 
-      <S.Content>
+      <S.Content style={{ display: 'none' }}>
         {/* <S.Section>
           <S.SectionTitle>Próximos eventos</S.SectionTitle>
 
