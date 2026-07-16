@@ -30,6 +30,7 @@ export const CreateSongPage: React.FC<Props> = ({ createSongRequest }) => {
         lyrics: '',
       },
     ],
+    singers: [],
   } as any);
 
   const goHome = () => {
