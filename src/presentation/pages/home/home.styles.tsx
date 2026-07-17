@@ -20,6 +20,7 @@ export const Header = styled.header`
 export const Title = styled.h1`
   font-size: 2rem;
   font-weight: bold;
+  letter-spacing: 0.08em;
 `;
 
 export const UserAvatar = styled.img`
@@ -55,6 +56,7 @@ export const Section = styled.section`
 export const SectionTitle = styled.h1`
   font-size: 1.5rem;
   font-weight: 500;
+  letter-spacing: 0.08em;
 `;
 
 export const SectionContent = styled.div`

@@ -2,8 +2,6 @@ import React from 'react';
 
 import * as S from './home.styles';
 import * as DS from '@/presentation/components/ds/ds.styles';
-import { BadgeComponent } from '@/presentation/components/badge';
-// import { SongList } from '@/presentation/components/songlist';
 import { useNavigate } from 'react-router-dom';
 import { LoadAllSetlistsRequest } from '@/domain/usecases/setlists/load-all-setlists-request';
 import { Setlist } from '@/domain/models/setlist';
@@ -193,34 +191,6 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest, loadAllS
                 <DS.ItemName>{setlist.name}</DS.ItemName>
                 {setlist.address || 'sem endereço'} - {formatDate(setlist.date)}
               </DS.ItemContent>
-              {/* <DS.ItemMeta>
-                {isEditMode ? (
-                  <>
-                    <DS.SingerSelect
-                      value={item.singer?.id || ''}
-                      onChange={(e) => handleUpdateItemSingerById(index, e.target.value)}
-                    >
-                      <option value="">Selecionar cantor</option>
-                      {item.song?.singers?.map((singer) => (
-                        <option key={singer.id} value={singer.id}>
-                          {singer.name}
-                        </option>
-                      ))}
-                    </DS.SingerSelect>
-                    <DS.KeyInput
-                      type="text"
-                      value={item.key || ''}
-                      onChange={(e) => handleUpdateItemKey(index, e.target.value)}
-                      placeholder="Tom"
-                    />
-                  </>
-                ) : (
-                  <>
-                    {item.singer && <DS.SingerBadge>{item.singer.name}</DS.SingerBadge>}
-                    {item.key && <DS.KeyBadge>{item.key}</DS.KeyBadge>}
-                  </>
-                )}
-              </DS.ItemMeta> */}
             </DS.ItemCard>
           ))}
         </DS.CardList>
@@ -279,112 +249,6 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest, loadAllS
           </DS.ActionCard>
         </DS.Sidebar> */}
       </DS.SetlistGrid>
-
-      <S.Content style={{ display: 'none' }}>
-        {/* <S.Section>
-          <S.SectionTitle>Próximos eventos</S.SectionTitle>
-
-          <S.SectionContent>
-            <BadgeComponent.Badge $variant="darkGray" onClick={() => handleLinkClick(`songs/`)}>
-              <BadgeComponent.BadgeTitle>12/jan</BadgeComponent.BadgeTitle>
-              <BadgeComponent.BadgeSubTitle>JoJoe</BadgeComponent.BadgeSubTitle>
-            </BadgeComponent.Badge>
-            <BadgeComponent.Badge $variant="darkGray" onClick={() => handleLinkClick(`songs-small/`)}>
-              <BadgeComponent.BadgeTitle>12/jan [smartwatch]</BadgeComponent.BadgeTitle>
-              <BadgeComponent.BadgeSubTitle>JoJoe</BadgeComponent.BadgeSubTitle>
-            </BadgeComponent.Badge>
-          </S.SectionContent>
-        </S.Section> */}
-
-        <S.Section>
-          <S.SectionContent>
-            {setlists
-              // .sort((a, b) => {
-              //   const [dayA, monthA, yearA] = a.description.split('/').map(Number);
-              //   const [dayB, monthB, yearB] = b.description.split('/').map(Number);
-
-              //   const dateA = new Date(yearA, monthA - 1, dayA).getTime();
-              //   const dateB = new Date(yearB, monthB - 1, dayB).getTime();
-
-              //   return dateA - dateB;
-              // })
-              // .reverse()
-              .map((item) => (
-                <BadgeComponent.Badge key={item.id} $variant="darkGray" onClick={() => handleLinkClick(item)}>
-                  <BadgeComponent.BadgeTitle>{item.name}</BadgeComponent.BadgeTitle>
-                  <BadgeComponent.BadgeSubTitle>
-                    {item.address || 'sem endereço'} - {formatDate(item.date)}
-                  </BadgeComponent.BadgeSubTitle>
-                  <BadgeComponent.BadgeSubTitle>{item.description.replace(/\//g, '-')}</BadgeComponent.BadgeSubTitle>
-                </BadgeComponent.Badge>
-              ))}
-          </S.SectionContent>
-        </S.Section>
-
-        {/* <S.Section>
-          <S.SectionTitle>Músicas</S.SectionTitle>
-
-          <S.SectionContent>
-            <SongList.Badge $variant="darkGray" onClick={() => handleLinkClick('songs/123')}>
-              <SongList.ASide>
-                <SongList.Thumbnail>
-                  <img
-                    src="https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcRGCu3ETf6NPxGijCEaIvANw6fyshVbUJs42fXNSqNI0P_AmBBL"
-                    alt=""
-                  />
-                </SongList.Thumbnail>
-              </SongList.ASide>
-              <SongList.ASide>
-                <SongList.BadgeTitle>Camarão que Dorme a Onda Leva</SongList.BadgeTitle>
-                <SongList.BadgeSubTitle>Zeca Pagodinho</SongList.BadgeSubTitle>
-              </SongList.ASide>
-            </SongList.Badge>
-            <SongList.Badge $variant="darkGray">
-              <SongList.ASide>
-                <SongList.Thumbnail>
-                  <img src="https://images03.brasildefato.com.br/2e6b2c54d374ff3e215caf093a8ac7e4.jpeg" alt="" />
-                </SongList.Thumbnail>
-              </SongList.ASide>
-
-              <SongList.ASide>
-                <SongList.BadgeTitle>Banho de Folhas</SongList.BadgeTitle>
-                <SongList.BadgeSubTitle>Luedji Luna</SongList.BadgeSubTitle>
-              </SongList.ASide>
-            </SongList.Badge>
-            <SongList.Badge $variant="darkGray">
-              <SongList.ASide>
-                <SongList.Thumbnail>
-                  <img
-                    src="https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcS4vODmRGvasDViGXfn6bzIL0ZdQi91cUSQVn0S6NllO67yowvV"
-                    alt=""
-                  />
-                </SongList.Thumbnail>
-              </SongList.ASide>
-
-              <SongList.ASide>
-                <SongList.BadgeTitle>Pé na Areia</SongList.BadgeTitle>
-                <SongList.BadgeSubTitle>Diogo Nogueira</SongList.BadgeSubTitle>
-              </SongList.ASide>
-            </SongList.Badge>
-            <SongList.Badge $variant="darkGray">
-              <SongList.ASide>
-                <SongList.Thumbnail>
-                  <img
-                    src="https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcR8V8tD6hJqi6QpYrXlOXKOStFqu-8lGIo6r3SN4ajZFGA8GQSE"
-                    alt=""
-                  />
-                </SongList.Thumbnail>
-              </SongList.ASide>
-
-              <SongList.ASide>
-                <SongList.BadgeTitle>O que é o amor?</SongList.BadgeTitle>
-                <SongList.BadgeSubTitle>Arlindo Cruz</SongList.BadgeSubTitle>
-              </SongList.ASide>
-            </SongList.Badge>
-          </S.SectionContent>
-        </S.Section> */}
-        <>v5.0.0</>
-      </S.Content>
 
       <ModalSongsListComponent
         loadAllSongsRequest={loadAllSongsRequest}

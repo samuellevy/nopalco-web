@@ -11,7 +11,7 @@ export const GlobalStyles = createGlobalStyle`
       background: transparent;
       text-align: inherit;
       outline: none;
-      font-family: "Noto Sans", sans-serif;
+      font-family: "Roboto", sans-serif;
       font-optical-sizing: auto;
       font-weight: 100;
       font-style: normal;

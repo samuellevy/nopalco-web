@@ -34,6 +34,7 @@ export const Header = styled.header`
 export const Title = styled.h1`
   font-size: 2rem;
   font-weight: bold;
+  letter-spacing: 0.05em;
 `;
 
 export const UserAvatar = styled.img`
@@ -91,12 +92,14 @@ export const SetlistTitle = styled.h1`
   color: #fff;
   font-size: 2rem;
   font-weight: 600;
+  letter-spacing: 0.05em;
 `;
 
 export const SetlistSubtitle = styled.p`
   margin: 0;
   color: rgba(255, 255, 255, 0.7);
   font-size: 1.5rem;
+  letter-spacing: 0.05em;
 `;
 
 export const ActionGroup = styled.div`
@@ -129,6 +132,7 @@ export const PrimaryButton = styled.button`
   padding: 0.9rem 1.2rem;
   cursor: pointer;
   font-weight: 600;
+  letter-spacing: 0.05em;
 `;
 
 export const DangerButton = styled(PrimaryButton)`
@@ -209,6 +213,7 @@ export const ItemContent = styled.div`
   flex-direction: column;
   gap: 0.25rem;
   min-width: 0;
+  letter-spacing: 0.05em;
 `;
 
 export const ItemName = styled.h2`
@@ -216,12 +221,14 @@ export const ItemName = styled.h2`
   font-size: 2rem;
   color: #fff;
   font-weight: 600;
+  letter-spacing: 0.05em;
 `;
 
 export const ItemArtist = styled.p`
   margin: 0;
   color: rgba(255, 255, 255, 0.65);
   font-size: 1.5rem;
+  letter-spacing: 0.05em;
 `;
 
 export const ItemMeta = styled.div`
@@ -247,6 +254,7 @@ export const KeyBadge = styled.span`
   color: #fff;
   font-weight: 700;
   padding: 0 0.85rem;
+  letter-spacing: 0.05em;
 `;
 
 export const KeyInput = styled.input`
@@ -260,6 +268,7 @@ export const KeyInput = styled.input`
   outline: none;
   text-align: center;
   font-size: 1.5rem;
+  letter-spacing: 0.05em;
 
   &::placeholder {
     color: rgba(255, 255, 255, 0.4);
@@ -285,6 +294,7 @@ export const SingerBadge = styled.span`
 
   font-weight: 600;
   padding: 0 0.85rem;
+  letter-spacing: 0.05em;
 `;
 
 export const SingerInput = styled.input`
@@ -297,6 +307,7 @@ export const SingerInput = styled.input`
   padding: 0.75rem 1rem;
   outline: none;
   font-size: 1rem;
+  letter-spacing: 0.05em;
 
   &::placeholder {
     color: rgba(255, 255, 255, 0.4);
@@ -319,6 +330,7 @@ export const SingerSelect = styled.select`
   outline: none;
   font-size: 1rem;
   cursor: pointer;
+  letter-spacing: 0.05em;
 
   option {
     background: #1a1a2e;
@@ -349,6 +361,7 @@ export const CardTitle = styled.h3`
   margin: 0 0 1rem;
   font-size: 1rem;
   color: rgba(255, 255, 255, 0.85);
+  letter-spacing: 0.05em;
 `;
 
 export const InfoList = styled.div`
@@ -399,6 +412,7 @@ export const ToolItem = styled.button`
   color: #fff;
   font-size: 0.95rem;
   cursor: pointer;
+  letter-spacing: 0.05em;
 
   svg {
     color: #8a84ff;
@@ -424,6 +438,7 @@ export const BadgeKey = styled.div`
     color: #ffffff;
     padding: 5px 2px;
     text-align: center;
+    letter-spacing: 0.05em;
 
     &:focus {
       outline: ${({ theme }) => theme.colors.primary};
@@ -443,6 +458,7 @@ export const BadgeSinger = styled.div`
   color: #fff;
   padding: 2px 10px;
   font-size: 1rem;
+  letter-spacing: 0.05em;
 
   input {
     font-size: 1rem;
@@ -450,6 +466,7 @@ export const BadgeSinger = styled.div`
     color: #ffffff;
     /* padding: 5px 10px; */
     text-align: center;
+    letter-spacing: 0.05em;
 
     &:focus {
       outline: ${({ theme }) => theme.colors.primary};
@@ -489,6 +506,7 @@ export const SimpleButton = styled.button`
   font-size: 16px;
   font-weight: 400;
   outline: none;
+  letter-spacing: 0.05em;
   outline: 0;
   padding: 10px 25px;
   @media (max-width: 350px) {
