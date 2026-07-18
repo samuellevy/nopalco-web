@@ -3,7 +3,7 @@ import styled from 'styled-components';
 export const Container = styled.div`
   display: flex;
   flex-direction: row;
-  background-color: ${({ theme }) => theme.variants.lucide.screenBackground};
+  background: radial-gradient(circle at top right, rgba(139, 92, 246, 0.08), transparent 30%), #0f1117;
   color: ${({ theme }) => theme.colors.white};
   width: 100%;
   min-height: 100vh;
