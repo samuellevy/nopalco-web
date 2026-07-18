@@ -666,7 +666,7 @@ export const SongComponent: React.FC<Props> = ({
           {sheetMusicMode && song && <SheetMusicPage song={song} />}
           {lyricsMode && song && <S.LyricsBox>{song.lyrics}</S.LyricsBox>}
 
-          <S.FlexGap>
+          <S.FlexGap style={{ display: 'none' }}>
             <ButtonComponent $variant="purple" onClick={handleSetlistButton}>
               Setlist
             </ButtonComponent>
