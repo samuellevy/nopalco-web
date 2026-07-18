@@ -167,10 +167,13 @@ export const SongComponent: React.FC<Props> = ({
 
       const finalNewKey = key && isMinorChord(key) ? getRelativeMajor(key) : key;
 
+      // Ensure content is parsed if it's a string
+      const parsedContent = typeof data.content === 'string' ? JSON.parse(data.content) : data.content;
+
       const transposedContent =
-        key && data.content && data.key && finalNewKey
-          ? transposeContent(data.content, isMinorChord(data.key) ? getRelativeMajor(data.key) : data.key, finalNewKey)
-          : data.content;
+        key && parsedContent && data.key && finalNewKey
+          ? transposeContent(parsedContent, isMinorChord(data.key) ? getRelativeMajor(data.key) : data.key, finalNewKey)
+          : parsedContent;
       setSong({ ...data, content: transposedContent });
     }
   }, [data, key]);
@@ -637,7 +640,7 @@ export const SongComponent: React.FC<Props> = ({
                         </S.FullGridItem>
                       ) : null}
                       {!songSection.score &&
-                        songSection.notes.map((note: string, noteKey) => (
+                        songSection.notes?.map((note: string | [string, string], noteKey) => (
                           <S.Cell key={`${noteKey}`}>
                             {editMode && (
                               <S.CellInputValue>
