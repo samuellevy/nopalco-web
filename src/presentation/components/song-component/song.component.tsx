@@ -29,8 +29,9 @@ type Props = {
   updateSongRequest: UpdateSongRequest;
   setlistSongList?: SetlistItem[];
   handleSetlistButton: () => void;
-  handleNextSongButton: (id: string) => void;
-  handlePreviousSongButton: (id: string) => void;
+  handleNextSongButton: () => void;
+  handlePreviousSongButton: () => void;
+  handlePreloadNextSongButton?: () => void;
 };
 
 export const SongComponent: React.FC<Props> = ({
@@ -41,6 +42,7 @@ export const SongComponent: React.FC<Props> = ({
   handleSetlistButton,
   handleNextSongButton,
   handlePreviousSongButton,
+  handlePreloadNextSongButton,
 }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -125,6 +127,11 @@ export const SongComponent: React.FC<Props> = ({
   const updateSong = async (tempSong: Song) => {
     const { content, ...rest } = tempSong;
 
+    if (!song?.id) {
+      console.error('Cannot update song: song ID is missing');
+      return;
+    }
+
     try {
       const updatedSong = await updateSongRequest.execute(song.id, {
         ...rest,
@@ -153,16 +160,17 @@ export const SongComponent: React.FC<Props> = ({
   };
 
   React.useEffect(() => {
-    if (data) {
+    if (data && data.name) {
       document.title = `${data.name} - NoPalco`;
       // console.log(key, `key`);
       // console.log(data, `data`);
 
-      const finalNewKey = isMinorChord(key) ? getRelativeMajor(key) : key;
+      const finalNewKey = key && isMinorChord(key) ? getRelativeMajor(key) : key;
 
-      const transposedContent = key
-        ? transposeContent(data.content, isMinorChord(data.key) ? getRelativeMajor(data.key) : data.key, finalNewKey)
-        : data.content;
+      const transposedContent =
+        key && data.content && data.key && finalNewKey
+          ? transposeContent(data.content, isMinorChord(data.key) ? getRelativeMajor(data.key) : data.key, finalNewKey)
+          : data.content;
       setSong({ ...data, content: transposedContent });
     }
   }, [data, key]);
@@ -220,6 +228,7 @@ export const SongComponent: React.FC<Props> = ({
       return newContent;
     }
     setSong((prevState) => ({ ...prevState, content: newContent }));
+    return [];
   }
 
   function decreaseTone(content: any[]): void {
@@ -379,6 +388,7 @@ export const SongComponent: React.FC<Props> = ({
   };
 
   const handleUpdateNote = (e: React.ChangeEvent<HTMLInputElement>, noteKey: number, sectionKeyChanged: number) => {
+    if (!song?.content) return;
     const { value } = e.target;
     const updatedContent = song.content.map((section: Content, sectionKey: number) => ({
       ...section,
@@ -400,6 +410,7 @@ export const SongComponent: React.FC<Props> = ({
   };
 
   const handleUpdateSectionTitle = (e: React.ChangeEvent<HTMLInputElement>, sectionIndex: number) => {
+    if (!song?.content) return;
     const { value } = e.target;
     const updatedContent = song.content.map((section: Content, index: number) =>
       index === sectionIndex ? { ...section, block: value } : section,
@@ -408,6 +419,7 @@ export const SongComponent: React.FC<Props> = ({
   };
 
   const handleUpdateSectionObs = (e: React.ChangeEvent<HTMLInputElement>, sectionIndex: number) => {
+    if (!song?.content) return;
     const { value } = e.target;
     const updatedContent = song.content.map((section: Content, index: number) =>
       index === sectionIndex ? { ...section, obs: value } : section,
@@ -416,11 +428,13 @@ export const SongComponent: React.FC<Props> = ({
   };
 
   const handleRemoveSection = (sectionIndex: number) => {
+    if (!song?.content) return;
     const updatedContent = song.content.filter((_, index: number) => index !== sectionIndex);
     setSong((prevState) => ({ ...prevState, content: updatedContent }));
   };
 
   const handleAddSection = () => {
+    if (!song?.content) return;
     const newSection: Content = {
       block: 'Nova Seção',
       notes: ['%', '%', '%', '%'],
@@ -431,6 +445,7 @@ export const SongComponent: React.FC<Props> = ({
   };
 
   const handleAddNote = (noteKey: number) => {
+    if (!song?.content) return;
     // preciso adicionar uma nova nota vazia após a notaKey
     const updatedContent = song.content.map((section: Content) => ({
       ...section,
@@ -440,6 +455,7 @@ export const SongComponent: React.FC<Props> = ({
   };
 
   const handleSaveButton = async () => {
+    if (!song?.content) return;
     // remover de songs tudo o que for string vazia
     const cleanedContent = song.content.map((section: Content) => ({
       ...section,
@@ -465,8 +481,22 @@ export const SongComponent: React.FC<Props> = ({
 
   return (
     <>
-      {!song && <h1>Loading</h1>}
-      {song && (
+      {!song || !data ? (
+        <div
+          style={{
+            width: '100%',
+            height: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#0f1117',
+            color: '#f8fafc',
+            fontSize: '18px',
+          }}
+        >
+          Carregando...
+        </div>
+      ) : (
         <S.Container>
           <S.Header>
             <S.FlexRow>
@@ -526,9 +556,9 @@ export const SongComponent: React.FC<Props> = ({
                     {!editMode && (key || song.key)}
                   </S.CellValue>
                   <S.CellLabel>
-                    <MinusCircle size={22} onClick={() => decreaseTone(song.content)} />
+                    <MinusCircle size={22} onClick={() => song.content && decreaseTone(song.content)} />
                     KEY
-                    <PlusCircle size={22} onClick={() => increaseTone(song.content)} />
+                    <PlusCircle size={22} onClick={() => song.content && increaseTone(song.content)} />
                   </S.CellLabel>
                 </S.CellHeader>
                 <S.CellHeader>
@@ -637,12 +667,17 @@ export const SongComponent: React.FC<Props> = ({
             <ButtonComponent $variant="purple" onClick={handleSetlistButton}>
               Setlist
             </ButtonComponent>
-            <ButtonComponent $variant="purple" onClick={() => handlePreviousSongButton(song.id)}>
+            <ButtonComponent $variant="purple" onClick={handlePreviousSongButton}>
               Anterior
             </ButtonComponent>
-            <ButtonComponent $variant="purple" onClick={() => handleNextSongButton(song.id)}>
+            <ButtonComponent $variant="purple" onClick={handleNextSongButton}>
               Próxima
             </ButtonComponent>
+            {handlePreloadNextSongButton && (
+              <ButtonComponent $variant="purple" onClick={handlePreloadNextSongButton}>
+                + Carregar
+              </ButtonComponent>
+            )}
             <ButtonComponent $variant="purple" onClick={handleHomeButton}>
               Sair
             </ButtonComponent>

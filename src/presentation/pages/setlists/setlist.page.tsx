@@ -12,6 +12,7 @@ import { SongComponent } from '@/presentation/components/song-component/song.com
 import { Song } from '@/domain/models';
 import { UpdateSongRequest } from '@/domain/usecases/songs/update-song-request';
 import FullscreenButtonComponent from '@/presentation/components/fullscreen-button/fullscreen-button.component';
+import { ButtonComponent } from '@/presentation/components/button/button';
 
 type SetlistProps = {
   loadSetlistRequest: LoadSetlistRequest;
@@ -31,7 +32,6 @@ export const SetlistPage: React.FC<SetlistProps> = ({
   const [searchParams] = useSearchParams();
   const position = searchParams.get('position') || null;
   const songParam = searchParams.get('song') || null;
-  const keyParam = searchParams.get('key') || null;
 
   const [loadingData, setLoadingData] = React.useState(true);
   const [modalSongsOpen, setModalSongsOpen] = React.useState(false);
@@ -43,7 +43,8 @@ export const SetlistPage: React.FC<SetlistProps> = ({
   const [showSavedModal, setShowSavedModal] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
 
-  const [setlistItemOpened, setSetlistItemOpened] = React.useState<SetlistItem | null>(null);
+  const [currentSongIndex, setCurrentSongIndex] = React.useState<number | null>(null);
+  const [preloadedIndices, setPreloadedIndices] = React.useState<Set<number>>(new Set());
 
   console.log('update');
 
@@ -61,11 +62,12 @@ export const SetlistPage: React.FC<SetlistProps> = ({
   }, [loadSetlistRequest, setlistId]);
 
   const handleLinkClick = (setlistItem: SetlistItem) => {
-    // navigate(`/songs/${songId}?setlist=${setlistId}&key=${encodeURIComponent(key)}`);
-    setSetlistItemOpened(setlistItem);
-    // add ?songId=${song.id} to URL without reloading the page
-    window.history.pushState({}, '', `/setlists/${setlistId}?song=${setlistItem.song?.id}&key=${setlistItem.key}`);
-    // console.log(setlistItem.song);
+    const index = setlist.items?.findIndex((item) => item.id === setlistItem.id);
+    if (index !== undefined && index >= 0) {
+      setCurrentSongIndex(index);
+      setPreloadedIndices(new Set([index]));
+      window.history.pushState({}, '', `/setlists/${setlistId}?song=${setlistItem.song?.id}&key=${setlistItem.key}`);
+    }
   };
 
   const handleCopySetlist = () => {
@@ -117,7 +119,8 @@ export const SetlistPage: React.FC<SetlistProps> = ({
   };
 
   const backToSetlist = () => {
-    setSetlistItemOpened(null);
+    setCurrentSongIndex(null);
+    setPreloadedIndices(new Set());
     window.history.pushState({}, '', `/setlists/${setlistId}`);
   };
 
@@ -214,28 +217,23 @@ export const SetlistPage: React.FC<SetlistProps> = ({
     return hours > 0 ? `${pad(hours)}:${pad(minutes)}:${pad(secs)}` : `${pad(minutes)}:${pad(secs)}`;
   }, [setlist.items]);
 
-  const handleNextSongButton = () => {
-    if (!setlistItemOpened) return;
-
-    const currentIndex = setlist.items?.findIndex((item) => item.id === setlistItemOpened.id);
-    if (currentIndex === undefined || currentIndex === -1 || currentIndex === setlist.items!.length - 1) return;
-
-    const nextItem = setlist.items![currentIndex + 1];
-    if (nextItem.song) {
-      handleLinkClick(nextItem);
-    }
+  const handleNextSongButton = (fromIndex: number) => {
+    if (fromIndex === null || fromIndex === itemsToRender.length - 1) return;
+    const nextIndex = fromIndex + 1;
+    setCurrentSongIndex(nextIndex);
+    setPreloadedIndices(new Set([nextIndex]));
   };
 
-  const handlePreviousSongButton = () => {
-    if (!setlistItemOpened) return;
+  const handlePreviousSongButton = (fromIndex: number) => {
+    if (fromIndex === null || fromIndex <= 0) return;
+    const prevIndex = fromIndex - 1;
+    setCurrentSongIndex(prevIndex);
+    setPreloadedIndices(new Set([prevIndex]));
+  };
 
-    const currentIndex = setlist.items?.findIndex((item) => item.id === setlistItemOpened.id);
-    if (currentIndex === undefined || currentIndex <= 0) return;
-
-    const previousItem = setlist.items![currentIndex - 1];
-    if (previousItem.song) {
-      handleLinkClick(previousItem);
-    }
+  const handlePreloadNextSong = (fromIndex: number) => {
+    if (fromIndex === null || fromIndex === itemsToRender.length - 1) return;
+    setPreloadedIndices((prev) => new Set([...prev, fromIndex + 1]));
   };
 
   const handleBackToHome = () => {
@@ -265,27 +263,21 @@ export const SetlistPage: React.FC<SetlistProps> = ({
 
   useEffect(() => {
     if (setlist && songParam) {
-      // console.log(songParam, `songParam`);
       const setlistItem = setlist.items?.find((item) => item.song?.id === songParam);
-
       if (setlistItem) {
-        setSetlistItemOpened(setlistItem);
+        const index = setlist.items?.findIndex((item) => item.id === setlistItem.id);
+        if (index !== undefined && index >= 0) {
+          setCurrentSongIndex(index);
+          setPreloadedIndices(new Set([index]));
+        }
       }
-
-      if (keyParam) {
-        setSetlistItemOpened((prev) => (prev ? { ...prev, key: keyParam } : prev));
-      }
-      // else {
-      //   // If song not found in setlist, ensure we are back to the main setlist view
-      //   setSetlistItemOpened(null);
-      //   window.history.pushState({}, '', `/setlists/${setlistId}`);
-      // }
     }
-  }, [songParam, keyParam, setlist]);
+  }, [songParam, setlist]);
 
   React.useEffect(() => {
     if (!songParam) {
-      setSetlistItemOpened(null);
+      setCurrentSongIndex(null);
+      setPreloadedIndices(new Set());
     }
   }, [songParam]);
 
@@ -294,10 +286,17 @@ export const SetlistPage: React.FC<SetlistProps> = ({
       const params = new URLSearchParams(window.location.search);
       const song = params.get('song');
       if (!song) {
-        setSetlistItemOpened(null);
+        setCurrentSongIndex(null);
+        setPreloadedIndices(new Set());
       } else if (setlist && setlist.items) {
         const setlistItem = setlist.items.find((item) => item.song?.id === song);
-        setSetlistItemOpened(setlistItem || null);
+        if (setlistItem) {
+          const index = setlist.items.findIndex((item) => item.id === setlistItem.id);
+          if (index >= 0) {
+            setCurrentSongIndex(index);
+            setPreloadedIndices(new Set([index]));
+          }
+        }
       }
     };
 
@@ -307,7 +306,7 @@ export const SetlistPage: React.FC<SetlistProps> = ({
 
   return (
     <>
-      {!setlistItemOpened && (
+      {currentSongIndex === null && (
         <S.SetlistLayout>
           <S.Main>
             <S.PageHeader>
@@ -461,25 +460,202 @@ export const SetlistPage: React.FC<SetlistProps> = ({
           </S.Main>
         </S.SetlistLayout>
       )}
-      {setlistItemOpened && (
-        <SongComponent
-          data={
-            {
-              ...setlistItemOpened.song,
-              content:
-                typeof setlistItemOpened.song.content === 'string'
-                  ? JSON.parse(setlistItemOpened.song.content)
-                  : setlistItemOpened.song.content,
-            } as Song
-          }
-          dataKey={setlistItemOpened.key ?? null}
-          loadAllSongsRequest={loadAllSongsRequest}
-          loadSetlistRequest={loadSetlistRequest}
-          updateSongRequest={updateSongRequest}
-          handleSetlistButton={() => backToSetlist()}
-          handleNextSongButton={handleNextSongButton}
-          handlePreviousSongButton={handlePreviousSongButton}
-        />
+      {currentSongIndex !== null && (
+        <div style={{ width: '100%', overflow: 'auto' }}>
+          {currentSongIndex !== null && itemsToRender[currentSongIndex] && (
+            <div
+              key={`song-${currentSongIndex}`}
+              style={{
+                width: '100%',
+                minHeight: '100vh',
+              }}
+            >
+              {itemsToRender[currentSongIndex].song ? (
+                <SongComponent
+                  data={
+                    {
+                      ...itemsToRender[currentSongIndex].song,
+                      content:
+                        typeof itemsToRender[currentSongIndex].song.content === 'string'
+                          ? JSON.parse(itemsToRender[currentSongIndex].song.content)
+                          : itemsToRender[currentSongIndex].song.content,
+                    } as Song
+                  }
+                  dataKey={itemsToRender[currentSongIndex].key ?? null}
+                  loadAllSongsRequest={loadAllSongsRequest}
+                  loadSetlistRequest={loadSetlistRequest}
+                  updateSongRequest={updateSongRequest}
+                  handleSetlistButton={() => backToSetlist()}
+                  handleNextSongButton={() => handleNextSongButton(currentSongIndex)}
+                  handlePreviousSongButton={() => handlePreviousSongButton(currentSongIndex)}
+                  handlePreloadNextSongButton={() => handlePreloadNextSong(currentSongIndex)}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: '100%',
+                    minHeight: '100vh',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    backgroundColor: '#0f1117',
+                    color: '#f8fafc',
+                    padding: '2rem',
+                  }}
+                >
+                  <div style={{ fontSize: '2rem', fontWeight: 'bold', textAlign: 'left', marginBottom: '30px' }}>
+                    {itemsToRender[currentSongIndex]?.pureTitle || 'Sem título'}
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    {currentSongIndex > 0 && (
+                      <button
+                        onClick={() => handlePreviousSongButton(currentSongIndex)}
+                        style={{
+                          padding: '10px 20px',
+                          fontSize: '16px',
+                          cursor: 'pointer',
+                          backgroundColor: '#8B5CF6',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                        }}
+                      >
+                        Anterior
+                      </button>
+                    )}
+                    {currentSongIndex < itemsToRender.length - 1 && (
+                      <>
+                        <button
+                          onClick={() => handleNextSongButton(currentSongIndex)}
+                          style={{
+                            padding: '10px 20px',
+                            fontSize: '16px',
+                            cursor: 'pointer',
+                            backgroundColor: '#8B5CF6',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                          }}
+                        >
+                          Próxima
+                        </button>
+                        <button
+                          onClick={() => handlePreloadNextSong(currentSongIndex)}
+                          style={{
+                            padding: '10px 20px',
+                            fontSize: '16px',
+                            cursor: 'pointer',
+                            backgroundColor: '#8B5CF6',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                          }}
+                        >
+                          + Carregar
+                        </button>
+                      </>
+                    )}
+                    <button
+                      onClick={() => backToSetlist()}
+                      style={{
+                        padding: '10px 20px',
+                        fontSize: '16px',
+                        cursor: 'pointer',
+                        backgroundColor: '#666',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                      }}
+                    >
+                      Voltar
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {Array.from(preloadedIndices)
+            .filter((idx) => idx !== currentSongIndex)
+            .sort((a, b) => a - b)
+            .map((index) => {
+              const item = itemsToRender[index];
+              return (
+                <div
+                  key={`song-${index}`}
+                  style={{
+                    width: '100%',
+                    minHeight: '100vh',
+                    borderTop: '2px solid rgba(255, 255, 255, 0.1)',
+                  }}
+                >
+                  {item?.song ? (
+                    <SongComponent
+                      data={
+                        {
+                          ...item.song,
+                          content:
+                            typeof item.song.content === 'string' ? JSON.parse(item.song.content) : item.song.content,
+                        } as Song
+                      }
+                      dataKey={item.key ?? null}
+                      loadAllSongsRequest={loadAllSongsRequest}
+                      loadSetlistRequest={loadSetlistRequest}
+                      updateSongRequest={updateSongRequest}
+                      handleSetlistButton={() => backToSetlist()}
+                      handleNextSongButton={() => handleNextSongButton(index)}
+                      handlePreviousSongButton={() => handlePreviousSongButton(index)}
+                      handlePreloadNextSongButton={() => handlePreloadNextSong(index)}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: '100%',
+                        minHeight: '100vh',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        backgroundColor: '#0f1117',
+                        color: '#f8fafc',
+                        padding: '2rem',
+                      }}
+                    >
+                      <div style={{ fontSize: '2rem', fontWeight: 'bold', textAlign: 'left', marginBottom: '30px' }}>
+                        {item?.pureTitle || 'Sem título'}
+                      </div>
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: '10px',
+                          padding: '5rem 1rem',
+                          flexWrap: 'wrap',
+                        }}
+                      >
+                        {index > 0 && (
+                          <ButtonComponent $variant="purple" onClick={() => handlePreviousSongButton(index)}>
+                            Anterior
+                          </ButtonComponent>
+                        )}
+                        {index < itemsToRender.length - 1 && (
+                          <>
+                            <ButtonComponent $variant="purple" onClick={() => handleNextSongButton(index)}>
+                              Próxima
+                            </ButtonComponent>
+                            <ButtonComponent $variant="purple" onClick={() => handlePreloadNextSong(index)}>
+                              + Carregar
+                            </ButtonComponent>
+                          </>
+                        )}
+                        <ButtonComponent $variant="purple" onClick={() => backToSetlist()}>
+                          Voltar
+                        </ButtonComponent>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+        </div>
       )}
 
       <ModalSongsListComponent
