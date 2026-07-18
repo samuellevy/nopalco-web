@@ -31,7 +31,6 @@ export const SetlistPage: React.FC<SetlistProps> = ({
   const { setlistId } = useParams<{ setlistId: string }>();
   const [searchParams] = useSearchParams();
   const position = searchParams.get('position') || null;
-  const songParam = searchParams.get('song') || null;
 
   const [loadingData, setLoadingData] = React.useState(true);
   const [modalSongsOpen, setModalSongsOpen] = React.useState(false);
@@ -45,6 +44,10 @@ export const SetlistPage: React.FC<SetlistProps> = ({
 
   const [currentSongIndex, setCurrentSongIndex] = React.useState<number | null>(null);
   const [preloadedIndices, setPreloadedIndices] = React.useState<Set<number>>(new Set());
+  const [lastLoadedIndex, setLastLoadedIndex] = React.useState<number | null>(null);
+
+  const [showNewMomentoModal, setShowNewMomentoModal] = React.useState(false);
+  const [newMomentoTitle, setNewMomentoTitle] = React.useState('');
 
   console.log('update');
 
@@ -66,7 +69,8 @@ export const SetlistPage: React.FC<SetlistProps> = ({
     if (index !== undefined && index >= 0) {
       setCurrentSongIndex(index);
       setPreloadedIndices(new Set([index]));
-      window.history.pushState({}, '', `/setlists/${setlistId}?song=${setlistItem.song?.id}&key=${setlistItem.key}`);
+      setLastLoadedIndex(index);
+      window.history.pushState({}, '', `/setlists/${setlistId}?setlistItem=${setlistItem.id}&key=${setlistItem.key}`);
     }
   };
 
@@ -105,6 +109,23 @@ export const SetlistPage: React.FC<SetlistProps> = ({
     setDragOverIndex(null);
   };
 
+  const handleAddNewMomento = () => {
+    if (!newMomentoTitle.trim()) return;
+
+    const newMomento: SetlistItem = {
+      id: `momento_${Date.now()}`,
+      pureTitle: newMomentoTitle,
+      key: '',
+      singer: undefined,
+      song: null as any,
+      order: editableItems.length + 1,
+    };
+
+    setEditableItems([...editableItems, newMomento]);
+    setNewMomentoTitle('');
+    setShowNewMomentoModal(false);
+  };
+
   const handleDragStart = (index: number) => {
     setDraggedIndex(index);
   };
@@ -121,6 +142,7 @@ export const SetlistPage: React.FC<SetlistProps> = ({
   const backToSetlist = () => {
     setCurrentSongIndex(null);
     setPreloadedIndices(new Set());
+    setLastLoadedIndex(null);
     window.history.pushState({}, '', `/setlists/${setlistId}`);
   };
 
@@ -222,6 +244,8 @@ export const SetlistPage: React.FC<SetlistProps> = ({
     const nextIndex = fromIndex + 1;
     setCurrentSongIndex(nextIndex);
     setPreloadedIndices(new Set([nextIndex]));
+    setLastLoadedIndex(nextIndex);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handlePreviousSongButton = (fromIndex: number) => {
@@ -229,11 +253,15 @@ export const SetlistPage: React.FC<SetlistProps> = ({
     const prevIndex = fromIndex - 1;
     setCurrentSongIndex(prevIndex);
     setPreloadedIndices(new Set([prevIndex]));
+    setLastLoadedIndex(prevIndex);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handlePreloadNextSong = (fromIndex: number) => {
     if (fromIndex === null || fromIndex === itemsToRender.length - 1) return;
-    setPreloadedIndices((prev) => new Set([...prev, fromIndex + 1]));
+    const nextIndex = fromIndex + 1;
+    setPreloadedIndices((prev) => new Set([...prev, nextIndex]));
+    setLastLoadedIndex(nextIndex);
   };
 
   const handleBackToHome = () => {
@@ -262,26 +290,6 @@ export const SetlistPage: React.FC<SetlistProps> = ({
   }, [setlist]);
 
   useEffect(() => {
-    if (setlist && songParam) {
-      const setlistItem = setlist.items?.find((item) => item.song?.id === songParam);
-      if (setlistItem) {
-        const index = setlist.items?.findIndex((item) => item.id === setlistItem.id);
-        if (index !== undefined && index >= 0) {
-          setCurrentSongIndex(index);
-          setPreloadedIndices(new Set([index]));
-        }
-      }
-    }
-  }, [songParam, setlist]);
-
-  React.useEffect(() => {
-    if (!songParam) {
-      setCurrentSongIndex(null);
-      setPreloadedIndices(new Set());
-    }
-  }, [songParam]);
-
-  useEffect(() => {
     const handlePopState = () => {
       const params = new URLSearchParams(window.location.search);
       const song = params.get('song');
@@ -303,6 +311,36 @@ export const SetlistPage: React.FC<SetlistProps> = ({
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, [setlist]);
+
+  // Initialize from URL query params when setlist loads
+  useEffect(() => {
+    if (!setlist || !setlist.items || loadingData) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const setlistItemId = params.get('setlistItem') || params.get('song');
+
+    if (!setlistItemId) {
+      setCurrentSongIndex(null);
+      setPreloadedIndices(new Set());
+      setLastLoadedIndex(null);
+      return;
+    }
+
+    // Try to find by setlistItem ID first, then by song ID for backward compatibility
+    let targetItem = setlist.items.find((item) => item.id === setlistItemId);
+    if (!targetItem) {
+      targetItem = setlist.items.find((item) => item.song?.id === setlistItemId);
+    }
+
+    if (targetItem) {
+      const index = setlist.items.findIndex((item) => item.id === targetItem!.id);
+      if (index >= 0) {
+        setCurrentSongIndex(index);
+        setPreloadedIndices(new Set([index]));
+        setLastLoadedIndex(index);
+      }
+    }
+  }, [setlist, loadingData]);
 
   return (
     <>
@@ -328,6 +366,7 @@ export const SetlistPage: React.FC<SetlistProps> = ({
                   </S.PrimaryButton>
                 ) : (
                   <>
+                    <S.PrimaryButton onClick={() => setShowNewMomentoModal(true)}>+ Momento</S.PrimaryButton>
                     <S.PrimaryButton onClick={handleSaveSetlist} disabled={isSaving}>
                       <Check size={16} />
                       {isSaving ? 'Salvando...' : 'Salvar'}
@@ -351,7 +390,7 @@ export const SetlistPage: React.FC<SetlistProps> = ({
                   <S.ItemCard
                     key={item.id || index}
                     type="button"
-                    onClick={() => !isEditMode && item.song && handleLinkClick(item)}
+                    onClick={() => !isEditMode && handleLinkClick(item)}
                     draggable={isEditMode}
                     onDragStart={() => isEditMode && handleDragStart(index)}
                     onDragOver={(e) => isEditMode && handleDragOver(index, e)}
@@ -461,13 +500,12 @@ export const SetlistPage: React.FC<SetlistProps> = ({
         </S.SetlistLayout>
       )}
       {currentSongIndex !== null && (
-        <div style={{ width: '100%', overflow: 'auto' }}>
+        <div style={{ width: '100%', overflow: 'auto', paddingBottom: '140px' }}>
           {currentSongIndex !== null && itemsToRender[currentSongIndex] && (
             <div
               key={`song-${currentSongIndex}`}
               style={{
                 width: '100%',
-                minHeight: '100vh',
               }}
             >
               {itemsToRender[currentSongIndex].song ? (
@@ -475,10 +513,7 @@ export const SetlistPage: React.FC<SetlistProps> = ({
                   data={
                     {
                       ...itemsToRender[currentSongIndex].song,
-                      content:
-                        typeof itemsToRender[currentSongIndex].song.content === 'string'
-                          ? JSON.parse(itemsToRender[currentSongIndex].song.content)
-                          : itemsToRender[currentSongIndex].song.content,
+                      content: itemsToRender[currentSongIndex].song.content,
                     } as Song
                   }
                   dataKey={itemsToRender[currentSongIndex].key ?? null}
@@ -494,7 +529,6 @@ export const SetlistPage: React.FC<SetlistProps> = ({
                 <div
                   style={{
                     width: '100%',
-                    minHeight: '100vh',
                     display: 'flex',
                     flexDirection: 'column',
                     backgroundColor: '#0f1117',
@@ -581,10 +615,10 @@ export const SetlistPage: React.FC<SetlistProps> = ({
               const item = itemsToRender[index];
               return (
                 <div
+                  id={`preload-song-${index}`}
                   key={`song-${index}`}
                   style={{
                     width: '100%',
-                    minHeight: '100vh',
                     borderTop: '2px solid rgba(255, 255, 255, 0.1)',
                   }}
                 >
@@ -610,7 +644,6 @@ export const SetlistPage: React.FC<SetlistProps> = ({
                     <div
                       style={{
                         width: '100%',
-                        minHeight: '100vh',
                         display: 'flex',
                         flexDirection: 'column',
                         backgroundColor: '#0f1117',
@@ -620,35 +653,6 @@ export const SetlistPage: React.FC<SetlistProps> = ({
                     >
                       <div style={{ fontSize: '2rem', fontWeight: 'bold', textAlign: 'left', marginBottom: '30px' }}>
                         {item?.pureTitle || 'Sem título'}
-                      </div>
-                      <div
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          gap: '10px',
-                          padding: '5rem 1rem',
-                          flexWrap: 'wrap',
-                        }}
-                      >
-                        {index > 0 && (
-                          <ButtonComponent $variant="purple" onClick={() => handlePreviousSongButton(index)}>
-                            Anterior
-                          </ButtonComponent>
-                        )}
-                        {index < itemsToRender.length - 1 && (
-                          <>
-                            <ButtonComponent $variant="purple" onClick={() => handleNextSongButton(index)}>
-                              Próxima
-                            </ButtonComponent>
-                            <ButtonComponent $variant="purple" onClick={() => handlePreloadNextSong(index)}>
-                              + Carregar
-                            </ButtonComponent>
-                          </>
-                        )}
-                        <ButtonComponent $variant="purple" onClick={() => backToSetlist()}>
-                          Voltar
-                        </ButtonComponent>
                       </div>
                     </div>
                   )}
@@ -695,6 +699,117 @@ export const SetlistPage: React.FC<SetlistProps> = ({
             <p style={{ margin: 0, color: '#666' }}>As alterações foram salvas na setlist.</p>
           </div>
         </div>
+      )}
+
+      {showNewMomentoModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '0',
+            left: '0',
+            right: '0',
+            bottom: '0',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: '#1f2937',
+              padding: '30px',
+              borderRadius: '8px',
+              textAlign: 'center',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+              maxWidth: '400px',
+              color: '#fff',
+            }}
+          >
+            <h2 style={{ margin: '0 0 20px', fontSize: '20px', fontWeight: 'bold' }}>Adicionar Novo Momento</h2>
+            <input
+              type="text"
+              placeholder="Nome do momento"
+              value={newMomentoTitle}
+              onChange={(e) => setNewMomentoTitle(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleAddNewMomento()}
+              style={{
+                width: '100%',
+                padding: '10px',
+                marginBottom: '20px',
+                borderRadius: '6px',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                backgroundColor: '#0f1117',
+                color: '#fff',
+                boxSizing: 'border-box',
+                fontSize: '16px',
+              }}
+              autoFocus
+            />
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <button
+                onClick={handleAddNewMomento}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#8B5CF6',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                }}
+              >
+                Adicionar
+              </button>
+              <button
+                onClick={() => {
+                  setShowNewMomentoModal(false);
+                  setNewMomentoTitle('');
+                }}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#6b7280',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                }}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {currentSongIndex !== null && (
+        <S.NavigationFooter>
+          <ButtonComponent $variant="purple" onClick={() => backToSetlist()}>
+            Setlist
+          </ButtonComponent>
+          {lastLoadedIndex !== null && lastLoadedIndex > 0 && (
+            <ButtonComponent $variant="purple" onClick={() => handlePreviousSongButton(lastLoadedIndex)}>
+              Anterior
+            </ButtonComponent>
+          )}
+          {lastLoadedIndex !== null && lastLoadedIndex < itemsToRender.length - 1 && (
+            <ButtonComponent $variant="purple" onClick={() => handleNextSongButton(lastLoadedIndex)}>
+              Próxima
+            </ButtonComponent>
+          )}
+          {lastLoadedIndex !== null && lastLoadedIndex < itemsToRender.length - 1 && (
+            <ButtonComponent $variant="purple" onClick={() => handlePreloadNextSong(lastLoadedIndex)}>
+              + Carregar
+            </ButtonComponent>
+          )}
+          <ButtonComponent $variant="purple" onClick={() => handleBackToHome()}>
+            Sair
+          </ButtonComponent>
+        </S.NavigationFooter>
       )}
     </>
   );

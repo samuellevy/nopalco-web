@@ -539,3 +539,24 @@ export const Button = styled.button`
     opacity: 0.6;
   }
 `;
+
+export const NavigationFooter = styled.footer`
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-around;
+  gap: 10px;
+  padding: 1rem;
+  background: linear-gradient(to top, rgba(15, 17, 23, 0.98), rgba(15, 17, 23, 0.95));
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  z-index: 1000;
+
+  @media (max-width: 720px) {
+    padding: 0.75rem;
+    gap: 8px;
+  }
+`;
