@@ -342,6 +342,13 @@ export const SetlistPage: React.FC<SetlistProps> = ({
     }
   }, [setlist, loadingData]);
 
+  // Scroll to top when a song is selected
+  useEffect(() => {
+    if (currentSongIndex !== null) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [currentSongIndex]);
+
   return (
     <>
       {currentSongIndex === null && (
