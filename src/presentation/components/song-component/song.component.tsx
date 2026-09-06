@@ -154,7 +154,7 @@ export const SongComponent: React.FC<Props> = ({
 
     let newContent = content;
     for (let i = 0; i < steps; i++) {
-      newContent = increaseTone(newContent, true);
+      newContent = increaseTone(newContent, true, targetKey);
     }
     return newContent;
   };
@@ -178,7 +178,7 @@ export const SongComponent: React.FC<Props> = ({
     }
   }, [data, key]);
 
-  function increaseTone(content: any[], returnContent = false): any[] {
+  function increaseTone(content: any[], returnContent = false, targetKey?: string): any[] {
     function transposeNote(note: string): string {
       const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
@@ -210,7 +210,7 @@ export const SongComponent: React.FC<Props> = ({
           if (noteIndex === -1) return chordPart;
 
           const newIndex = (noteIndex + 1) % NOTES.length;
-          const transposedNote = NOTES[newIndex];
+          const transposedNote = targetKey === 'F' && NOTES[newIndex] === 'A#' ? 'Bb' : NOTES[newIndex];
 
           return transposedNote + modifiers;
         })
@@ -236,7 +236,7 @@ export const SongComponent: React.FC<Props> = ({
     return [];
   }
 
-  function decreaseTone(content: any[]): void {
+  function decreaseTone(content: any[], targetKey?: string): void {
     const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
     const FLAT_TO_SHARP_MAP: { [key: string]: string } = {
       Db: 'C#',
@@ -266,7 +266,7 @@ export const SongComponent: React.FC<Props> = ({
           if (noteIndex === -1) return chordPart;
 
           const newIndex = (noteIndex - 1 + NOTES.length) % NOTES.length;
-          const transposedNote = NOTES[newIndex];
+          const transposedNote = targetKey === 'F' && NOTES[newIndex] === 'A#' ? 'Bb' : NOTES[newIndex];
 
           return transposedNote + modifiers;
         })
@@ -566,9 +566,9 @@ export const SongComponent: React.FC<Props> = ({
                     {!editMode && (key || song.key)}
                   </S.CellValue>
                   <S.CellLabel>
-                    <MinusCircle size={22} onClick={() => song.content && decreaseTone(song.content)} />
+                    <MinusCircle size={22} onClick={() => song.content && decreaseTone(song.content, key || song.key)} />
                     KEY
-                    <PlusCircle size={22} onClick={() => song.content && increaseTone(song.content)} />
+                    <PlusCircle size={22} onClick={() => song.content && increaseTone(song.content, false, key || song.key)} />
                   </S.CellLabel>
                 </S.CellHeader>
                 <S.CellHeader>
