@@ -191,28 +191,30 @@ export const SongComponent: React.FC<Props> = ({
         Bb: 'A#',
       };
 
-      // Extrair a parte da nota base (C, C#, D, etc.)
-      const regex = /^([A-G][#b]?)(.*)$/;
-      const match = note.match(regex);
+      return note
+        .split('/')
+        .map((chordPart) => {
+          const regex = /^([A-G][#b]?)(.*)$/;
+          const match = chordPart.match(regex);
 
-      if (!match) return note; // Se não corresponder ao padrão de uma nota, retorna o valor original
+          if (!match) return chordPart;
 
-      let baseNote = match[1]; // A nota base (Ex: E, F#, Db)
-      const modifiers = match[2]; // Modificadores (Ex: m, º, sus4, etc.)
+          let baseNote = match[1];
+          const modifiers = match[2];
 
-      // Se a nota for bemol, converte para o sustenido equivalente
-      if (baseNote in FLAT_TO_SHARP_MAP) {
-        baseNote = FLAT_TO_SHARP_MAP[baseNote];
-      }
+          if (baseNote in FLAT_TO_SHARP_MAP) {
+            baseNote = FLAT_TO_SHARP_MAP[baseNote];
+          }
 
-      const noteIndex = NOTES.indexOf(baseNote);
-      if (noteIndex === -1) return note; // Se não for uma nota válida, retorna o valor original
+          const noteIndex = NOTES.indexOf(baseNote);
+          if (noteIndex === -1) return chordPart;
 
-      // Aumenta um semitom e faz o wrap usando o módulo para ciclar a lista
-      const newIndex = (noteIndex + 1) % NOTES.length;
-      const transposedNote = NOTES[newIndex];
+          const newIndex = (noteIndex + 1) % NOTES.length;
+          const transposedNote = NOTES[newIndex];
 
-      return transposedNote + modifiers; // Retorna a nota transposta junto com os modificadores
+          return transposedNote + modifiers;
+        })
+        .join('/');
     }
 
     function transposeNotesBlock(notesBlock: string | [string, string]): string | [string, string] {
@@ -245,25 +247,30 @@ export const SongComponent: React.FC<Props> = ({
     };
 
     function transposeNote(note: string): string {
-      const regex = /^([A-G][#b]?)(.*)$/;
-      const match = note.match(regex);
+      return note
+        .split('/')
+        .map((chordPart) => {
+          const regex = /^([A-G][#b]?)(.*)$/;
+          const match = chordPart.match(regex);
 
-      if (!match) return note;
+          if (!match) return chordPart;
 
-      let baseNote = match[1];
-      const modifiers = match[2];
+          let baseNote = match[1];
+          const modifiers = match[2];
 
-      if (baseNote in FLAT_TO_SHARP_MAP) {
-        baseNote = FLAT_TO_SHARP_MAP[baseNote];
-      }
+          if (baseNote in FLAT_TO_SHARP_MAP) {
+            baseNote = FLAT_TO_SHARP_MAP[baseNote];
+          }
 
-      const noteIndex = NOTES.indexOf(baseNote);
-      if (noteIndex === -1) return note;
+          const noteIndex = NOTES.indexOf(baseNote);
+          if (noteIndex === -1) return chordPart;
 
-      const newIndex = (noteIndex - 1 + NOTES.length) % NOTES.length;
-      const transposedNote = NOTES[newIndex];
+          const newIndex = (noteIndex - 1 + NOTES.length) % NOTES.length;
+          const transposedNote = NOTES[newIndex];
 
-      return transposedNote + modifiers;
+          return transposedNote + modifiers;
+        })
+        .join('/');
     }
 
     function transposeNotesBlock(notesBlock: string | [string, string]): string | [string, string] {
