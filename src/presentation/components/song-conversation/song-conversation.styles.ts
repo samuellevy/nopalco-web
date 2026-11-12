@@ -10,6 +10,13 @@ export const Conversation = styled.section`
   gap: 20px;
 `;
 
+export const History = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+`;
+
 export const Messages = styled.div`
   display: flex;
   flex-direction: column;

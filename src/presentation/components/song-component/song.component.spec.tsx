@@ -38,6 +38,7 @@ const renderSong = (
   dataKey: string | null = null,
   blockTitle = 'Verse',
   updateSong = jest.fn().mockResolvedValue(undefined),
+  lyrics = 'Primeiro verso\n\nRefrão',
 ) => {
   const sheet = new ServerStyleSheet();
   const song: Song = {
@@ -47,6 +48,7 @@ const renderSong = (
     key: originalKey,
     bpm: '120',
     rhythm: 'Pop',
+    lyrics,
     content: [{ block: blockTitle, notes: [`${originalKey}/E`] }],
   };
 
@@ -136,6 +138,62 @@ describe('SongComponent metadata editing', () => {
     ['Título', 'Subtítulo', 'BPM', 'Tom', 'Ritmo'].forEach((label) => {
       expect(screen.getByRole('textbox', { name: label })).toBeInTheDocument();
     });
+  });
+});
+
+describe('SongComponent lyrics editing', () => {
+  test('shows a large textarea in lyrics mode and saves lyrics without changing chords', async () => {
+    const updateSong = jest.fn().mockResolvedValue(undefined);
+    renderSong('C', null, 'Verse', updateSong);
+    fireEvent.click(screen.getByRole('button', { name: 'Letra' }));
+    expect(screen.queryByRole('textbox', { name: 'Letra da música' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
+
+    const input = screen.getByRole('textbox', { name: 'Letra da música' });
+    expect(input).toHaveValue('Primeiro verso\n\nRefrão');
+    expect(input).toHaveAttribute('rows', '16');
+    expect(screen.queryByRole('button', { name: 'Seção' })).not.toBeInTheDocument();
+    fireEvent.change(input, { target: { value: 'Novo verso\n\nNovo refrão' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() =>
+      expect(updateSong).toHaveBeenCalledWith(
+        'song-1',
+        expect.objectContaining({
+          lyrics: 'Novo verso\n\nNovo refrão',
+          content: JSON.stringify([{ block: 'Verse', notes: ['C/E'] }]),
+        }),
+      ),
+    );
+    await waitFor(() => expect(screen.queryByRole('textbox', { name: 'Letra da música' })).not.toBeInTheDocument());
+    expect(screen.getByText('Novo verso Novo refrão')).toBeInTheDocument();
+  });
+
+  test('cancelling restores the previous lyrics and does not send an update', () => {
+    const updateSong = jest.fn();
+    renderSong('C', null, 'Verse', updateSong);
+    fireEvent.click(screen.getByRole('button', { name: 'Letra' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Letra da música' }), { target: { value: 'Discard this' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+
+    expect(screen.queryByText('Discard this')).not.toBeInTheDocument();
+    expect(screen.getByText('Primeiro verso Refrão')).toBeInTheDocument();
+    expect(updateSong).not.toHaveBeenCalled();
+  });
+
+  test('allows writing and saving lyrics for a song without existing lyrics', async () => {
+    const updateSong = jest.fn().mockResolvedValue(undefined);
+    renderSong('C', null, 'Verse', updateSong, '');
+    fireEvent.click(screen.getByRole('button', { name: 'Letra' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
+    const input = screen.getByRole('textbox', { name: 'Letra da música' });
+    expect(input).toHaveValue('');
+    fireEvent.change(input, { target: { value: 'New lyrics' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+    await waitFor(() =>
+      expect(updateSong).toHaveBeenCalledWith('song-1', expect.objectContaining({ lyrics: 'New lyrics' })),
+    );
   });
 });
 

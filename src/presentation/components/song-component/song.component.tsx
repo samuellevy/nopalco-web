@@ -13,7 +13,9 @@ import {
   Columns,
   Users,
   MessageSquare,
-  LogIn,
+  Check,
+  X,
+  Trash2,
 } from 'lucide-react';
 
 import * as S from './song.component.styles';
@@ -30,6 +32,8 @@ import { ButtonComponent } from '../button/button';
 import { ModalSongSingers } from '@/presentation/components/modal-song-singers/modal-song-singers.component';
 import { SongConversation } from '@/presentation/components/song-conversation/song-conversation.component';
 import { getAccessToken, useSession } from '@/main/config/session';
+import { UserMenu } from '@/presentation/components/user-menu/user-menu.component';
+import { SetlistObservations } from '@/presentation/components/setlist-observations/setlist-observations.component';
 
 interface Content {
   block: string;
@@ -51,6 +55,16 @@ type Props = {
   handlePreviousSongButton: () => void;
   handlePreloadNextSongButton?: () => void;
   showPageNavigation?: boolean;
+  lyricsMode?: boolean;
+  onLyricsModeChange?: (active: boolean) => void;
+  editMode?: boolean;
+  onEditModeChange?: (active: boolean) => void;
+  conversationGroupId?: string | null;
+  conversationGroupName?: string;
+  observationsMode?: boolean;
+  onObservationsModeChange?: (active: boolean) => void;
+  observations?: string;
+  onSaveObservations?: (value: string) => Promise<void>;
 };
 
 export const SongComponent: React.FC<Props> = ({
@@ -65,6 +79,16 @@ export const SongComponent: React.FC<Props> = ({
   handlePreviousSongButton,
   handlePreloadNextSongButton,
   showPageNavigation = false,
+  lyricsMode: controlledLyricsMode,
+  onLyricsModeChange,
+  editMode: controlledEditMode,
+  onEditModeChange,
+  conversationGroupId,
+  conversationGroupName,
+  observationsMode = false,
+  onObservationsModeChange,
+  observations,
+  onSaveObservations,
 }) => {
   const navigate = useNavigate();
   const { isAuthenticated } = useSession();
@@ -73,9 +97,9 @@ export const SongComponent: React.FC<Props> = ({
   const setlist = searchParams.get('setlist') || setlistId;
   const key = dataKey || null;
   const [activeBpm, setActiveBpm] = React.useState(false);
-  const [editMode, setEditMode] = React.useState(false);
+  const [localEditMode, setLocalEditMode] = React.useState(false);
   const [sheetMusicMode, setSheetMusicMode] = React.useState(true);
-  const [lyricsMode, setLyricsMode] = React.useState(false);
+  const [localLyricsMode, setLocalLyricsMode] = React.useState(false);
   const [conversationMode, setConversationMode] = React.useState(false);
   const [chordsMusicMode] = React.useState(true);
   const [modalSongsOpen, setModalSongsOpen] = React.useState(false);
@@ -83,6 +107,29 @@ export const SongComponent: React.FC<Props> = ({
   const [modalSingersOpen, setModalSingersOpen] = React.useState(false);
   const [isSplitted, setIsSplitted] = React.useState(false);
   const [song, setSong] = React.useState<Song>(null as unknown as Song);
+  const editSnapshot = React.useRef<Song | null>(null);
+  const editMode = controlledEditMode ?? localEditMode;
+  const lyricsMode = controlledLyricsMode ?? localLyricsMode;
+
+  const setEditMode = (value: React.SetStateAction<boolean>) => {
+    const active = typeof value === 'function' ? value(editMode) : value;
+    setLocalEditMode(active);
+    onEditModeChange?.(active);
+  };
+
+  const setLyricsMode = (value: React.SetStateAction<boolean>) => {
+    const active = typeof value === 'function' ? value(lyricsMode) : value;
+    setLocalLyricsMode(active);
+    onLyricsModeChange?.(active);
+  };
+
+  React.useEffect(() => {
+    if (controlledLyricsMode) setConversationMode(false);
+  }, [controlledLyricsMode]);
+
+  React.useEffect(() => {
+    if (observationsMode) setConversationMode(false);
+  }, [observationsMode]);
 
   React.useEffect(() => {
     if (!isAuthenticated) {
@@ -436,7 +483,14 @@ export const SongComponent: React.FC<Props> = ({
       return;
     }
     setConversationMode(false);
-    setEditMode((prevState) => !prevState);
+    if (editMode) {
+      if (editSnapshot.current) setSong(editSnapshot.current);
+      editSnapshot.current = null;
+      setEditMode(false);
+    } else {
+      editSnapshot.current = song;
+      setEditMode(true);
+    }
     // console.log(song.content);
   };
 
@@ -445,11 +499,13 @@ export const SongComponent: React.FC<Props> = ({
   };
 
   const handleToggleSheetMusicMode = () => {
+    onObservationsModeChange?.(false);
     setSheetMusicMode((prevState) => !prevState);
     // console.log(song.content);
   };
 
   const handleToggleLyricsMode = () => {
+    onObservationsModeChange?.(false);
     setConversationMode(false);
     setLyricsMode((prevState) => !prevState);
     // console.log(song.content);
@@ -472,7 +528,7 @@ export const SongComponent: React.FC<Props> = ({
     setSong((prevState) => ({ ...prevState, content: updatedContent }));
   };
 
-  const handleUpdateMetadata = (field: 'name' | 'author' | 'bpm' | 'key' | 'rhythm', value: string) => {
+  const handleUpdateMetadata = (field: 'name' | 'author' | 'bpm' | 'key' | 'rhythm' | 'lyrics', value: string) => {
     setSong((prevState) => ({ ...prevState, [field]: value }));
   };
 
@@ -538,6 +594,7 @@ export const SongComponent: React.FC<Props> = ({
     const tempSong = { ...song, content: cleanedContent };
     setSong((prevState) => ({ ...prevState, content: cleanedContent }));
     await updateSong(tempSong);
+    editSnapshot.current = null;
     setEditMode(false);
   };
 
@@ -583,7 +640,7 @@ export const SongComponent: React.FC<Props> = ({
             <S.FlexRow>
               <S.FlexColumn>
                 <S.Title onDoubleClick={() => !editMode && goFullscreen()}>
-                  {editMode ? (
+                  {editMode && !observationsMode ? (
                     <S.MetadataInput
                       aria-label="Título"
                       placeholder="Título"
@@ -595,7 +652,7 @@ export const SongComponent: React.FC<Props> = ({
                   )}
                 </S.Title>
                 <S.Author>
-                  {editMode ? (
+                  {editMode && !observationsMode ? (
                     <S.MetadataInput
                       aria-label="Subtítulo"
                       placeholder="Subtítulo"
@@ -634,7 +691,11 @@ export const SongComponent: React.FC<Props> = ({
                       <Edit2 size={15} aria-hidden="true" /> <span>Editar</span>
                     </S.ToolbarButton>
                   )}
-                  {editMode && <S.MiniSimpleButton onClick={handleEditButton}>Cancelar</S.MiniSimpleButton>}
+                  {editMode && !observationsMode && (
+                    <S.EditAction $variant="cancel" type="button" onClick={handleEditButton}>
+                      <X size={16} aria-hidden="true" /> Cancelar
+                    </S.EditAction>
+                  )}
                   {!editMode && (
                     <S.ToolbarButton
                       onClick={toggleSplit}
@@ -653,18 +714,16 @@ export const SongComponent: React.FC<Props> = ({
                   )}
                   {!editMode && (
                     <S.ToolbarButton
-                      onClick={() => setConversationMode((current) => !current)}
+                      onClick={() => {
+                        onObservationsModeChange?.(false);
+                        setConversationMode((current) => !current);
+                      }}
                       $active={conversationMode}
                       aria-label="Orientações"
                       aria-pressed={conversationMode}
                       title="Orientações"
                     >
                       <MessageSquare size={15} aria-hidden="true" /> <span>Orientações</span>
-                    </S.ToolbarButton>
-                  )}
-                  {!editMode && !isAuthenticated && (
-                    <S.ToolbarButton onClick={handleEditButton} aria-label="Login" title="Login">
-                      <LogIn size={15} aria-hidden="true" /> <span>Login</span>
                     </S.ToolbarButton>
                   )}
                   {!editMode && data.key && (
@@ -677,14 +736,16 @@ export const SongComponent: React.FC<Props> = ({
                       <RotateCcw size={15} aria-hidden="true" /> <span>Original:</span> {data.key}
                     </S.OriginalToneButton>
                   )}
-                  {editMode && (
+                  {editMode && !observationsMode && (
                     <>
-                      <S.MiniSimpleButton $backgroundColor="#008000" onClick={handleAddSection}>
-                        + Seção
-                      </S.MiniSimpleButton>
-                      <S.MiniSimpleButton $backgroundColor="#D0342c" onClick={handleSaveButton}>
-                        Salvar
-                      </S.MiniSimpleButton>
+                      {!lyricsMode && (
+                        <S.EditAction $variant="add" type="button" onClick={handleAddSection}>
+                          <PlusCircle size={16} aria-hidden="true" /> Seção
+                        </S.EditAction>
+                      )}
+                      <S.EditAction $variant="save" type="button" onClick={handleSaveButton}>
+                        <Check size={16} aria-hidden="true" /> Salvar
+                      </S.EditAction>
                     </>
                   )}
                 </S.PureFlexRow>
@@ -695,7 +756,7 @@ export const SongComponent: React.FC<Props> = ({
               </S.CellHeader> */}
             </S.FlexRow>
 
-            {!conversationMode && (!lyricsMode || editMode) && (
+            {!observationsMode && !conversationMode && (!lyricsMode || editMode) && (
               <S.MetadataRow>
                 <S.CellHeader onClick={() => !editMode && setActiveBpm(!activeBpm)}>
                   {!editMode && (
@@ -771,50 +832,29 @@ export const SongComponent: React.FC<Props> = ({
             )}
           </S.Header>
 
-          {!conversationMode && !lyricsMode && chordsMusicMode && (
+          {!observationsMode && !conversationMode && !lyricsMode && chordsMusicMode && (
             <S.Content className={isSplitted ? 'splitted' : ''}>
               {song.content &&
                 song.content.map((songSection: Content, keyContent) => (
                   <S.Section className={isSplitted ? 'splitted' : ''} key={`content-${keyContent}`}>
                     {editMode ? (
-                      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '10px' }}>
+                      <S.SectionEditor>
                         <S.CellInput
                           type="text"
+                          aria-label={`Título do bloco ${keyContent + 1}`}
                           value={songSection.block}
                           onChange={(e) => handleUpdateSectionTitle(e, keyContent)}
-                          style={{
-                            flex: 1,
-                            padding: '8px',
-                            fontSize: '1.2em',
-                            fontWeight: 'bold',
-                          }}
                         />
                         <S.CellInput
                           type="text"
+                          aria-label={`Observação do bloco ${keyContent + 1}`}
                           value={songSection.obs || ''}
                           onChange={(e) => handleUpdateSectionObs(e, keyContent)}
-                          style={{
-                            flex: 1,
-                            padding: '8px',
-                            fontSize: '1.2em',
-                            fontWeight: 'bold',
-                          }}
                         />
-                        <button
-                          onClick={() => handleRemoveSection(keyContent)}
-                          style={{
-                            padding: '6px 12px',
-                            backgroundColor: '#CF142b',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '14px',
-                          }}
-                        >
-                          Remover
-                        </button>
-                      </div>
+                        <S.EditAction $variant="remove" type="button" onClick={() => handleRemoveSection(keyContent)}>
+                          <Trash2 size={16} aria-hidden="true" /> Remover
+                        </S.EditAction>
+                      </S.SectionEditor>
                     ) : (
                       <>
                         <S.SectionTitle
@@ -856,9 +896,43 @@ export const SongComponent: React.FC<Props> = ({
             </S.Content>
           )}
 
-          {!conversationMode && sheetMusicMode && song && <SheetMusicPage song={song} />}
-          {!conversationMode && lyricsMode && song && <S.LyricsBox>{song.lyrics}</S.LyricsBox>}
-          {conversationMode && song?.id && <SongConversation key={song.id} songId={song.id} />}
+          {!observationsMode && !conversationMode && !lyricsMode && sheetMusicMode && song && (
+            <SheetMusicPage song={song} />
+          )}
+          {!observationsMode &&
+            !conversationMode &&
+            lyricsMode &&
+            song &&
+            (editMode ? (
+              <S.LyricsEditor>
+                <S.LyricsInput
+                  aria-label="Letra da música"
+                  placeholder="Letra da música"
+                  rows={16}
+                  value={song.lyrics || ''}
+                  onChange={(event) => handleUpdateMetadata('lyrics', event.target.value)}
+                />
+              </S.LyricsEditor>
+            ) : (
+              <S.LyricsBox>{song.lyrics}</S.LyricsBox>
+            ))}
+          {observationsMode && onSaveObservations && (
+            <SetlistObservations
+              observations={observations}
+              onSave={onSaveObservations}
+              editing={editMode}
+              onEditingChange={setEditMode}
+              showEditButton={false}
+            />
+          )}
+          {!observationsMode && conversationMode && song?.id && (
+            <SongConversation
+              key={`${song.id}:${conversationGroupId || ''}`}
+              songId={song.id}
+              groupId={conversationGroupId}
+              groupName={conversationGroupName}
+            />
+          )}
 
           <S.FlexGap style={{ display: 'none' }}>
             <ButtonComponent $variant="purple" onClick={handleSetlistButton}>
@@ -919,6 +993,7 @@ export const SongComponent: React.FC<Props> = ({
               <ListMusic />
             </S.Button>
           )}
+          <UserMenu inline />
         </S.UserNavigation>
         {/* <Search onClick={() => setModalSongsOpen(true)} /> */}
       </S.RightSideActions>

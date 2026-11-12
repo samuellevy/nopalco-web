@@ -3,6 +3,7 @@ export interface SetlistUpdateDTO {
   description?: string;
   address?: string;
   date?: string | Date;
+  groupId?: string | null;
   items?: {
     id?: string;
     songId: string;

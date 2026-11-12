@@ -26,6 +26,7 @@ export interface Song {
 
 export interface SongConversationMessage {
   id: string;
+  groupId: string;
   userId: string;
   author: string;
   text: string;

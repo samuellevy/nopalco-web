@@ -14,8 +14,8 @@ const FullscreenButtonComponent = () => {
   };
 
   return (
-    <S.Button onClick={() => goFullscreen()}>
-      <ExpandIcon />
+    <S.Button type="button" title="Tela cheia" aria-label="Tela cheia" onClick={() => goFullscreen()}>
+      <ExpandIcon aria-hidden="true" />
     </S.Button>
   );
 };

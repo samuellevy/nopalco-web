@@ -6,6 +6,7 @@ import { Song } from '@/domain/models';
 import Loader from '@/presentation/components/loader/loader';
 import { ArrowDownUp, Check, X } from 'lucide-react';
 import { CreateSetlistDTO, CreateSetlistRequest } from '@/domain/usecases/setlists/create-setlist-request';
+import { SetlistGroupSelect } from '@/presentation/components/setlist-group-select/setlist-group-select.component';
 
 type Props = {
   loadAllSongsRequest: LoadAllSongsRequest;
@@ -22,6 +23,7 @@ export const SetlistCreatePage: React.FC<Props> = ({ loadAllSongsRequest, create
   const [eventDescription, setEventDescription] = React.useState<string>('');
   const [eventDate, setEventDate] = React.useState<string>(null);
   const [eventAddress, setEventAddress] = React.useState<string>('');
+  const [groupId, setGroupId] = React.useState<string | null>(null);
   const [sendingData, setSendingData] = React.useState(false);
   const [draggedIndex, setDraggedIndex] = React.useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = React.useState<number | null>(null);
@@ -134,6 +136,7 @@ export const SetlistCreatePage: React.FC<Props> = ({ loadAllSongsRequest, create
       name: eventName,
       description: eventDescription,
       address: eventAddress,
+      groupId,
       date: eventDate ? new Date(eventDate) : null,
       items: selectedSongs.map((song, index) => ({
         pureTitle: song.name,
@@ -241,6 +244,9 @@ export const SetlistCreatePage: React.FC<Props> = ({ loadAllSongsRequest, create
                 onChange={(e) => setEventAddress(e.target.value)}
                 value={eventAddress}
               />
+            </S.InputGroup>
+            <S.InputGroup>
+              <SetlistGroupSelect value={groupId} onChange={setGroupId} disabled={sendingData} />
             </S.InputGroup>
             <S.InputGroup>
               <S.SimpleButton disabled={sendingData} onClick={() => handleCreateSetlist()}>

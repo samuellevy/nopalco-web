@@ -3,4 +3,5 @@ export type AccountModel = {
   name: string;
   username: string;
   scopes: string[];
+  type?: 'user' | 'admin';
 };

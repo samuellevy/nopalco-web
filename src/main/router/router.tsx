@@ -17,6 +17,8 @@ import { RemoteCreateSetlistRequest } from '@/data/usecases/setlists/remote-crea
 import { RemoteUpdateSetlistRequest } from '@/data/usecases/setlists/remote-update-setlist-request';
 import { CreateSongPage } from '@/presentation/pages/songs/song/create/song.page';
 import { RemoteCreateSongRequest } from '@/data/usecases/songs/remote-create-song-request';
+import { AccountPage } from '@/presentation/pages/account/account.page';
+import { GroupsPage } from '@/presentation/pages/account/groups.page';
 
 export const Router: React.FC = () => {
   const axiosHttpClient = new AxiosHttpClient();
@@ -45,6 +47,8 @@ export const Router: React.FC = () => {
           />
           <Route path="/songs" element={<SongsPage loadAllSongsRequest={loadAllSongsRequest} />} />
           <Route element={<PrivateRoute />}>
+            <Route path="/account" element={<AccountPage />} />
+            <Route path="/groups" element={<GroupsPage />} />
             <Route path="/songs/create" element={<CreateSongPage createSongRequest={createSongRequest} />} />
           </Route>
           <Route

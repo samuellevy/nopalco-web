@@ -111,7 +111,7 @@ export const Action = styled.button<{ $primary?: boolean }>`
   padding: 8px 12px;
   border: 1px solid rgba(167, 139, 250, 0.3);
   border-radius: 6px;
-  background: ${({ $primary }) => $primary ? '#8b5cf6' : '#1d2232'};
+  background: ${({ $primary }) => ($primary ? '#8b5cf6' : '#1d2232')};
   color: #f8fafc;
   font-size: 14px;
   font-weight: 500;

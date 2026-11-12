@@ -14,6 +14,7 @@ export interface SetlistItem {
   singer?: Singer;
   pureTitle?: string;
   pureAuthor?: string;
+  observations?: string;
 }
 
 export interface Setlist {
@@ -24,4 +25,6 @@ export interface Setlist {
   date?: Date;
   order?: number;
   items: SetlistItem[];
+  groupId?: string | null;
+  group?: { id: string; name: string } | null;
 }

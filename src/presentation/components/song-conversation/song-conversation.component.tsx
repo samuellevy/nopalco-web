@@ -5,10 +5,62 @@ import { SongConversationMessage } from '@/domain/models/song';
 import { AxiosHttpClient } from '@/infra/http/axios-http-client/axios-http-client';
 import { getAccessToken, useSession } from '@/main/config/session';
 import * as S from './song-conversation.styles';
+import { SetlistGroupSelect } from '@/presentation/components/setlist-group-select/setlist-group-select.component';
 
 const httpClient = new AxiosHttpClient();
 
-export const SongConversation = ({ songId }: { songId: string }) => {
+export const SongConversation = ({
+  songId,
+  groupId,
+  groupName,
+}: {
+  songId: string;
+  groupId?: string | null;
+  groupName?: string;
+}) => {
+  const navigate = useNavigate();
+  const { isAuthenticated, account } = useSession();
+  const [selectedGroup, setSelectedGroup] = useState<{ username: string; id: string | null } | null>(null);
+  const activeGroupId = groupId || (selectedGroup?.username === account?.username ? selectedGroup?.id : null);
+
+  if (!isAuthenticated)
+    return (
+      <S.Conversation aria-label="Orientações da música">
+        <S.Action
+          type="button"
+          onClick={() => navigate('/login', { state: { from: window.location.pathname + window.location.search } })}
+        >
+          <LogIn size={16} /> Entrar para acessar orientações
+        </S.Action>
+      </S.Conversation>
+    );
+
+  return (
+    <S.Conversation aria-label="Orientações da música">
+      {groupId ? (
+        <S.Status>{groupName || 'Grupo do setlist'}</S.Status>
+      ) : (
+        <SetlistGroupSelect
+          key={account?.username}
+          label="Grupo das orientações"
+          value={activeGroupId || null}
+          onChange={(id) => setSelectedGroup({ username: account?.username || '', id })}
+        />
+      )}
+      {activeGroupId ? (
+        <GroupConversation
+          key={`${songId}:${activeGroupId}:${account?.username}`}
+          songId={songId}
+          groupId={activeGroupId}
+        />
+      ) : (
+        <S.Status>Nenhum grupo selecionado.</S.Status>
+      )}
+    </S.Conversation>
+  );
+};
+
+const GroupConversation = ({ songId, groupId }: { songId: string; groupId: string }) => {
   const navigate = useNavigate();
   const { isAuthenticated, account } = useSession();
   const [messages, setMessages] = useState<SongConversationMessage[]>([]);
@@ -23,27 +75,33 @@ export const SongConversation = ({ songId }: { songId: string }) => {
     let active = true;
     setLoading(true);
     setLoadError('');
-    httpClient.request({ url: `${window.env.API}/songs/${songId}/conversation`, method: 'get' }).then(
-      (response) => {
-        if (!active) return;
-        if (response.statusCode !== 200 || !Array.isArray(response.body)) {
-          setLoadError('Não foi possível carregar as orientações.');
-        } else {
-          setMessages(response.body);
-        }
-        setLoading(false);
-      },
-      () => {
-        if (active) {
-          setLoadError('Não foi possível carregar as orientações.');
+    httpClient
+      .request({ url: `${window.env.API}/songs/${songId}/conversation`, method: 'get', params: { groupId } })
+      .then(
+        (response) => {
+          if (!active) return;
+          if (response.statusCode !== 200 || !Array.isArray(response.body)) {
+            setLoadError(
+              response.statusCode === 403
+                ? 'Você não participa deste grupo.'
+                : 'Não foi possível carregar as orientações.',
+            );
+          } else {
+            setMessages(response.body.filter((message: SongConversationMessage) => message.groupId === groupId));
+          }
           setLoading(false);
-        }
-      },
-    );
+        },
+        () => {
+          if (active) {
+            setLoadError('Não foi possível carregar as orientações.');
+            setLoading(false);
+          }
+        },
+      );
     return () => {
       active = false;
     };
-  }, [songId, refresh]);
+  }, [songId, groupId, refresh]);
 
   const login = () => navigate('/login', { state: { from: window.location.pathname + window.location.search } });
 
@@ -60,9 +118,9 @@ export const SongConversation = ({ songId }: { songId: string }) => {
       const response = await httpClient.request({
         url: `${window.env.API}/songs/${songId}/conversation`,
         method: 'post',
-        body: { text: text.trim() },
+        body: { text: text.trim(), groupId },
       });
-      if (response.statusCode !== 201) throw new Error('Message not saved');
+      if (response.statusCode !== 201 || response.body?.groupId !== groupId) throw new Error('Message not saved');
       setMessages((current) => [...current, response.body]);
       setText('');
     } catch {
@@ -73,7 +131,7 @@ export const SongConversation = ({ songId }: { songId: string }) => {
   };
 
   return (
-    <S.Conversation aria-label="Orientações da música">
+    <S.History>
       {loading && <S.Status role="status">Carregando orientações...</S.Status>}
       {loadError && (
         <>
@@ -122,6 +180,6 @@ export const SongConversation = ({ songId }: { songId: string }) => {
           <LogIn size={16} /> Entrar para enviar
         </S.Action>
       )}
-    </S.Conversation>
+    </S.History>
   );
 };

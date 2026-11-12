@@ -3,7 +3,7 @@ import { UpdateSongDTO, UpdateSongRequest } from '@/domain/usecases/songs/update
 import { Song } from '@/domain/models';
 
 export class RemoteUpdateSongRequest implements UpdateSongRequest {
-  constructor(private readonly httpClient: HttpClient<any>) { }
+  constructor(private readonly httpClient: HttpClient<any>) {}
 
   async execute(songId: string, songData: Partial<UpdateSongDTO>): Promise<Song | void> {
     const url = `${window.env.API}/songs/${songId}`;
@@ -17,9 +17,10 @@ export class RemoteUpdateSongRequest implements UpdateSongRequest {
       case 200:
         return {
           ...httpResponse.body,
-          content: typeof httpResponse.body?.content === 'string'
-            ? JSON.parse(httpResponse.body.content)
-            : httpResponse.body?.content || [],
+          content:
+            typeof httpResponse.body?.content === 'string'
+              ? JSON.parse(httpResponse.body.content)
+              : httpResponse.body?.content || [],
         };
       case 204:
         return null;

@@ -103,7 +103,11 @@ describe('SetlistPage adding songs', () => {
     await renderSetlist();
     const actions = screen.getByRole('button', { name: 'Buscar músicas' }).parentElement;
 
-    expect(within(actions).getAllByRole('button')).toHaveLength(2);
+    expect(
+      within(actions)
+        .getAllByRole('button')
+        .map((button) => button.getAttribute('title')),
+    ).toEqual(['Tela cheia', 'Buscar músicas', 'Menu do usuário']);
     expect(actions.querySelector('button button')).toBeNull();
   });
 

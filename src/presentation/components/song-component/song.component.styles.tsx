@@ -113,11 +113,9 @@ export const FlexRow = styled.header`
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  @media (min-width: 350px) {
-    gap: 10px;
-    padding: 5rem 1rem;
-    height: 3rem;
-  }
+  gap: 10px;
+  padding: 1.6rem 1rem;
+  height: auto;
 `;
 
 export const MetadataRow = styled(FlexRow)`
@@ -258,14 +256,111 @@ export const CellInputValue = styled(CellValue)`
 `;
 
 export const CellInput = styled.input`
-  color: ${({ theme }) => theme.colors.white};
-  background-color: ${({ theme }) => theme.colors.grayBg};
-  &:focus {
-    outline: ${({ theme }) => theme.colors.primary};
-    background-color: #d0342c;
-  }
   width: 100%;
-  padding: 1rem;
+  min-width: 0;
+  height: 40px;
+  padding: 8px 10px;
+  border: 1px solid rgba(167, 139, 250, 0.3);
+  border-radius: 6px;
+  background: ${COLORS.card};
+  color: ${COLORS.text};
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+
+  &:focus-visible {
+    outline: 2px solid ${COLORS.primaryLight};
+    outline-offset: 2px;
+    background: ${COLORS.cardHover};
+  }
+`;
+export const EditAction = styled.button<{ $variant: 'save' | 'cancel' | 'add' | 'remove' }>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid;
+  cursor: pointer;
+  flex: 0 0 auto;
+  width: auto;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border-color: ${({ $variant }) => ($variant === 'remove' ? 'rgba(248, 113, 113, 0.3)' : 'rgba(167, 139, 250, 0.3)')};
+  background: ${({ $variant }) => ($variant === 'save' ? '#166534' : $variant === 'cancel' ? '#991b1b' : COLORS.card)};
+  color: ${({ $variant }) => ($variant === 'remove' ? '#fca5a5' : COLORS.text)};
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0;
+  box-shadow: none;
+
+  &:hover {
+    filter: brightness(1.15);
+  }
+  &:focus-visible {
+    outline: 2px solid ${COLORS.primaryLight};
+    outline-offset: 2px;
+  }
+`;
+
+export const SectionEditor = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+
+  @media (max-width: 600px) {
+    grid-template-columns: minmax(0, 1fr);
+    button {
+      justify-self: end;
+    }
+  }
+`;
+
+export const ObservationsForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`;
+
+export const ObservationsError = styled.p`
+  color: #fca5a5;
+  font-size: 14px;
+  font-weight: 400;
+`;
+
+export const LyricsEditor = styled.div`
+  width: calc(100% - 3.2rem);
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 1.6rem 0 3.2rem;
+`;
+
+export const LyricsInput = styled.textarea`
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 360px;
+  padding: 16px;
+  border: 1px solid rgba(167, 139, 250, 0.4);
+  border-radius: 6px;
+  background: ${COLORS.card};
+  color: ${COLORS.text};
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.75;
+  letter-spacing: 0;
+  text-align: left;
+  resize: vertical;
+
+  &::placeholder {
+    color: ${COLORS.textSecondary};
+  }
+  &:focus-visible {
+    outline: 2px solid ${COLORS.primaryLight};
+    outline-offset: 2px;
+  }
 `;
 
 export const MetadataInput = styled(CellInput)`
@@ -287,7 +382,7 @@ export const MetadataInput = styled(CellInput)`
   }
 `;
 
-export const MetadataValue = styled(CellValue) <{ $field: 'bpm' | 'rhythm' }>`
+export const MetadataValue = styled(CellValue)<{ $field: 'bpm' | 'rhythm' }>`
   width: ${({ $field }) => ($field === 'bpm' ? '56px' : '96px')};
   height: 34px;
   padding: 0;
@@ -555,9 +650,9 @@ export const BlinkingDiv = styled.div<BlinkingDivProps>`
   animation: ${blink} ${({ bpm }) => calculateDuration(bpm)}s infinite;
 `;
 
-export const RightSideActions = styled.div`
+export const RightSideActions = styled.div<{ $withUserMenu?: boolean }>`
   position: fixed;
-  top: 2rem;
+  top: ${({ $withUserMenu }) => ($withUserMenu ? '72px' : '2rem')};
   right: 2rem;
   gap: 0.5rem;
   display: flex;

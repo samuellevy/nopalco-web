@@ -8,8 +8,21 @@ import { Setlist } from '@/domain/models/setlist';
 import { ModalSongsListComponent } from '@/presentation/components/modal-song-list/modal-song-list.component';
 import { LoadAllSongsRequest } from '@/domain/usecases';
 import FullscreenButtonComponent from '@/presentation/components/fullscreen-button/fullscreen-button.component';
-import { Check, Edit2, GripVertical, MessageCircle, Search, X, LogIn, LogOut } from 'lucide-react';
-import { clearAccount, useSession } from '@/main/config/session';
+import {
+  Check,
+  Edit2,
+  GripVertical,
+  MessageCircle,
+  Search,
+  X,
+  MapPin,
+  CalendarDays,
+  ChevronRight,
+  RotateCcw,
+  Users,
+} from 'lucide-react';
+import { UserMenu } from '@/presentation/components/user-menu/user-menu.component';
+import { useSession } from '@/main/config/session';
 
 type HomeProps = {
   loadAllSetlistsRequest: LoadAllSetlistsRequest;
@@ -18,10 +31,14 @@ type HomeProps = {
 
 export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest, loadAllSongsRequest }) => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useSession();
+  const { isAuthenticated, account } = useSession();
+  const canViewAllSetlists = isAuthenticated && account?.type === 'admin';
   const [loadingData, setLoadingData] = React.useState(true);
   const [setlists, setSetlists] = React.useState<Setlist[]>([]);
   const [modalSongsOpen, setModalSongsOpen] = React.useState(false);
+  const [loadError, setLoadError] = React.useState(false);
+  const [refresh, setRefresh] = React.useState(0);
+  const [showAllSetlists, setShowAllSetlists] = React.useState(false);
 
   const [isEditMode, setIsEditMode] = React.useState(false);
   const [editableItems, setEditableItems] = React.useState<Setlist[]>([]);
@@ -29,17 +46,6 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest, loadAllS
   const [dragOverIndex, setDragOverIndex] = React.useState<number | null>(null);
   // const [showSavedModal, setShowSavedModal] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
-
-  const fetchLoadAllSetlistsRequest = React.useCallback(async () => {
-    setLoadingData(true);
-    try {
-      const loadAllSetlistsRequestResult = await loadAllSetlistsRequest.execute();
-      setSetlists(loadAllSetlistsRequestResult);
-      setLoadingData(false);
-    } catch (error) {
-      throw new Error(error as undefined);
-    }
-  }, [loadAllSetlistsRequest]);
 
   const itemsToRender = React.useMemo(() => {
     return (
@@ -59,11 +65,35 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest, loadAllS
   };
 
   React.useEffect(() => {
-    if (!loadingData) return;
-    if (setlists && setlists.length > 0) return;
-
-    fetchLoadAllSetlistsRequest();
-  }, [fetchLoadAllSetlistsRequest, loadingData, setlists]);
+    let active = true;
+    setSetlists([]);
+    setEditableItems([]);
+    setIsEditMode(false);
+    setLoadError(false);
+    setLoadingData(isAuthenticated);
+    if (!canViewAllSetlists) setShowAllSetlists(false);
+    if (!isAuthenticated) {
+      setShowAllSetlists(false);
+      return;
+    }
+    loadAllSetlistsRequest.execute(canViewAllSetlists && showAllSetlists).then(
+      (result) => {
+        if (active) {
+          setSetlists(result);
+          setLoadingData(false);
+        }
+      },
+      () => {
+        if (active) {
+          setLoadError(true);
+          setLoadingData(false);
+        }
+      },
+    );
+    return () => {
+      active = false;
+    };
+  }, [loadAllSetlistsRequest, isAuthenticated, account?.username, canViewAllSetlists, refresh, showAllSetlists]);
 
   const formatDate = (dateString: any) => {
     if (!dateString) return '';
@@ -135,20 +165,18 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest, loadAllS
   return (
     <S.Container>
       <S.Header>
-        {/* <S.Title>Olá, Samuel!</S.Title> */}
-        <S.Title>&nbsp;</S.Title>
-        <S.UserNavigation>
-          <S.Button
-            title={isAuthenticated ? 'Sair da conta' : 'Login'}
-            onClick={() => (isAuthenticated ? clearAccount() : navigate('/login'))}
-          >
-            {isAuthenticated ? <LogOut size={18} /> : <LogIn size={18} />}
-            {isAuthenticated ? 'Sair da conta' : 'Login'}
-          </S.Button>
+        <S.Title>Setlists</S.Title>
+        <S.UserNavigation aria-label="Ações da home">
           <FullscreenButtonComponent />
-          <S.Button onClick={() => setModalSongsOpen(true)}>
-            <Search />
+          <S.Button
+            type="button"
+            title="Buscar músicas"
+            aria-label="Buscar músicas"
+            onClick={() => setModalSongsOpen(true)}
+          >
+            <Search aria-hidden="true" />
           </S.Button>
+          <UserMenu inline />
         </S.UserNavigation>
 
         <DS.ActionGroup style={{ display: 'none' }}>
@@ -175,36 +203,79 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest, loadAllS
         </DS.ActionGroup>
       </S.Header>
 
-      <DS.SetlistGrid>
-        <DS.CardList>
-          {itemsToRender.map((setlist, index) => (
-            <DS.ItemCard
-              key={setlist.id || index}
-              type="button"
-              onClick={() => !isEditMode && setlist && handleLinkClick(setlist)}
-              draggable={isEditMode}
-              onDragStart={() => isEditMode && handleDragStart(index)}
-              onDragOver={(e) => isEditMode && handleDragOver(index, e)}
-              onDragLeave={handleDragLeave}
-              onDrop={(e) => isEditMode && handleDrop(index, e)}
-              $isDragging={isEditMode && draggedIndex === index}
-              $isDragOver={isEditMode && dragOverIndex === index}
-            >
-              {isEditMode && (
-                <DS.ItemHandle>
-                  <GripVertical size={18} />
-                </DS.ItemHandle>
-              )}
-              <DS.ItemNumber>{String(index + 1).padStart(2, '0')}</DS.ItemNumber>
-              <DS.ItemContent>
-                <DS.ItemName>{setlist.name}</DS.ItemName>
-                {setlist.address || 'sem endereço'} - {formatDate(setlist.date)}
-              </DS.ItemContent>
-            </DS.ItemCard>
-          ))}
-        </DS.CardList>
+      {canViewAllSetlists && (
+        <S.FilterFlag>
+          <input
+            type="checkbox"
+            checked={showAllSetlists}
+            onChange={(event) => setShowAllSetlists(event.target.checked)}
+          />
+          Todos os setlists
+        </S.FilterFlag>
+      )}
+      {!isAuthenticated && <S.Status>Você não está conectado.</S.Status>}
+      {isAuthenticated && loadingData && <S.Status role="status">Carregando setlists...</S.Status>}
+      {isAuthenticated && loadError && (
+        <S.LoadState>
+          <S.Error role="alert">Não foi possível carregar os setlists.</S.Error>
+          <S.Button type="button" title="Tentar novamente" onClick={() => setRefresh((current) => current + 1)}>
+            <RotateCcw size={18} /> Tentar novamente
+          </S.Button>
+        </S.LoadState>
+      )}
+      {isAuthenticated && !loadingData && !loadError && !itemsToRender.length && (
+        <S.Status>{showAllSetlists ? 'Nenhum setlist.' : 'Nenhum setlist nos seus grupos.'}</S.Status>
+      )}
 
-        {/* <DS.Sidebar>
+      {isAuthenticated && (
+        <S.SetlistList>
+          <DS.CardList>
+            {itemsToRender.map((setlist, index) => (
+              <S.SetlistCard
+                key={setlist.id || index}
+                type="button"
+                onClick={() => !isEditMode && setlist && handleLinkClick(setlist)}
+                draggable={isEditMode}
+                onDragStart={() => isEditMode && handleDragStart(index)}
+                onDragOver={(e) => isEditMode && handleDragOver(index, e)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => isEditMode && handleDrop(index, e)}
+                $isDragging={isEditMode && draggedIndex === index}
+                $isDragOver={isEditMode && dragOverIndex === index}
+              >
+                {isEditMode && (
+                  <DS.ItemHandle>
+                    <GripVertical size={18} />
+                  </DS.ItemHandle>
+                )}
+                <S.SetlistNumber>{String(index + 1).padStart(2, '0')}</S.SetlistNumber>
+                <DS.ItemContent>
+                  <S.SetlistName>{setlist.name}</S.SetlistName>
+                  <S.EventMeta>
+                    {setlist.group && (
+                      <S.MetaEntry>
+                        <Users size={14} aria-hidden="true" />
+                        {setlist.group.name}
+                      </S.MetaEntry>
+                    )}
+                    <S.MetaEntry>
+                      <MapPin size={14} aria-hidden="true" />
+                      {setlist.address || 'Sem endereço'}
+                    </S.MetaEntry>
+                    {setlist.date && (
+                      <S.MetaEntry>
+                        <CalendarDays size={14} aria-hidden="true" />
+                        <time>{formatDate(setlist.date)}</time>
+                      </S.MetaEntry>
+                    )}
+                  </S.EventMeta>
+                </DS.ItemContent>
+                <ChevronRight size={20} aria-hidden="true" />
+              </S.SetlistCard>
+            ))}
+          </DS.CardList>
+
+          {/* <DS.Sidebar>
           <DS.InfoCard>
             <DS.CardTitle>Informações do Show</DS.CardTitle>
             <DS.InfoList>
@@ -257,7 +328,8 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest, loadAllS
             </DS.ToolList>
           </DS.ActionCard>
         </DS.Sidebar> */}
-      </DS.SetlistGrid>
+        </S.SetlistList>
+      )}
 
       <ModalSongsListComponent
         loadAllSongsRequest={loadAllSongsRequest}

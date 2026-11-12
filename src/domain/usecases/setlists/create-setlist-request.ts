@@ -14,6 +14,7 @@ export interface CreateSetlistDTO {
   items: CreateSetlistSongDTO[];
   address?: string;
   date?: Date;
+  groupId?: string | null;
 }
 
 export interface CreateSetlistRequest {

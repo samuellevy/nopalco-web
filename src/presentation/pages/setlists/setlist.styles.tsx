@@ -107,6 +107,37 @@ export const SetlistNavigation = styled(BottomNavigation)`
     flex: 1 0 64px;
     max-width: none;
     white-space: nowrap;
+
+    &[aria-pressed='true'] {
+      background: rgba(167, 139, 250, 0.18);
+      color: #c4b5fd;
+    }
+  }
+
+  @media (max-width: 600px) {
+    padding-left: 4px;
+    padding-right: 4px;
+
+    > button {
+      flex: 1 1 0;
+      min-width: 0;
+      padding: 4px 2px;
+      gap: 2px;
+      font-size: 11px;
+
+      svg {
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
+      }
+
+      span {
+        max-width: 100%;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        line-height: 1.15;
+      }
+    }
   }
 `;
 
@@ -211,6 +242,13 @@ export const TitleGroup = styled.div`
   overflow-wrap: anywhere;
 `;
 
+export const GroupName = styled.p`
+  color: #c4b5fd;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+`;
+
 export const SetlistTitle = styled.h1`
   margin: 0;
   color: #fff;
@@ -236,16 +274,16 @@ export const ActionGroup = styled.div`
     flex-wrap: nowrap;
     gap: 6px;
     min-width: 0;
-    overflow-x: auto;
+    overflow: visible;
 
     > button,
     > div {
       display: inline-flex;
-      flex: 0 0 36px;
+      flex: 0 0 40px;
       align-items: center;
       justify-content: center;
-      width: 36px;
-      height: 36px;
+      width: 40px;
+      height: 40px;
       padding: 0;
       border-radius: 8px;
 

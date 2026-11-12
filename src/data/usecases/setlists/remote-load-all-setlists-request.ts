@@ -5,11 +5,12 @@ import { LoadAllSetlistsRequest } from '@/domain/usecases/setlists/load-all-setl
 export class RemoteLoadAllSetlistsRequest implements LoadAllSetlistsRequest {
   constructor(private readonly httpClient: HttpClient<Setlist[]>) {}
 
-  async execute(): Promise<Setlist[]> {
+  async execute(all = false): Promise<Setlist[]> {
     const url = `${window.env.API}/setlists`;
     const httpResponse = await this.httpClient.request({
       url,
       method: 'get',
+      ...(all ? { params: { all: true } } : {}),
     });
 
     switch (httpResponse.statusCode) {

@@ -13,7 +13,6 @@ import {
   Upload,
   Download,
   Printer,
-  DoorOpen,
   Search,
   Home,
   ListMusic,
@@ -21,7 +20,8 @@ import {
   ChevronRight,
   Plus,
   Copy,
-  LogIn,
+  Text,
+  Wand2,
 } from 'lucide-react';
 import { LoadAllSongsRequest } from '@/domain/usecases';
 import { ModalSongsListComponent } from '@/presentation/components/modal-song-list/modal-song-list.component';
@@ -30,9 +30,13 @@ import { SongComponent } from '@/presentation/components/song-component/song.com
 import { Song } from '@/domain/models';
 import { UpdateSongRequest } from '@/domain/usecases/songs/update-song-request';
 import FullscreenButtonComponent from '@/presentation/components/fullscreen-button/fullscreen-button.component';
-import { BottomNavigation, NavigationButton } from '@/presentation/components/song-component/song.component.styles';
+import { NavigationButton } from '@/presentation/components/song-component/song.component.styles';
 import { CreateSetlistRequest } from '@/domain/usecases/setlists/create-setlist-request';
 import { getAccessToken, useSession } from '@/main/config/session';
+import { UserMenu } from '@/presentation/components/user-menu/user-menu.component';
+import { SetlistObservations } from '@/presentation/components/setlist-observations/setlist-observations.component';
+import { saveSetlistObservations } from '@/data/services/setlist-observations-service';
+import { SetlistGroupSelect } from '@/presentation/components/setlist-group-select/setlist-group-select.component';
 
 type SetlistProps = {
   createSetlistRequest: CreateSetlistRequest;
@@ -71,6 +75,7 @@ export const SetlistPage: React.FC<SetlistProps> = ({
   const [setlist, setSetlist] = React.useState<Setlist>({} as Setlist);
   const [isEditMode, setIsEditMode] = React.useState(false);
   const [editableItems, setEditableItems] = React.useState<Setlist['items']>([]);
+  const [editableGroupId, setEditableGroupId] = React.useState<string | null>(null);
   const [draggedIndex, setDraggedIndex] = React.useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = React.useState<number | null>(null);
   const [showSavedModal, setShowSavedModal] = React.useState(false);
@@ -83,11 +88,29 @@ export const SetlistPage: React.FC<SetlistProps> = ({
     description: '',
     address: '',
     date: '',
+    groupId: '',
   });
 
   const [currentSongIndex, setCurrentSongIndex] = React.useState<number | null>(null);
   const [preloadedIndices, setPreloadedIndices] = React.useState<Set<number>>(new Set());
   const [lastLoadedIndex, setLastLoadedIndex] = React.useState<number | null>(null);
+  const [lyricsMode, setLyricsMode] = React.useState(false);
+  const [observationsMode, setObservationsMode] = React.useState(false);
+
+  const changeLyricsMode = (active: React.SetStateAction<boolean>) => {
+    setObservationsMode(false);
+    setLyricsMode(active);
+  };
+
+  const handleSaveObservations = async (itemId: string, value: string) => {
+    if (!setlistId) throw new Error('Missing setlist');
+    const saved = await saveSetlistObservations(setlistId, itemId, value);
+    setSetlist((current) => ({
+      ...current,
+      items: current.items.map((item) => (item.id === itemId ? { ...item, observations: saved } : item)),
+    }));
+  };
+  const [editingSongIndex, setEditingSongIndex] = React.useState<number | null>(null);
 
   const [showNewMomentoModal, setShowNewMomentoModal] = React.useState(false);
   const [newMomentoTitle, setNewMomentoTitle] = React.useState('');
@@ -146,6 +169,7 @@ export const SetlistPage: React.FC<SetlistProps> = ({
       description: setlist.description || '',
       address: setlist.address || '',
       date: localDateTime,
+      groupId: setlist.groupId || setlist.group?.id || '',
     });
     setDuplicateError('');
     setDuplicateOpen(true);
@@ -171,6 +195,7 @@ export const SetlistPage: React.FC<SetlistProps> = ({
         description: duplicateDetails.description.trim(),
         address: duplicateDetails.address.trim(),
         date: duplicateDetails.date ? new Date(duplicateDetails.date) : undefined,
+        groupId: duplicateDetails.groupId || null,
         items: (setlist.items || [])
           .slice()
           .sort((first, second) => first.order - second.order)
@@ -204,6 +229,7 @@ export const SetlistPage: React.FC<SetlistProps> = ({
       return;
     }
     setEditableItems([...setlist.items]);
+    setEditableGroupId(setlist.groupId || setlist.group?.id || null);
     setIsEditMode(true);
   };
 
@@ -431,7 +457,7 @@ export const SetlistPage: React.FC<SetlistProps> = ({
         order: index + 1,
       }));
 
-      await updateSetlistRequest.execute(setlistId, { ...setlist, items: updatedItems });
+      await updateSetlistRequest.execute(setlistId, { ...setlist, groupId: editableGroupId, items: updatedItems });
 
       setShowSavedModal(true);
       setTimeout(async () => {
@@ -598,8 +624,12 @@ export const SetlistPage: React.FC<SetlistProps> = ({
               <S.TitleGroup>
                 <S.SetlistTitle>{setlist.name}</S.SetlistTitle>
                 <S.SetlistSubtitle>{setlist.description}</S.SetlistSubtitle>
+                <S.GroupName>{setlist.group?.name || 'Sem grupo'}</S.GroupName>
               </S.TitleGroup>
               <S.ActionGroup>
+                <S.IconButton as="div">
+                  <FullscreenButtonComponent />
+                </S.IconButton>
                 <S.IconButton
                   title="Buscar músicas"
                   aria-label="Buscar músicas"
@@ -607,11 +637,18 @@ export const SetlistPage: React.FC<SetlistProps> = ({
                 >
                   <Search size={18} />
                 </S.IconButton>
-                <S.IconButton as="div">
-                  <FullscreenButtonComponent />
-                </S.IconButton>
+                <UserMenu inline />
               </S.ActionGroup>
             </S.PageHeader>
+
+            {isEditMode && (
+              <SetlistGroupSelect
+                value={editableGroupId}
+                currentName={setlist.group?.name}
+                disabled={isSaving}
+                onChange={setEditableGroupId}
+              />
+            )}
 
             <S.SetlistGrid>
               <S.CardList>
@@ -799,13 +836,18 @@ export const SetlistPage: React.FC<SetlistProps> = ({
             >
               {itemsToRender[currentSongIndex].song ? (
                 <SongComponent
-                  data={
-                    {
-                      ...itemsToRender[currentSongIndex].song,
-                      content: itemsToRender[currentSongIndex].song.content,
-                    } as Song
-                  }
+                  data={itemsToRender[currentSongIndex].song}
                   dataKey={itemsToRender[currentSongIndex].key ?? null}
+                  conversationGroupId={setlist.groupId || setlist.group?.id || null}
+                  conversationGroupName={setlist.group?.name}
+                  lyricsMode={lyricsMode}
+                  onLyricsModeChange={changeLyricsMode}
+                  observationsMode={observationsMode}
+                  onObservationsModeChange={setObservationsMode}
+                  observations={itemsToRender[currentSongIndex].observations}
+                  onSaveObservations={(value) => handleSaveObservations(itemsToRender[currentSongIndex].id, value)}
+                  editMode={editingSongIndex === currentSongIndex}
+                  onEditModeChange={(active) => setEditingSongIndex(active ? currentSongIndex : null)}
                   setlistSongList={setlist.items}
                   handleSelectSetlistItem={handleLinkClick}
                   loadAllSongsRequest={loadAllSongsRequest}
@@ -830,7 +872,13 @@ export const SetlistPage: React.FC<SetlistProps> = ({
                   <div style={{ fontSize: '2rem', fontWeight: 'bold', textAlign: 'left', marginBottom: '30px' }}>
                     {itemsToRender[currentSongIndex]?.pureTitle || 'Sem título'}
                   </div>
-                  <div style={{ display: 'flex', gap: '10px' }}>
+                  {observationsMode && (
+                    <SetlistObservations
+                      observations={itemsToRender[currentSongIndex].observations}
+                      onSave={(value) => handleSaveObservations(itemsToRender[currentSongIndex].id, value)}
+                    />
+                  )}
+                  <div style={{ display: observationsMode ? 'none' : 'flex', gap: '10px' }}>
                     {currentSongIndex > 0 && (
                       <button
                         onClick={() => handlePreviousSongButton(currentSongIndex)}
@@ -915,14 +963,18 @@ export const SetlistPage: React.FC<SetlistProps> = ({
                 >
                   {item?.song ? (
                     <SongComponent
-                      data={
-                        {
-                          ...item.song,
-                          content:
-                            typeof item.song.content === 'string' ? JSON.parse(item.song.content) : item.song.content,
-                        } as Song
-                      }
+                      data={item.song}
                       dataKey={item.key ?? null}
+                      conversationGroupId={setlist.groupId || setlist.group?.id || null}
+                      conversationGroupName={setlist.group?.name}
+                      lyricsMode={lyricsMode}
+                      onLyricsModeChange={changeLyricsMode}
+                      observationsMode={observationsMode}
+                      onObservationsModeChange={setObservationsMode}
+                      observations={item.observations}
+                      onSaveObservations={(value) => handleSaveObservations(item.id, value)}
+                      editMode={editingSongIndex === index}
+                      onEditModeChange={(active) => setEditingSongIndex(active ? index : null)}
                       setlistSongList={setlist.items}
                       handleSelectSetlistItem={handleLinkClick}
                       loadAllSongsRequest={loadAllSongsRequest}
@@ -947,6 +999,12 @@ export const SetlistPage: React.FC<SetlistProps> = ({
                       <div style={{ fontSize: '2rem', fontWeight: 'bold', textAlign: 'left', marginBottom: '30px' }}>
                         {item?.pureTitle || 'Sem título'}
                       </div>
+                      {observationsMode && (
+                        <SetlistObservations
+                          observations={item.observations}
+                          onSave={(value) => handleSaveObservations(item.id, value)}
+                        />
+                      )}
                     </div>
                   )}
                 </div>
@@ -1022,12 +1080,6 @@ export const SetlistPage: React.FC<SetlistProps> = ({
                 </S.EditNavigationButton>
               </>
             ))}
-          {!isAuthenticated && (
-            <NavigationButton type="button" onClick={login} title="Login">
-              <LogIn size={22} aria-hidden="true" />
-              <span>Login</span>
-            </NavigationButton>
-          )}
         </S.SetlistNavigation>
       )}
 
@@ -1070,6 +1122,13 @@ export const SetlistPage: React.FC<SetlistProps> = ({
           >
             <S.DuplicateTitle id="duplicate-setlist-title">Duplicar setlist</S.DuplicateTitle>
             <S.DuplicateFields disabled={isDuplicating}>
+              <SetlistGroupSelect
+                label="Grupo do novo setlist"
+                value={duplicateDetails.groupId || null}
+                currentName={setlist.group?.name}
+                disabled={isDuplicating}
+                onChange={(groupId) => setDuplicateDetails({ ...duplicateDetails, groupId: groupId || '' })}
+              />
               <S.DuplicateField>
                 Nome
                 <input
@@ -1240,7 +1299,7 @@ export const SetlistPage: React.FC<SetlistProps> = ({
       )}
 
       {currentSongIndex !== null && (
-        <BottomNavigation aria-label="Navegacao das musicas do setlist">
+        <S.SetlistNavigation aria-label="Navegacao das musicas do setlist">
           <NavigationButton type="button" onClick={() => backToSetlist()}>
             <ListMusic size={22} aria-hidden="true" />
             <span>Setlist</span>
@@ -1263,11 +1322,28 @@ export const SetlistPage: React.FC<SetlistProps> = ({
               <span>Carregar</span>
             </NavigationButton>
           )}
-          <NavigationButton type="button" onClick={() => handleBackToHome()}>
-            <DoorOpen size={22} aria-hidden="true" />
-            <span>Sair</span>
+          <NavigationButton
+            type="button"
+            title="Letras"
+            aria-pressed={lyricsMode}
+            onClick={() => changeLyricsMode((active) => !active)}
+          >
+            <Text size={22} aria-hidden="true" />
+            <span>Letras</span>
           </NavigationButton>
-        </BottomNavigation>
+          <NavigationButton
+            type="button"
+            title="Observações"
+            aria-pressed={observationsMode}
+            onClick={() => {
+              setLyricsMode(false);
+              setObservationsMode((active) => !active);
+            }}
+          >
+            <Wand2 size={22} aria-hidden="true" />
+            <span>Obs</span>
+          </NavigationButton>
+        </S.SetlistNavigation>
       )}
     </>
   );

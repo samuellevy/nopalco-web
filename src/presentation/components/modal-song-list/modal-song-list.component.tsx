@@ -35,12 +35,15 @@ export const ModalSongsListComponent: React.FC<ModalSongsProps> = ({
 
   const fetchLoadAllSongsRequest = React.useCallback(async () => {
     if (setlistItems) {
-      const songs = setlistItems.slice().sort((first, second) => first.order - second.order).map((item) => ({
-        ...item.song,
-        id: item.id,
-        name: item.pureTitle || item.song?.name || 'Sem título',
-        author: [item.singer?.name || item.song?.author, item.key].filter(Boolean).join(' - '),
-      }));
+      const songs = setlistItems
+        .slice()
+        .sort((first, second) => first.order - second.order)
+        .map((item) => ({
+          ...item.song,
+          id: item.id,
+          name: item.pureTitle || item.song?.name || 'Sem título',
+          author: [item.singer?.name || item.song?.author, item.key].filter(Boolean).join(' - '),
+        }));
       setSongList(songs);
       setSongOriginalList(songs);
       setLoadingData(false);
@@ -62,8 +65,8 @@ export const ModalSongsListComponent: React.FC<ModalSongsProps> = ({
     const { value } = e.target;
     setSearchText(value);
     const query = normalizeSearchText(value);
-    const filteredSongList = originalList.filter((song) =>
-      normalizeSearchText(song.name).includes(query) || normalizeSearchText(song.author).includes(query),
+    const filteredSongList = originalList.filter(
+      (song) => normalizeSearchText(song.name).includes(query) || normalizeSearchText(song.author).includes(query),
     );
     setSongList(filteredSongList);
   };
@@ -100,7 +103,9 @@ export const ModalSongsListComponent: React.FC<ModalSongsProps> = ({
       role="dialog"
       aria-modal={modalSongsOpen}
       aria-hidden={!modalSongsOpen}
-      aria-label={ariaLabel || (onSelectSong ? 'Adicionar música ao setlist' : setlistItems ? 'Setlist atual' : 'Buscar músicas')}
+      aria-label={
+        ariaLabel || (onSelectSong ? 'Adicionar música ao setlist' : setlistItems ? 'Setlist atual' : 'Buscar músicas')
+      }
     >
       <S.ModalSongListContent>
         <S.ModalSongListHeader>
@@ -139,7 +144,7 @@ export const ModalSongsListComponent: React.FC<ModalSongsProps> = ({
               <SongList.Badge
                 key={`${song.id}-${key}`}
                 $variant="darkGray"
-                onClick={() => onSelectSong ? onSelectSong(song) : handleClickSong(song.id)}
+                onClick={() => (onSelectSong ? onSelectSong(song) : handleClickSong(song.id))}
               >
                 <SongList.ASide>
                   <SongList.Thumbnail>
@@ -149,9 +154,7 @@ export const ModalSongsListComponent: React.FC<ModalSongsProps> = ({
                 <SongList.ASide>
                   <SongList.BadgeTitle>{song.name}</SongList.BadgeTitle>
                   <SongList.BadgeSubTitle>
-                    {[song.author, !setlistItems ? song.key : null]
-                      .filter(Boolean)
-                      .join(' - ')}
+                    {[song.author, !setlistItems ? song.key : null].filter(Boolean).join(' - ')}
                   </SongList.BadgeSubTitle>
                 </SongList.ASide>
               </SongList.Badge>
