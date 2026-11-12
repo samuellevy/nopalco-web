@@ -21,4 +21,13 @@ export interface Song {
   lyrics?: string;
   new?: boolean;
   singers?: Singer[];
+  conversation?: SongConversationMessage[];
+}
+
+export interface SongConversationMessage {
+  id: string;
+  userId: string;
+  author: string;
+  text: string;
+  createdAt: string;
 }

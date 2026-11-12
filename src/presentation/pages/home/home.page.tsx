@@ -8,7 +8,8 @@ import { Setlist } from '@/domain/models/setlist';
 import { ModalSongsListComponent } from '@/presentation/components/modal-song-list/modal-song-list.component';
 import { LoadAllSongsRequest } from '@/domain/usecases';
 import FullscreenButtonComponent from '@/presentation/components/fullscreen-button/fullscreen-button.component';
-import { Check, Edit2, GripVertical, MessageCircle, Search, X } from 'lucide-react';
+import { Check, Edit2, GripVertical, MessageCircle, Search, X, LogIn, LogOut } from 'lucide-react';
+import { clearAccount, useSession } from '@/main/config/session';
 
 type HomeProps = {
   loadAllSetlistsRequest: LoadAllSetlistsRequest;
@@ -17,6 +18,7 @@ type HomeProps = {
 
 export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest, loadAllSongsRequest }) => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useSession();
   const [loadingData, setLoadingData] = React.useState(true);
   const [setlists, setSetlists] = React.useState<Setlist[]>([]);
   const [modalSongsOpen, setModalSongsOpen] = React.useState(false);
@@ -136,6 +138,13 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest, loadAllS
         {/* <S.Title>Olá, Samuel!</S.Title> */}
         <S.Title>&nbsp;</S.Title>
         <S.UserNavigation>
+          <S.Button
+            title={isAuthenticated ? 'Sair da conta' : 'Login'}
+            onClick={() => (isAuthenticated ? clearAccount() : navigate('/login'))}
+          >
+            {isAuthenticated ? <LogOut size={18} /> : <LogIn size={18} />}
+            {isAuthenticated ? 'Sair da conta' : 'Login'}
+          </S.Button>
           <FullscreenButtonComponent />
           <S.Button onClick={() => setModalSongsOpen(true)}>
             <Search />

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Eye, EyeOff, Music } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { saveAccount } from '@/main/config/session';
 
 import * as S from './login.styles';
 import FullscreenButtonComponent from '@/presentation/components/fullscreen-button/fullscreen-button.component';
@@ -10,6 +11,7 @@ import { InvalidCredentialsError } from '@/domain/errors';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [username, setUsername] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [remember, setRemember] = React.useState(true);
@@ -31,8 +33,11 @@ export const LoginPage: React.FC = () => {
     try {
       const auth = new RemoteAuthentication(`${window.env.API}/auth/login`, new AxiosHttpClient());
       const account = await auth.auth({ username, password });
-      localStorage.setItem('account', JSON.stringify({ ...account, remember }));
-      navigate('/');
+      saveAccount(account, remember);
+      const from = (location.state as { from?: string } | null)?.from;
+      navigate(from?.startsWith('/') && !from.startsWith('//') && !from.startsWith('/login') ? from : '/', {
+        replace: true,
+      });
     } catch (error) {
       if (error instanceof InvalidCredentialsError) {
         setError('Usuário ou senha inválidos');
@@ -54,7 +59,7 @@ export const LoginPage: React.FC = () => {
           <Music size={28} />
         </S.IconWrapper>
         <S.Title>Bem-vindo de volta!</S.Title>
-        <S.Subtitle>Faça login para acessar seus shows</S.Subtitle>
+        <S.Subtitle>Entre na sua conta</S.Subtitle>
 
         <S.Form onSubmit={handleLogin}>
           <S.Field>

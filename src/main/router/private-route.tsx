@@ -1,7 +1,12 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { useSession } from '@/main/config/session';
 
 export const PrivateRoute: React.FC = () => {
-  // const isAuthenticated = !!localStorage.getItem('account');
-  const isAuthenticated = true; // TODO: Implement admin authentication check
-  return isAuthenticated ? <Outlet /> : <Navigate to="/login" />;
+  const { isAuthenticated } = useSession();
+  const location = useLocation();
+  return isAuthenticated ? (
+    <Outlet />
+  ) : (
+    <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />
+  );
 };

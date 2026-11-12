@@ -4,7 +4,25 @@ import * as S from './setlist.styles';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Setlist, SetlistItem } from '@/domain/models/setlist';
 import { LoadSetlistRequest } from '@/domain/usecases/setlists/load-setlist-request';
-import { MessageCircle, Edit2, Check, X, GripVertical, Upload, Download, Printer, DoorOpen, Search, Home, ListMusic, ChevronLeft, ChevronRight, Plus, Copy } from 'lucide-react';
+import {
+  MessageCircle,
+  Edit2,
+  Check,
+  X,
+  GripVertical,
+  Upload,
+  Download,
+  Printer,
+  DoorOpen,
+  Search,
+  Home,
+  ListMusic,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Copy,
+  LogIn,
+} from 'lucide-react';
 import { LoadAllSongsRequest } from '@/domain/usecases';
 import { ModalSongsListComponent } from '@/presentation/components/modal-song-list/modal-song-list.component';
 import { UpdateSetlistRequest } from '@/domain/usecases/setlists/update-setlist-request';
@@ -14,6 +32,7 @@ import { UpdateSongRequest } from '@/domain/usecases/songs/update-song-request';
 import FullscreenButtonComponent from '@/presentation/components/fullscreen-button/fullscreen-button.component';
 import { BottomNavigation, NavigationButton } from '@/presentation/components/song-component/song.component.styles';
 import { CreateSetlistRequest } from '@/domain/usecases/setlists/create-setlist-request';
+import { getAccessToken, useSession } from '@/main/config/session';
 
 type SetlistProps = {
   createSetlistRequest: CreateSetlistRequest;
@@ -31,6 +50,8 @@ export const SetlistPage: React.FC<SetlistProps> = ({
   updateSongRequest,
 }) => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useSession();
+  const login = () => navigate('/login', { state: { from: window.location.pathname + window.location.search } });
   const { setlistId } = useParams<{ setlistId: string }>();
   const [searchParams] = useSearchParams();
   const position = searchParams.get('position') || null;
@@ -41,7 +62,11 @@ export const SetlistPage: React.FC<SetlistProps> = ({
   const [replacingItemId, setReplacingItemId] = React.useState<string | null>(null);
   const lastItemTap = React.useRef<{ id: string; time: number } | null>(null);
   const itemTouch = React.useRef<{
-    id: string; x: number; y: number; time: number; moved: boolean;
+    id: string;
+    x: number;
+    y: number;
+    time: number;
+    moved: boolean;
   } | null>(null);
   const [setlist, setSetlist] = React.useState<Setlist>({} as Setlist);
   const [isEditMode, setIsEditMode] = React.useState(false);
@@ -54,7 +79,10 @@ export const SetlistPage: React.FC<SetlistProps> = ({
   const [isDuplicating, setIsDuplicating] = React.useState(false);
   const [duplicateError, setDuplicateError] = React.useState('');
   const [duplicateDetails, setDuplicateDetails] = React.useState({
-    name: '', description: '', address: '', date: '',
+    name: '',
+    description: '',
+    address: '',
+    date: '',
   });
 
   const [currentSongIndex, setCurrentSongIndex] = React.useState<number | null>(null);
@@ -95,8 +123,9 @@ export const SetlistPage: React.FC<SetlistProps> = ({
       ?.sort((a, b) => a.order - b.order)
       .forEach((item, index) => {
         if (item.song) {
-          text += `${index + 1}. ${item.pureTitle ? item.pureTitle : item.song.name} - ${item.song.author} [${item.singer?.name || ''
-            }${item.singer?.name ? ' ' : ''}${item.key}]\n`;
+          text += `${index + 1}. ${item.pureTitle ? item.pureTitle : item.song.name} - ${item.song.author} [${
+            item.singer?.name || ''
+          }${item.singer?.name ? ' ' : ''}${item.key}]\n`;
         } else {
           text += `${index + 1}. ${item.pureTitle} `;
           text += `[${item.singer?.name || ''} ${item.key}]\n`;
@@ -106,6 +135,10 @@ export const SetlistPage: React.FC<SetlistProps> = ({
   };
 
   const handleOpenDuplicate = () => {
+    if (!getAccessToken()) {
+      login();
+      return;
+    }
     const now = new Date();
     const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
     setDuplicateDetails({
@@ -120,6 +153,10 @@ export const SetlistPage: React.FC<SetlistProps> = ({
 
   const handleDuplicateSetlist = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!getAccessToken()) {
+      login();
+      return;
+    }
     if (isDuplicating) return;
     if (!duplicateDetails.name.trim()) {
       setDuplicateError('Informe o nome do novo setlist.');
@@ -134,7 +171,9 @@ export const SetlistPage: React.FC<SetlistProps> = ({
         description: duplicateDetails.description.trim(),
         address: duplicateDetails.address.trim(),
         date: duplicateDetails.date ? new Date(duplicateDetails.date) : undefined,
-        items: (setlist.items || []).slice().sort((first, second) => first.order - second.order)
+        items: (setlist.items || [])
+          .slice()
+          .sort((first, second) => first.order - second.order)
           .map((item, index) => ({
             pureTitle: item.pureTitle || item.song?.name || '',
             songId: item.song?.id || null,
@@ -160,6 +199,10 @@ export const SetlistPage: React.FC<SetlistProps> = ({
   };
 
   const handleEditMode = () => {
+    if (!getAccessToken()) {
+      login();
+      return;
+    }
     setEditableItems([...setlist.items]);
     setIsEditMode(true);
   };
@@ -174,21 +217,32 @@ export const SetlistPage: React.FC<SetlistProps> = ({
   };
 
   const handleAddSong = (song: Song) => {
-    setEditableItems((items) => replacingItemId ? items.map((item) => item.id === replacingItemId ? {
-      ...item,
-      pureTitle: song.name,
-      pureAuthor: song.author,
-      song,
-      key: song.key || '',
-      singer: undefined,
-    } : item) : [...items, {
-      id: `song_${Date.now()}_${items.length}`,
-      pureTitle: song.name,
-      song,
-      key: song.key || '',
-      singer: undefined,
-      order: items.length + 1,
-    }]);
+    setEditableItems((items) =>
+      replacingItemId
+        ? items.map((item) =>
+            item.id === replacingItemId
+              ? {
+                  ...item,
+                  pureTitle: song.name,
+                  pureAuthor: song.author,
+                  song,
+                  key: song.key || '',
+                  singer: undefined,
+                }
+              : item,
+          )
+        : [
+            ...items,
+            {
+              id: `song_${Date.now()}_${items.length}`,
+              pureTitle: song.name,
+              song,
+              key: song.key || '',
+              singer: undefined,
+              order: items.length + 1,
+            },
+          ],
+    );
     setModalAddSongsOpen(false);
     setReplacingItemId(null);
   };
@@ -217,19 +271,20 @@ export const SetlistPage: React.FC<SetlistProps> = ({
 
         const reorderedItems = [...items];
         [reorderedItems[selectedIndex], reorderedItems[targetIndex]] = [
-          reorderedItems[targetIndex], reorderedItems[selectedIndex],
+          reorderedItems[targetIndex],
+          reorderedItems[selectedIndex],
         ];
         return reorderedItems;
       });
       setReplacingItemId(null);
       setModalAddSongsOpen(false);
-    } else if (item.song) {
+    } else {
       setReplacingItemId(item.id);
     }
   };
 
   const handleEditableItemDoubleClick = (item: SetlistItem) => {
-    if (isSaving || !item.song) return;
+    if (isSaving) return;
     setReplacingItemId(item.id);
     setModalAddSongsOpen(true);
   };
@@ -258,8 +313,13 @@ export const SetlistPage: React.FC<SetlistProps> = ({
     if (!isEditMode || isSaving || !start || start.id !== item.id) return;
     const touch = event.changedTouches[0];
     const now = Date.now();
-    if (!touch || start.moved || now - start.time > 500 ||
-      Math.abs(touch.clientX - start.x) > 10 || Math.abs(touch.clientY - start.y) > 10) {
+    if (
+      !touch ||
+      start.moved ||
+      now - start.time > 500 ||
+      Math.abs(touch.clientX - start.x) > 10 ||
+      Math.abs(touch.clientY - start.y) > 10
+    ) {
       lastItemTap.current = null;
       return;
     }
@@ -352,6 +412,10 @@ export const SetlistPage: React.FC<SetlistProps> = ({
   };
 
   const handleSaveSetlist = async () => {
+    if (!getAccessToken()) {
+      login();
+      return;
+    }
     if (!setlistId || !updateSetlistRequest) {
       return;
     }
@@ -448,10 +512,18 @@ export const SetlistPage: React.FC<SetlistProps> = ({
         }
       }
     });
-
   }, [fetchLoadSetlistsRequest, position]);
 
   React.useEffect(() => {
+    if (!isAuthenticated) {
+      setIsEditMode(false);
+      setDuplicateOpen(false);
+      setModalAddSongsOpen(false);
+      setReplacingItemId(null);
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
     if (setlist && setlist.name) {
       document.title = `${setlist.name} - NoPalco`;
     }
@@ -528,7 +600,11 @@ export const SetlistPage: React.FC<SetlistProps> = ({
                 <S.SetlistSubtitle>{setlist.description}</S.SetlistSubtitle>
               </S.TitleGroup>
               <S.ActionGroup>
-                <S.IconButton title="Buscar músicas" aria-label="Buscar músicas" onClick={() => setModalSongsOpen(true)}>
+                <S.IconButton
+                  title="Buscar músicas"
+                  aria-label="Buscar músicas"
+                  onClick={() => setModalSongsOpen(true)}
+                >
                   <Search size={18} />
                 </S.IconButton>
                 <S.IconButton as="div">
@@ -547,7 +623,7 @@ export const SetlistPage: React.FC<SetlistProps> = ({
                       onClick={(event) => {
                         if (!isEditMode) {
                           handleLinkClick(item);
-                        } else if (event.detail < 2) {
+                        } else if (event.detail < 2 || replacingItemId !== item.id) {
                           handleEditableItemClick(item);
                         }
                       }}
@@ -560,8 +636,6 @@ export const SetlistPage: React.FC<SetlistProps> = ({
                         lastItemTap.current = null;
                       }}
                       aria-pressed={isEditMode ? replacingItemId === item.id : undefined}
-                      draggable={isEditMode}
-                      onDragStart={() => isEditMode && handleDragStart(index)}
                       onDragOver={(e) => isEditMode && handleDragOver(index, e)}
                       onDragLeave={handleDragLeave}
                       onDrop={(e) => isEditMode && handleDrop(index, e)}
@@ -573,6 +647,16 @@ export const SetlistPage: React.FC<SetlistProps> = ({
                       <S.ItemNumber>
                         {isEditMode && (
                           <S.ItemHandle
+                            draggable={!isSaving}
+                            title="Arrastar para reordenar"
+                            onDragStart={(event) => {
+                              event.stopPropagation();
+                              handleDragStart(index);
+                            }}
+                            onDragEnd={() => {
+                              setDraggedIndex(null);
+                              setDragOverIndex(null);
+                            }}
                             onClick={(event) => event.stopPropagation()}
                             onDoubleClick={(event) => event.stopPropagation()}
                             onTouchStart={(event) => event.stopPropagation()}
@@ -621,6 +705,17 @@ export const SetlistPage: React.FC<SetlistProps> = ({
                         )}
                       </S.ItemMeta>
                     </S.ItemCard>
+                    {isEditMode && (
+                      <S.ReplaceItemButton
+                        type="button"
+                        title="Substituir música"
+                        aria-label={`Substituir música ${index + 1}`}
+                        disabled={isSaving}
+                        onClick={() => handleEditableItemDoubleClick(item)}
+                      >
+                        <Edit2 size={18} aria-hidden="true" />
+                      </S.ReplaceItemButton>
+                    )}
                     {isEditMode && (
                       <S.RemoveItemButton
                         type="button"
@@ -866,43 +961,72 @@ export const SetlistPage: React.FC<SetlistProps> = ({
             <Home size={22} aria-hidden="true" />
             <span>Home</span>
           </NavigationButton>
-          <NavigationButton type="button" title="Copiar setlist" aria-label="Copiar setlist" onClick={handleCopySetlist}>
+          <NavigationButton
+            type="button"
+            title="Copiar setlist"
+            aria-label="Copiar setlist"
+            onClick={handleCopySetlist}
+          >
             <MessageCircle size={22} aria-hidden="true" />
             <span>Copiar</span>
           </NavigationButton>
-          {!isEditMode ? (
-            <>
-              <NavigationButton type="button" onClick={handleEditMode} title="Editar">
-                <Edit2 size={22} aria-hidden="true" />
-                <span>Editar</span>
-              </NavigationButton>
-              <NavigationButton type="button" onClick={handleOpenDuplicate} disabled={loadingData} title="Duplicar">
-                <Copy size={22} aria-hidden="true" />
-                <span>Duplicar</span>
-              </NavigationButton>
-            </>
-          ) : (
-            <>
-              <NavigationButton type="button" onClick={() => {
-                setReplacingItemId(null);
-                setModalAddSongsOpen(true);
-              }} disabled={isSaving} title="Adicionar música" aria-label="Adicionar música">
-                <Plus size={22} aria-hidden="true" />
-                <span>Música</span>
-              </NavigationButton>
-              <NavigationButton type="button" onClick={() => setShowNewMomentoModal(true)} title="Adicionar momento" aria-label="Adicionar momento">
-                <ListMusic size={22} aria-hidden="true" />
-                <span>Momento</span>
-              </NavigationButton>
-              <S.EditNavigationButton $intent="save" type="button" onClick={handleSaveSetlist} disabled={isSaving} title="Salvar">
-                <Check size={22} aria-hidden="true" />
-                <span>{isSaving ? 'Salvando...' : 'Salvar'}</span>
-              </S.EditNavigationButton>
-              <S.EditNavigationButton $intent="cancel" type="button" onClick={handleCancelEdit} title="Cancelar">
-                <X size={22} aria-hidden="true" />
-                <span>Cancelar</span>
-              </S.EditNavigationButton>
-            </>
+          {isAuthenticated &&
+            (!isEditMode ? (
+              <>
+                <NavigationButton type="button" onClick={handleEditMode} title="Editar">
+                  <Edit2 size={22} aria-hidden="true" />
+                  <span>Editar</span>
+                </NavigationButton>
+                <NavigationButton type="button" onClick={handleOpenDuplicate} disabled={loadingData} title="Duplicar">
+                  <Copy size={22} aria-hidden="true" />
+                  <span>Duplicar</span>
+                </NavigationButton>
+              </>
+            ) : (
+              <>
+                <NavigationButton
+                  type="button"
+                  onClick={() => {
+                    setReplacingItemId(null);
+                    setModalAddSongsOpen(true);
+                  }}
+                  disabled={isSaving}
+                  title="Adicionar música"
+                  aria-label="Adicionar música"
+                >
+                  <Plus size={22} aria-hidden="true" />
+                  <span>Música</span>
+                </NavigationButton>
+                <NavigationButton
+                  type="button"
+                  onClick={() => setShowNewMomentoModal(true)}
+                  title="Adicionar momento"
+                  aria-label="Adicionar momento"
+                >
+                  <ListMusic size={22} aria-hidden="true" />
+                  <span>Momento</span>
+                </NavigationButton>
+                <S.EditNavigationButton
+                  $intent="save"
+                  type="button"
+                  onClick={handleSaveSetlist}
+                  disabled={isSaving}
+                  title="Salvar"
+                >
+                  <Check size={22} aria-hidden="true" />
+                  <span>{isSaving ? 'Salvando...' : 'Salvar'}</span>
+                </S.EditNavigationButton>
+                <S.EditNavigationButton $intent="cancel" type="button" onClick={handleCancelEdit} title="Cancelar">
+                  <X size={22} aria-hidden="true" />
+                  <span>Cancelar</span>
+                </S.EditNavigationButton>
+              </>
+            ))}
+          {!isAuthenticated && (
+            <NavigationButton type="button" onClick={login} title="Login">
+              <LogIn size={22} aria-hidden="true" />
+              <span>Login</span>
+            </NavigationButton>
           )}
         </S.SetlistNavigation>
       )}
@@ -948,23 +1072,34 @@ export const SetlistPage: React.FC<SetlistProps> = ({
             <S.DuplicateFields disabled={isDuplicating}>
               <S.DuplicateField>
                 Nome
-                <input autoFocus required value={duplicateDetails.name} onChange={(event) =>
-                  setDuplicateDetails({ ...duplicateDetails, name: event.target.value })} />
+                <input
+                  autoFocus
+                  required
+                  value={duplicateDetails.name}
+                  onChange={(event) => setDuplicateDetails({ ...duplicateDetails, name: event.target.value })}
+                />
               </S.DuplicateField>
               <S.DuplicateField>
                 Descrição
-                <input value={duplicateDetails.description} onChange={(event) =>
-                  setDuplicateDetails({ ...duplicateDetails, description: event.target.value })} />
+                <input
+                  value={duplicateDetails.description}
+                  onChange={(event) => setDuplicateDetails({ ...duplicateDetails, description: event.target.value })}
+                />
               </S.DuplicateField>
               <S.DuplicateField>
                 Data e hora
-                <input type="datetime-local" value={duplicateDetails.date} onChange={(event) =>
-                  setDuplicateDetails({ ...duplicateDetails, date: event.target.value })} />
+                <input
+                  type="datetime-local"
+                  value={duplicateDetails.date}
+                  onChange={(event) => setDuplicateDetails({ ...duplicateDetails, date: event.target.value })}
+                />
               </S.DuplicateField>
               <S.DuplicateField>
                 Local
-                <input value={duplicateDetails.address} onChange={(event) =>
-                  setDuplicateDetails({ ...duplicateDetails, address: event.target.value })} />
+                <input
+                  value={duplicateDetails.address}
+                  onChange={(event) => setDuplicateDetails({ ...duplicateDetails, address: event.target.value })}
+                />
               </S.DuplicateField>
               {duplicateError && <p role="alert">{duplicateError}</p>}
               <S.DuplicateActions>

@@ -36,27 +36,29 @@ export const Router: React.FC = () => {
         <Route path="/login" element={<LoginPage />} />
         {/* <Route path="/" element={<Configs />} /> */}
 
-        <Route path="/" element={<PrivateRoute />}>
-          <Route path="/" element={<AdminLayout />}>
-            <Route
-              path="/"
-              element={
-                <HomePage loadAllSetlistsRequest={loadAllSetlistsRequest} loadAllSongsRequest={loadAllSongsRequest} />
-              }
-            />
-            <Route path="/songs" element={<SongsPage loadAllSongsRequest={loadAllSongsRequest} />} />
+        <Route path="/" element={<AdminLayout />}>
+          <Route
+            path="/"
+            element={
+              <HomePage loadAllSetlistsRequest={loadAllSetlistsRequest} loadAllSongsRequest={loadAllSongsRequest} />
+            }
+          />
+          <Route path="/songs" element={<SongsPage loadAllSongsRequest={loadAllSongsRequest} />} />
+          <Route element={<PrivateRoute />}>
             <Route path="/songs/create" element={<CreateSongPage createSongRequest={createSongRequest} />} />
-            <Route
-              path="/songs/:songId"
-              element={
-                <SongPage
-                  loadSongRequest={loadSongRequest}
-                  loadAllSongsRequest={loadAllSongsRequest}
-                  loadSetlistRequest={loadSetlistRequest}
-                  updateSongRequest={updateSongRequest}
-                />
-              }
-            />
+          </Route>
+          <Route
+            path="/songs/:songId"
+            element={
+              <SongPage
+                loadSongRequest={loadSongRequest}
+                loadAllSongsRequest={loadAllSongsRequest}
+                loadSetlistRequest={loadSetlistRequest}
+                updateSongRequest={updateSongRequest}
+              />
+            }
+          />
+          <Route element={<PrivateRoute />}>
             <Route
               path="/setlists/create"
               element={
@@ -66,26 +68,26 @@ export const Router: React.FC = () => {
                 />
               }
             />
-            <Route
-              path="/setlists/:setlistId"
-              element={
-                <SetlistPage
-                  createSetlistRequest={createSetlistRequest}
-                  loadSetlistRequest={loadSetlistRequest}
-                  loadAllSongsRequest={loadAllSongsRequest}
-                  updateSetlistRequest={updateSetlistRequest}
-                  updateSongRequest={updateSongRequest}
-                />
-              }
-            />
-
-            <Route path="/songs-small" element={<SongsSmallPage loadAllSongsRequest={loadAllSongsRequest} />} />
-            <Route
-              path="/songs-small/:songId"
-              element={<SongSmallPage loadSongRequest={loadSongRequest} loadAllSongsRequest={loadAllSongsRequest} />}
-            />
-            {/* <Route path="/sheet-music" element={<SheetMusicPage />} /> */}
           </Route>
+          <Route
+            path="/setlists/:setlistId"
+            element={
+              <SetlistPage
+                createSetlistRequest={createSetlistRequest}
+                loadSetlistRequest={loadSetlistRequest}
+                loadAllSongsRequest={loadAllSongsRequest}
+                updateSetlistRequest={updateSetlistRequest}
+                updateSongRequest={updateSongRequest}
+              />
+            }
+          />
+
+          <Route path="/songs-small" element={<SongsSmallPage loadAllSongsRequest={loadAllSongsRequest} />} />
+          <Route
+            path="/songs-small/:songId"
+            element={<SongSmallPage loadSongRequest={loadSongRequest} loadAllSongsRequest={loadAllSongsRequest} />}
+          />
+          {/* <Route path="/sheet-music" element={<SheetMusicPage />} /> */}
         </Route>
       </Routes>
       <ScrollToTop />

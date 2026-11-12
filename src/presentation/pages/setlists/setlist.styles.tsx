@@ -110,8 +110,8 @@ export const SetlistNavigation = styled(BottomNavigation)`
   }
 `;
 
-export const EditNavigationButton = styled(NavigationButton) <{ $intent: 'save' | 'cancel' }>`
-  background: ${({ $intent }) => $intent === 'save' ? '#166534' : '#991b1b'};
+export const EditNavigationButton = styled(NavigationButton)<{ $intent: 'save' | 'cancel' }>`
+  background: ${({ $intent }) => ($intent === 'save' ? '#166534' : '#991b1b')};
   color: #fff;
 
   span {
@@ -119,7 +119,7 @@ export const EditNavigationButton = styled(NavigationButton) <{ $intent: 'save' 
   }
 
   &:hover {
-    background: ${({ $intent }) => $intent === 'save' ? '#15803d' : '#b91c1c'};
+    background: ${({ $intent }) => ($intent === 'save' ? '#15803d' : '#b91c1c')};
   }
 
   &:disabled {
@@ -238,7 +238,8 @@ export const ActionGroup = styled.div`
     min-width: 0;
     overflow-x: auto;
 
-    > button, > div {
+    > button,
+    > div {
       display: inline-flex;
       flex: 0 0 36px;
       align-items: center;
@@ -338,6 +339,19 @@ export const RemoveItemButton = styled.button`
   }
 `;
 
+export const ReplaceItemButton = styled(RemoveItemButton)`
+  right: 48px;
+  color: #c4b5fd;
+
+  &:hover {
+    background: rgba(167, 139, 250, 0.18);
+  }
+
+  @media (hover: none), (pointer: coarse) {
+    display: none;
+  }
+`;
+
 export const ItemCard = styled.button<{
   $editing?: boolean;
   $isDragging?: boolean;
@@ -353,7 +367,7 @@ export const ItemCard = styled.button<{
   gap: 1rem;
   width: 100%;
   padding: 1.25rem 1.3rem;
-  padding-right: ${({ $editing }) => $editing ? '52px' : '1.3rem'};
+  padding-right: ${({ $editing }) => ($editing ? '92px' : '1.3rem')};
   border-radius: 20px;
   border: 1px solid ${({ $isDragOver }) => ($isDragOver ? 'rgba(94, 60, 255, 0.5)' : 'rgba(255, 255, 255, 0.1)')};
   ${($linked) => $linked && 'border-color: transparent'};
@@ -377,6 +391,14 @@ export const ItemCard = styled.button<{
     grid-template-columns: 44px minmax(0, 1fr);
     row-gap: 0.8rem;
     padding-right: 1.3rem;
+  }
+
+  @media (hover: none), (pointer: coarse) {
+    padding-right: ${({ $editing }) => ($editing ? '52px' : '1.3rem')};
+
+    @media (max-width: 720px) {
+      padding-right: 1.3rem;
+    }
   }
 `;
 
@@ -415,7 +437,11 @@ export const ItemContent = styled.div<{ $editing?: boolean }>`
   overflow-wrap: anywhere;
 
   @media (max-width: 720px) {
-    padding-right: ${({ $editing }) => $editing ? '32px' : '0'};
+    padding-right: ${({ $editing }) => ($editing ? '72px' : '0')};
+
+    @media (hover: none), (pointer: coarse) {
+      padding-right: ${({ $editing }) => ($editing ? '32px' : '0')};
+    }
   }
 `;
 

@@ -12,6 +12,8 @@ import {
   Edit2,
   Columns,
   Users,
+  MessageSquare,
+  LogIn,
 } from 'lucide-react';
 
 import * as S from './song.component.styles';
@@ -26,6 +28,8 @@ import FullscreenButtonComponent from '@/presentation/components/fullscreen-butt
 import SheetMusicPage from '@/presentation/pages/sheet-music/sheet-music.page';
 import { ButtonComponent } from '../button/button';
 import { ModalSongSingers } from '@/presentation/components/modal-song-singers/modal-song-singers.component';
+import { SongConversation } from '@/presentation/components/song-conversation/song-conversation.component';
+import { getAccessToken, useSession } from '@/main/config/session';
 
 interface Content {
   block: string;
@@ -63,6 +67,7 @@ export const SongComponent: React.FC<Props> = ({
   showPageNavigation = false,
 }) => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useSession();
   const { setlistId } = useParams<{ setlistId: string }>();
   const [searchParams] = useSearchParams();
   const setlist = searchParams.get('setlist') || setlistId;
@@ -71,12 +76,20 @@ export const SongComponent: React.FC<Props> = ({
   const [editMode, setEditMode] = React.useState(false);
   const [sheetMusicMode, setSheetMusicMode] = React.useState(true);
   const [lyricsMode, setLyricsMode] = React.useState(false);
+  const [conversationMode, setConversationMode] = React.useState(false);
   const [chordsMusicMode] = React.useState(true);
   const [modalSongsOpen, setModalSongsOpen] = React.useState(false);
   const [modalSetlistOpen, setModalSetlistOpen] = React.useState(false);
   const [modalSingersOpen, setModalSingersOpen] = React.useState(false);
   const [isSplitted, setIsSplitted] = React.useState(false);
   const [song, setSong] = React.useState<Song>(null as unknown as Song);
+
+  React.useEffect(() => {
+    if (!isAuthenticated) {
+      setEditMode(false);
+      setModalSingersOpen(false);
+    }
+  }, [isAuthenticated]);
 
   const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
@@ -146,6 +159,10 @@ export const SongComponent: React.FC<Props> = ({
   }
 
   const updateSong = async (tempSong: Song) => {
+    if (!getAccessToken()) {
+      navigate('/login', { state: { from: window.location.pathname + window.location.search } });
+      return;
+    }
     const { content, ...rest } = tempSong;
 
     if (!song?.id) {
@@ -414,6 +431,11 @@ export const SongComponent: React.FC<Props> = ({
   // };
 
   const handleEditButton = () => {
+    if (!getAccessToken()) {
+      navigate('/login', { state: { from: window.location.pathname + window.location.search } });
+      return;
+    }
+    setConversationMode(false);
     setEditMode((prevState) => !prevState);
     // console.log(song.content);
   };
@@ -428,6 +450,7 @@ export const SongComponent: React.FC<Props> = ({
   };
 
   const handleToggleLyricsMode = () => {
+    setConversationMode(false);
     setLyricsMode((prevState) => !prevState);
     // console.log(song.content);
   };
@@ -606,7 +629,7 @@ export const SongComponent: React.FC<Props> = ({
                       <Text size={15} aria-hidden="true" /> <span>Letra</span>
                     </S.ToolbarButton>
                   )}
-                  {!editMode && (
+                  {!editMode && isAuthenticated && (
                     <S.ToolbarButton onClick={handleEditButton} aria-label="Editar" title="Editar">
                       <Edit2 size={15} aria-hidden="true" /> <span>Editar</span>
                     </S.ToolbarButton>
@@ -623,9 +646,25 @@ export const SongComponent: React.FC<Props> = ({
                       <Columns size={15} aria-hidden="true" /> <span>Split</span>
                     </S.ToolbarButton>
                   )}
-                  {!editMode && (
+                  {!editMode && isAuthenticated && (
                     <S.ToolbarButton onClick={() => setModalSingersOpen(true)} aria-label="Cantores" title="Cantores">
                       <Users size={15} aria-hidden="true" /> <span>Cantores</span>
+                    </S.ToolbarButton>
+                  )}
+                  {!editMode && (
+                    <S.ToolbarButton
+                      onClick={() => setConversationMode((current) => !current)}
+                      $active={conversationMode}
+                      aria-label="Orientações"
+                      aria-pressed={conversationMode}
+                      title="Orientações"
+                    >
+                      <MessageSquare size={15} aria-hidden="true" /> <span>Orientações</span>
+                    </S.ToolbarButton>
+                  )}
+                  {!editMode && !isAuthenticated && (
+                    <S.ToolbarButton onClick={handleEditButton} aria-label="Login" title="Login">
+                      <LogIn size={15} aria-hidden="true" /> <span>Login</span>
                     </S.ToolbarButton>
                   )}
                   {!editMode && data.key && (
@@ -656,7 +695,7 @@ export const SongComponent: React.FC<Props> = ({
               </S.CellHeader> */}
             </S.FlexRow>
 
-            {(!lyricsMode || editMode) && (
+            {!conversationMode && (!lyricsMode || editMode) && (
               <S.MetadataRow>
                 <S.CellHeader onClick={() => !editMode && setActiveBpm(!activeBpm)}>
                   {!editMode && (
@@ -732,7 +771,7 @@ export const SongComponent: React.FC<Props> = ({
             )}
           </S.Header>
 
-          {!lyricsMode && chordsMusicMode && (
+          {!conversationMode && !lyricsMode && chordsMusicMode && (
             <S.Content className={isSplitted ? 'splitted' : ''}>
               {song.content &&
                 song.content.map((songSection: Content, keyContent) => (
@@ -817,8 +856,9 @@ export const SongComponent: React.FC<Props> = ({
             </S.Content>
           )}
 
-          {sheetMusicMode && song && <SheetMusicPage song={song} />}
-          {lyricsMode && song && <S.LyricsBox>{song.lyrics}</S.LyricsBox>}
+          {!conversationMode && sheetMusicMode && song && <SheetMusicPage song={song} />}
+          {!conversationMode && lyricsMode && song && <S.LyricsBox>{song.lyrics}</S.LyricsBox>}
+          {conversationMode && song?.id && <SongConversation key={song.id} songId={song.id} />}
 
           <S.FlexGap style={{ display: 'none' }}>
             <ButtonComponent $variant="purple" onClick={handleSetlistButton}>
@@ -857,7 +897,7 @@ export const SongComponent: React.FC<Props> = ({
         </S.BottomNavigation>
       )}
 
-      {modalSingersOpen && song?.id && (
+      {modalSingersOpen && isAuthenticated && song?.id && (
         <ModalSongSingers
           songId={song.id}
           singers={song.singers || []}
