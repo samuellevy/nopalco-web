@@ -4,7 +4,7 @@ import * as S from './setlist.styles';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Setlist, SetlistItem } from '@/domain/models/setlist';
 import { LoadSetlistRequest } from '@/domain/usecases/setlists/load-setlist-request';
-import { MessageCircle, Edit2, Check, X, GripVertical, Upload, Download, Printer, DoorOpen } from 'lucide-react';
+import { MessageCircle, Edit2, Check, X, GripVertical, Upload, Download, Printer, DoorOpen, Search, Home, ListMusic, ChevronLeft, ChevronRight, Plus, Copy } from 'lucide-react';
 import { LoadAllSongsRequest } from '@/domain/usecases';
 import { ModalSongsListComponent } from '@/presentation/components/modal-song-list/modal-song-list.component';
 import { UpdateSetlistRequest } from '@/domain/usecases/setlists/update-setlist-request';
@@ -12,9 +12,11 @@ import { SongComponent } from '@/presentation/components/song-component/song.com
 import { Song } from '@/domain/models';
 import { UpdateSongRequest } from '@/domain/usecases/songs/update-song-request';
 import FullscreenButtonComponent from '@/presentation/components/fullscreen-button/fullscreen-button.component';
-import { ButtonComponent } from '@/presentation/components/button/button';
+import { BottomNavigation, NavigationButton } from '@/presentation/components/song-component/song.component.styles';
+import { CreateSetlistRequest } from '@/domain/usecases/setlists/create-setlist-request';
 
 type SetlistProps = {
+  createSetlistRequest: CreateSetlistRequest;
   loadSetlistRequest: LoadSetlistRequest;
   loadAllSongsRequest: LoadAllSongsRequest;
   updateSetlistRequest: UpdateSetlistRequest;
@@ -22,6 +24,7 @@ type SetlistProps = {
 };
 
 export const SetlistPage: React.FC<SetlistProps> = ({
+  createSetlistRequest,
   loadSetlistRequest,
   loadAllSongsRequest,
   updateSetlistRequest,
@@ -34,6 +37,12 @@ export const SetlistPage: React.FC<SetlistProps> = ({
 
   const [loadingData, setLoadingData] = React.useState(true);
   const [modalSongsOpen, setModalSongsOpen] = React.useState(false);
+  const [modalAddSongsOpen, setModalAddSongsOpen] = React.useState(false);
+  const [replacingItemId, setReplacingItemId] = React.useState<string | null>(null);
+  const lastItemTap = React.useRef<{ id: string; time: number } | null>(null);
+  const itemTouch = React.useRef<{
+    id: string; x: number; y: number; time: number; moved: boolean;
+  } | null>(null);
   const [setlist, setSetlist] = React.useState<Setlist>({} as Setlist);
   const [isEditMode, setIsEditMode] = React.useState(false);
   const [editableItems, setEditableItems] = React.useState<Setlist['items']>([]);
@@ -41,6 +50,12 @@ export const SetlistPage: React.FC<SetlistProps> = ({
   const [dragOverIndex, setDragOverIndex] = React.useState<number | null>(null);
   const [showSavedModal, setShowSavedModal] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
+  const [duplicateOpen, setDuplicateOpen] = React.useState(false);
+  const [isDuplicating, setIsDuplicating] = React.useState(false);
+  const [duplicateError, setDuplicateError] = React.useState('');
+  const [duplicateDetails, setDuplicateDetails] = React.useState({
+    name: '', description: '', address: '', date: '',
+  });
 
   const [currentSongIndex, setCurrentSongIndex] = React.useState<number | null>(null);
   const [preloadedIndices, setPreloadedIndices] = React.useState<Set<number>>(new Set());
@@ -48,8 +63,6 @@ export const SetlistPage: React.FC<SetlistProps> = ({
 
   const [showNewMomentoModal, setShowNewMomentoModal] = React.useState(false);
   const [newMomentoTitle, setNewMomentoTitle] = React.useState('');
-
-  console.log('update');
 
   const fetchLoadSetlistsRequest = React.useCallback(async () => {
     setLoadingData(true);
@@ -82,9 +95,8 @@ export const SetlistPage: React.FC<SetlistProps> = ({
       ?.sort((a, b) => a.order - b.order)
       .forEach((item, index) => {
         if (item.song) {
-          text += `${index + 1}. ${item.pureTitle ? item.pureTitle : item.song.name} - ${item.song.author} [${
-            item.singer?.name || ''
-          }${item.singer?.name ? ' ' : ''}${item.key}]\n`;
+          text += `${index + 1}. ${item.pureTitle ? item.pureTitle : item.song.name} - ${item.song.author} [${item.singer?.name || ''
+            }${item.singer?.name ? ' ' : ''}${item.key}]\n`;
         } else {
           text += `${index + 1}. ${item.pureTitle} `;
           text += `[${item.singer?.name || ''} ${item.key}]\n`;
@@ -93,8 +105,58 @@ export const SetlistPage: React.FC<SetlistProps> = ({
     navigator.clipboard.writeText(text);
   };
 
+  const handleOpenDuplicate = () => {
+    const now = new Date();
+    const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    setDuplicateDetails({
+      name: `${setlist.name} (cópia)`,
+      description: setlist.description || '',
+      address: setlist.address || '',
+      date: localDateTime,
+    });
+    setDuplicateError('');
+    setDuplicateOpen(true);
+  };
+
+  const handleDuplicateSetlist = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (isDuplicating) return;
+    if (!duplicateDetails.name.trim()) {
+      setDuplicateError('Informe o nome do novo setlist.');
+      return;
+    }
+
+    setIsDuplicating(true);
+    setDuplicateError('');
+    try {
+      const createdSetlist = await createSetlistRequest.execute({
+        name: duplicateDetails.name.trim(),
+        description: duplicateDetails.description.trim(),
+        address: duplicateDetails.address.trim(),
+        date: duplicateDetails.date ? new Date(duplicateDetails.date) : undefined,
+        items: (setlist.items || []).slice().sort((first, second) => first.order - second.order)
+          .map((item, index) => ({
+            pureTitle: item.pureTitle || item.song?.name || '',
+            songId: item.song?.id || null,
+            order: String(index + 1),
+            key: item.key || '',
+            singerId: item.singer?.id,
+          })),
+      });
+      if (!createdSetlist?.id) throw new Error('Missing created setlist ID');
+      setDuplicateOpen(false);
+      navigate(`/setlists/${createdSetlist.id}`);
+    } catch {
+      setDuplicateError('Não foi possível duplicar o setlist. Tente novamente.');
+    } finally {
+      setIsDuplicating(false);
+    }
+  };
+
   const handleClickSong = (songId: string) => {
-    navigate(`/songs/${songId}`);
+    const params = new URLSearchParams();
+    if (setlistId) params.set('setlist', setlistId);
+    navigate(`/songs/${songId}${params.size ? `?${params.toString()}` : ''}`);
   };
 
   const handleEditMode = () => {
@@ -104,10 +166,119 @@ export const SetlistPage: React.FC<SetlistProps> = ({
 
   const handleCancelEdit = () => {
     setIsEditMode(false);
+    setModalAddSongsOpen(false);
+    setReplacingItemId(null);
     setEditableItems([]);
     setDraggedIndex(null);
     setDragOverIndex(null);
   };
+
+  const handleAddSong = (song: Song) => {
+    setEditableItems((items) => replacingItemId ? items.map((item) => item.id === replacingItemId ? {
+      ...item,
+      pureTitle: song.name,
+      pureAuthor: song.author,
+      song,
+      key: song.key || '',
+      singer: undefined,
+    } : item) : [...items, {
+      id: `song_${Date.now()}_${items.length}`,
+      pureTitle: song.name,
+      song,
+      key: song.key || '',
+      singer: undefined,
+      order: items.length + 1,
+    }]);
+    setModalAddSongsOpen(false);
+    setReplacingItemId(null);
+  };
+
+  const handleRemoveItem = (itemId: string) => {
+    if (isSaving) return;
+    setEditableItems((items) => items.filter((item) => item.id !== itemId));
+    if (replacingItemId === itemId) {
+      setReplacingItemId(null);
+      setModalAddSongsOpen(false);
+    }
+    lastItemTap.current = null;
+    itemTouch.current = null;
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleEditableItemClick = (item: SetlistItem) => {
+    if (isSaving) return;
+
+    if (replacingItemId) {
+      setEditableItems((items) => {
+        const selectedIndex = items.findIndex((entry) => entry.id === replacingItemId);
+        const targetIndex = items.findIndex((entry) => entry.id === item.id);
+        if (selectedIndex < 0 || targetIndex < 0 || selectedIndex === targetIndex) return items;
+
+        const reorderedItems = [...items];
+        [reorderedItems[selectedIndex], reorderedItems[targetIndex]] = [
+          reorderedItems[targetIndex], reorderedItems[selectedIndex],
+        ];
+        return reorderedItems;
+      });
+      setReplacingItemId(null);
+      setModalAddSongsOpen(false);
+    } else if (item.song) {
+      setReplacingItemId(item.id);
+    }
+  };
+
+  const handleEditableItemDoubleClick = (item: SetlistItem) => {
+    if (isSaving || !item.song) return;
+    setReplacingItemId(item.id);
+    setModalAddSongsOpen(true);
+  };
+
+  const handleItemTouchStart = (event: React.TouchEvent<HTMLButtonElement>, item: SetlistItem) => {
+    if (!isEditMode || isSaving || event.touches.length !== 1) {
+      itemTouch.current = null;
+      lastItemTap.current = null;
+      return;
+    }
+    const touch = event.touches[0];
+    itemTouch.current = { id: item.id, x: touch.clientX, y: touch.clientY, time: Date.now(), moved: false };
+  };
+
+  const handleItemTouchMove = (event: React.TouchEvent<HTMLButtonElement>) => {
+    const start = itemTouch.current;
+    const touch = event.touches[0];
+    if (start && touch && (Math.abs(touch.clientX - start.x) > 10 || Math.abs(touch.clientY - start.y) > 10)) {
+      start.moved = true;
+    }
+  };
+
+  const handleItemTouchEnd = (event: React.TouchEvent<HTMLButtonElement>, item: SetlistItem) => {
+    const start = itemTouch.current;
+    itemTouch.current = null;
+    if (!isEditMode || isSaving || !start || start.id !== item.id) return;
+    const touch = event.changedTouches[0];
+    const now = Date.now();
+    if (!touch || start.moved || now - start.time > 500 ||
+      Math.abs(touch.clientX - start.x) > 10 || Math.abs(touch.clientY - start.y) > 10) {
+      lastItemTap.current = null;
+      return;
+    }
+
+    event.preventDefault();
+    const previousTap = lastItemTap.current;
+    if (previousTap?.id === item.id && now - previousTap.time <= 350) {
+      lastItemTap.current = null;
+      handleEditableItemDoubleClick(item);
+    } else {
+      lastItemTap.current = { id: item.id, time: now };
+      handleEditableItemClick(item);
+    }
+  };
+
+  useEffect(() => {
+    lastItemTap.current = null;
+    itemTouch.current = null;
+  }, [isEditMode]);
 
   const handleAddNewMomento = () => {
     if (!newMomentoTitle.trim()) return;
@@ -269,8 +440,6 @@ export const SetlistPage: React.FC<SetlistProps> = ({
   };
 
   useEffect(() => {
-    if (!loadingData) return;
-
     fetchLoadSetlistsRequest().then(() => {
       if (position) {
         const element = document.getElementById(position);
@@ -280,8 +449,7 @@ export const SetlistPage: React.FC<SetlistProps> = ({
       }
     });
 
-    //fetchLoadAllSongsRequest();
-  }, [fetchLoadSetlistsRequest, loadingData, setlist, position]);
+  }, [fetchLoadSetlistsRequest, position]);
 
   React.useEffect(() => {
     if (setlist && setlist.name) {
@@ -360,92 +528,111 @@ export const SetlistPage: React.FC<SetlistProps> = ({
                 <S.SetlistSubtitle>{setlist.description}</S.SetlistSubtitle>
               </S.TitleGroup>
               <S.ActionGroup>
-                <S.IconButton title="Copiar setlist" onClick={() => handleCopySetlist()}>
-                  <MessageCircle size={18} />
+                <S.IconButton title="Buscar músicas" aria-label="Buscar músicas" onClick={() => setModalSongsOpen(true)}>
+                  <Search size={18} />
                 </S.IconButton>
-                <S.IconButton>
+                <S.IconButton as="div">
                   <FullscreenButtonComponent />
                 </S.IconButton>
-                {!isEditMode ? (
-                  <S.PrimaryButton onClick={handleEditMode}>
-                    <Edit2 size={16} />
-                    Editar
-                  </S.PrimaryButton>
-                ) : (
-                  <>
-                    <S.PrimaryButton onClick={() => setShowNewMomentoModal(true)}>+ Momento</S.PrimaryButton>
-                    <S.PrimaryButton onClick={handleSaveSetlist} disabled={isSaving}>
-                      <Check size={16} />
-                      {isSaving ? 'Salvando...' : 'Salvar'}
-                    </S.PrimaryButton>
-                    <S.DangerButton onClick={handleCancelEdit}>
-                      <X size={16} />
-                      Cancelar
-                    </S.DangerButton>
-                  </>
-                )}
-                <S.Button onClick={handleBackToHome}>
-                  <DoorOpen size={16} />
-                  Sair
-                </S.Button>
               </S.ActionGroup>
             </S.PageHeader>
 
             <S.SetlistGrid>
               <S.CardList>
                 {itemsToRender.map((item, index) => (
-                  <S.ItemCard
-                    key={item.id || index}
-                    type="button"
-                    onClick={() => !isEditMode && handleLinkClick(item)}
-                    draggable={isEditMode}
-                    onDragStart={() => isEditMode && handleDragStart(index)}
-                    onDragOver={(e) => isEditMode && handleDragOver(index, e)}
-                    onDragLeave={handleDragLeave}
-                    onDrop={(e) => isEditMode && handleDrop(index, e)}
-                    $isDragging={isEditMode && draggedIndex === index}
-                    $isDragOver={isEditMode && dragOverIndex === index}
-                    $linked={!!item.song}
-                  >
-                    {isEditMode && (
-                      <S.ItemHandle>
-                        <GripVertical size={18} />
-                      </S.ItemHandle>
-                    )}
-                    <S.ItemNumber>{String(index + 1).padStart(2, '0')}</S.ItemNumber>
-                    <S.ItemContent>
-                      <S.ItemName>{item.pureTitle || item.song?.name || 'Sem título'}</S.ItemName>
-                      {item.song?.author && <S.ItemArtist>{item.song.author}</S.ItemArtist>}
-                    </S.ItemContent>
-                    <S.ItemMeta>
-                      {isEditMode ? (
-                        <>
-                          <S.SingerSelect
-                            value={item.singer?.id || ''}
-                            onChange={(e) => handleUpdateItemSingerById(index, e.target.value)}
+                  <S.ItemRow key={item.id || index}>
+                    <S.ItemCard
+                      type="button"
+                      $editing={isEditMode}
+                      onClick={(event) => {
+                        if (!isEditMode) {
+                          handleLinkClick(item);
+                        } else if (event.detail < 2) {
+                          handleEditableItemClick(item);
+                        }
+                      }}
+                      onDoubleClick={() => isEditMode && handleEditableItemDoubleClick(item)}
+                      onTouchStart={(event) => handleItemTouchStart(event, item)}
+                      onTouchMove={handleItemTouchMove}
+                      onTouchEnd={(event) => handleItemTouchEnd(event, item)}
+                      onTouchCancel={() => {
+                        itemTouch.current = null;
+                        lastItemTap.current = null;
+                      }}
+                      aria-pressed={isEditMode ? replacingItemId === item.id : undefined}
+                      draggable={isEditMode}
+                      onDragStart={() => isEditMode && handleDragStart(index)}
+                      onDragOver={(e) => isEditMode && handleDragOver(index, e)}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => isEditMode && handleDrop(index, e)}
+                      $isDragging={isEditMode && draggedIndex === index}
+                      $isDragOver={isEditMode && dragOverIndex === index}
+                      $isSelected={isEditMode && replacingItemId === item.id}
+                      $linked={!!item.song}
+                    >
+                      <S.ItemNumber>
+                        {isEditMode && (
+                          <S.ItemHandle
+                            onClick={(event) => event.stopPropagation()}
+                            onDoubleClick={(event) => event.stopPropagation()}
+                            onTouchStart={(event) => event.stopPropagation()}
+                            onTouchEnd={(event) => event.stopPropagation()}
                           >
-                            <option value="">Selecionar cantor</option>
-                            {item.song?.singers?.map((singer) => (
-                              <option key={singer.id} value={singer.id}>
-                                {singer.name}
-                              </option>
-                            ))}
-                          </S.SingerSelect>
-                          <S.KeyInput
-                            type="text"
-                            value={item.key || ''}
-                            onChange={(e) => handleUpdateItemKey(index, e.target.value)}
-                            placeholder="Tom"
-                          />
-                        </>
-                      ) : (
-                        <>
-                          {item.singer && <S.SingerBadge>{item.singer.name}</S.SingerBadge>}
-                          {item.key && <S.KeyBadge>{item.key}</S.KeyBadge>}
-                        </>
-                      )}
-                    </S.ItemMeta>
-                  </S.ItemCard>
+                            <GripVertical size={14} />
+                          </S.ItemHandle>
+                        )}
+                        {String(index + 1).padStart(2, '0')}
+                      </S.ItemNumber>
+                      <S.ItemContent $editing={isEditMode}>
+                        <S.ItemName>{item.pureTitle || item.song?.name || 'Sem título'}</S.ItemName>
+                        {item.song?.author && <S.ItemArtist>{item.song.author}</S.ItemArtist>}
+                      </S.ItemContent>
+                      <S.ItemMeta
+                        onClick={(event) => isEditMode && event.stopPropagation()}
+                        onDoubleClick={(event) => isEditMode && event.stopPropagation()}
+                        onTouchStart={(event) => isEditMode && event.stopPropagation()}
+                        onTouchEnd={(event) => isEditMode && event.stopPropagation()}
+                      >
+                        {isEditMode ? (
+                          <>
+                            <S.SingerSelect
+                              value={item.singer?.id || ''}
+                              onChange={(e) => handleUpdateItemSingerById(index, e.target.value)}
+                            >
+                              <option value="">Selecionar cantor</option>
+                              {item.song?.singers?.map((singer) => (
+                                <option key={singer.id} value={singer.id}>
+                                  {singer.name}
+                                </option>
+                              ))}
+                            </S.SingerSelect>
+                            <S.KeyInput
+                              type="text"
+                              value={item.key || ''}
+                              onChange={(e) => handleUpdateItemKey(index, e.target.value)}
+                              placeholder="Tom"
+                            />
+                          </>
+                        ) : (
+                          <>
+                            {item.singer && <S.SingerBadge>{item.singer.name}</S.SingerBadge>}
+                            {item.key && <S.KeyBadge>{item.key}</S.KeyBadge>}
+                          </>
+                        )}
+                      </S.ItemMeta>
+                    </S.ItemCard>
+                    {isEditMode && (
+                      <S.RemoveItemButton
+                        type="button"
+                        title={`Remover ${item.pureTitle || item.song?.name || 'item'} do setlist`}
+                        aria-label={`Remover música ${index + 1} do setlist`}
+                        disabled={isSaving}
+                        onClick={() => handleRemoveItem(item.id)}
+                      >
+                        <X size={18} aria-hidden="true" />
+                      </S.RemoveItemButton>
+                    )}
+                  </S.ItemRow>
                 ))}
               </S.CardList>
 
@@ -524,6 +711,8 @@ export const SetlistPage: React.FC<SetlistProps> = ({
                     } as Song
                   }
                   dataKey={itemsToRender[currentSongIndex].key ?? null}
+                  setlistSongList={setlist.items}
+                  handleSelectSetlistItem={handleLinkClick}
                   loadAllSongsRequest={loadAllSongsRequest}
                   loadSetlistRequest={loadSetlistRequest}
                   updateSongRequest={updateSongRequest}
@@ -639,6 +828,8 @@ export const SetlistPage: React.FC<SetlistProps> = ({
                         } as Song
                       }
                       dataKey={item.key ?? null}
+                      setlistSongList={setlist.items}
+                      handleSelectSetlistItem={handleLinkClick}
                       loadAllSongsRequest={loadAllSongsRequest}
                       loadSetlistRequest={loadSetlistRequest}
                       updateSongRequest={updateSongRequest}
@@ -669,12 +860,125 @@ export const SetlistPage: React.FC<SetlistProps> = ({
         </div>
       )}
 
+      {currentSongIndex === null && (
+        <S.SetlistNavigation aria-label="Navegacao do setlist">
+          <NavigationButton type="button" onClick={handleBackToHome}>
+            <Home size={22} aria-hidden="true" />
+            <span>Home</span>
+          </NavigationButton>
+          <NavigationButton type="button" title="Copiar setlist" aria-label="Copiar setlist" onClick={handleCopySetlist}>
+            <MessageCircle size={22} aria-hidden="true" />
+            <span>Copiar</span>
+          </NavigationButton>
+          {!isEditMode ? (
+            <>
+              <NavigationButton type="button" onClick={handleEditMode} title="Editar">
+                <Edit2 size={22} aria-hidden="true" />
+                <span>Editar</span>
+              </NavigationButton>
+              <NavigationButton type="button" onClick={handleOpenDuplicate} disabled={loadingData} title="Duplicar">
+                <Copy size={22} aria-hidden="true" />
+                <span>Duplicar</span>
+              </NavigationButton>
+            </>
+          ) : (
+            <>
+              <NavigationButton type="button" onClick={() => {
+                setReplacingItemId(null);
+                setModalAddSongsOpen(true);
+              }} disabled={isSaving} title="Adicionar música" aria-label="Adicionar música">
+                <Plus size={22} aria-hidden="true" />
+                <span>Música</span>
+              </NavigationButton>
+              <NavigationButton type="button" onClick={() => setShowNewMomentoModal(true)} title="Adicionar momento" aria-label="Adicionar momento">
+                <ListMusic size={22} aria-hidden="true" />
+                <span>Momento</span>
+              </NavigationButton>
+              <S.EditNavigationButton $intent="save" type="button" onClick={handleSaveSetlist} disabled={isSaving} title="Salvar">
+                <Check size={22} aria-hidden="true" />
+                <span>{isSaving ? 'Salvando...' : 'Salvar'}</span>
+              </S.EditNavigationButton>
+              <S.EditNavigationButton $intent="cancel" type="button" onClick={handleCancelEdit} title="Cancelar">
+                <X size={22} aria-hidden="true" />
+                <span>Cancelar</span>
+              </S.EditNavigationButton>
+            </>
+          )}
+        </S.SetlistNavigation>
+      )}
+
+      {isEditMode && modalAddSongsOpen && (
+        <ModalSongsListComponent
+          loadAllSongsRequest={loadAllSongsRequest}
+          modalSongsOpen={modalAddSongsOpen}
+          setModalSongsOpen={(open) => {
+            setModalAddSongsOpen(open);
+            setReplacingItemId(null);
+          }}
+          handleClickSong={handleClickSong}
+          onSelectSong={handleAddSong}
+          ariaLabel={replacingItemId ? 'Substituir música do setlist' : 'Adicionar música ao setlist'}
+        />
+      )}
+
       <ModalSongsListComponent
         loadAllSongsRequest={loadAllSongsRequest}
         modalSongsOpen={modalSongsOpen}
         setModalSongsOpen={setModalSongsOpen}
         handleClickSong={handleClickSong}
       />
+
+      {duplicateOpen && (
+        <S.DuplicateOverlay
+          onClick={(event) => {
+            if (event.target === event.currentTarget && !isDuplicating) setDuplicateOpen(false);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape' && !isDuplicating) setDuplicateOpen(false);
+          }}
+        >
+          <S.DuplicateDialog
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="duplicate-setlist-title"
+            aria-busy={isDuplicating}
+            onSubmit={handleDuplicateSetlist}
+          >
+            <S.DuplicateTitle id="duplicate-setlist-title">Duplicar setlist</S.DuplicateTitle>
+            <S.DuplicateFields disabled={isDuplicating}>
+              <S.DuplicateField>
+                Nome
+                <input autoFocus required value={duplicateDetails.name} onChange={(event) =>
+                  setDuplicateDetails({ ...duplicateDetails, name: event.target.value })} />
+              </S.DuplicateField>
+              <S.DuplicateField>
+                Descrição
+                <input value={duplicateDetails.description} onChange={(event) =>
+                  setDuplicateDetails({ ...duplicateDetails, description: event.target.value })} />
+              </S.DuplicateField>
+              <S.DuplicateField>
+                Data e hora
+                <input type="datetime-local" value={duplicateDetails.date} onChange={(event) =>
+                  setDuplicateDetails({ ...duplicateDetails, date: event.target.value })} />
+              </S.DuplicateField>
+              <S.DuplicateField>
+                Local
+                <input value={duplicateDetails.address} onChange={(event) =>
+                  setDuplicateDetails({ ...duplicateDetails, address: event.target.value })} />
+              </S.DuplicateField>
+              {duplicateError && <p role="alert">{duplicateError}</p>}
+              <S.DuplicateActions>
+                <S.Button type="button" onClick={() => setDuplicateOpen(false)}>
+                  <X size={16} /> Cancelar
+                </S.Button>
+                <S.PrimaryButton type="submit">
+                  <Copy size={16} /> {isDuplicating ? 'Duplicando...' : 'Criar cópia'}
+                </S.PrimaryButton>
+              </S.DuplicateActions>
+            </S.DuplicateFields>
+          </S.DuplicateDialog>
+        </S.DuplicateOverlay>
+      )}
 
       {showSavedModal && (
         <div
@@ -684,7 +988,8 @@ export const SetlistPage: React.FC<SetlistProps> = ({
             left: '0',
             right: '0',
             bottom: '0',
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            padding: '16px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -693,17 +998,23 @@ export const SetlistPage: React.FC<SetlistProps> = ({
         >
           <div
             style={{
-              backgroundColor: '#fff',
+              backgroundColor: '#171b26',
+              color: '#f8fafc',
+              border: '1px solid rgba(167, 139, 250, 0.3)',
+              borderTop: '3px solid #a78bfa',
               padding: '30px',
               borderRadius: '8px',
               textAlign: 'center',
-              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+              boxShadow: '0 12px 32px rgba(0, 0, 0, 0.35)',
+              width: '100%',
               maxWidth: '400px',
             }}
           >
-            <Check size={48} color="#008000" style={{ margin: '0 auto 20px' }} />
+            <Check size={48} color="#a78bfa" style={{ margin: '0 auto 20px' }} />
             <h2 style={{ margin: '0 0 10px', fontSize: '20px', fontWeight: 'bold' }}>Setlist salva com sucesso!</h2>
-            <p style={{ margin: 0, color: '#666' }}>As alterações foram salvas na setlist.</p>
+            <p style={{ margin: 0, color: '#94a3b8', fontSize: '14px', fontWeight: 400, lineHeight: 1.5 }}>
+              As alterações foram salvas na setlist.
+            </p>
           </div>
         </div>
       )}
@@ -794,29 +1105,34 @@ export const SetlistPage: React.FC<SetlistProps> = ({
       )}
 
       {currentSongIndex !== null && (
-        <S.NavigationFooter>
-          <ButtonComponent $variant="purple" onClick={() => backToSetlist()}>
-            Setlist
-          </ButtonComponent>
+        <BottomNavigation aria-label="Navegacao das musicas do setlist">
+          <NavigationButton type="button" onClick={() => backToSetlist()}>
+            <ListMusic size={22} aria-hidden="true" />
+            <span>Setlist</span>
+          </NavigationButton>
           {lastLoadedIndex !== null && lastLoadedIndex > 0 && (
-            <ButtonComponent $variant="purple" onClick={() => handlePreviousSongButton(lastLoadedIndex)}>
-              Anterior
-            </ButtonComponent>
+            <NavigationButton type="button" onClick={() => handlePreviousSongButton(lastLoadedIndex)}>
+              <ChevronLeft size={22} aria-hidden="true" />
+              <span>Anterior</span>
+            </NavigationButton>
           )}
           {lastLoadedIndex !== null && lastLoadedIndex < itemsToRender.length - 1 && (
-            <ButtonComponent $variant="purple" onClick={() => handleNextSongButton(lastLoadedIndex)}>
-              Próxima
-            </ButtonComponent>
+            <NavigationButton type="button" onClick={() => handleNextSongButton(lastLoadedIndex)}>
+              <ChevronRight size={22} aria-hidden="true" />
+              <span>Próxima</span>
+            </NavigationButton>
           )}
           {lastLoadedIndex !== null && lastLoadedIndex < itemsToRender.length - 1 && (
-            <ButtonComponent $variant="purple" onClick={() => handlePreloadNextSong(lastLoadedIndex)}>
-              + Carregar
-            </ButtonComponent>
+            <NavigationButton type="button" onClick={() => handlePreloadNextSong(lastLoadedIndex)}>
+              <Plus size={22} aria-hidden="true" />
+              <span>Carregar</span>
+            </NavigationButton>
           )}
-          <ButtonComponent $variant="purple" onClick={() => handleBackToHome()}>
-            Sair
-          </ButtonComponent>
-        </S.NavigationFooter>
+          <NavigationButton type="button" onClick={() => handleBackToHome()}>
+            <DoorOpen size={22} aria-hidden="true" />
+            <span>Sair</span>
+          </NavigationButton>
+        </BottomNavigation>
       )}
     </>
   );

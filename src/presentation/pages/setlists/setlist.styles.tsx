@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { BottomNavigation, NavigationButton } from '@/presentation/components/song-component/song.component.styles';
 
 const COLORS = {
   bg: '#0F1117',
@@ -13,6 +14,119 @@ const COLORS = {
   text: '#F8FAFC',
   textSecondary: '#94A3B8',
 };
+
+export const DuplicateOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.7);
+`;
+
+export const DuplicateDialog = styled.form`
+  width: 100%;
+  max-width: 460px;
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  padding: 24px;
+  border: 1px solid rgba(167, 139, 250, 0.3);
+  border-top: 3px solid ${COLORS.primaryLight};
+  border-radius: 8px;
+  background: ${COLORS.card};
+  color: ${COLORS.text};
+`;
+
+export const DuplicateTitle = styled.h2`
+  margin: 0 0 20px;
+  font-size: 20px;
+  font-weight: 600;
+`;
+
+export const DuplicateFields = styled.fieldset`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+
+  p[role='alert'] {
+    color: #fca5a5;
+    font-size: 14px;
+    font-weight: 400;
+  }
+
+  &:disabled {
+    opacity: 0.7;
+  }
+`;
+
+export const DuplicateField = styled.label`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: ${COLORS.textSecondary};
+
+  input {
+    width: 100%;
+    min-width: 0;
+    min-height: 40px;
+    padding: 8px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    background: ${COLORS.bg};
+    color: ${COLORS.text};
+    color-scheme: dark;
+    font-size: 16px;
+    font-weight: 400;
+  }
+
+  input:focus-visible {
+    outline: 2px solid ${COLORS.primaryLight};
+    outline-offset: 2px;
+  }
+`;
+
+export const DuplicateActions = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+`;
+
+export const SetlistNavigation = styled(BottomNavigation)`
+  justify-content: flex-start;
+  overflow-x: auto;
+
+  > button {
+    flex: 1 0 64px;
+    max-width: none;
+    white-space: nowrap;
+  }
+`;
+
+export const EditNavigationButton = styled(NavigationButton) <{ $intent: 'save' | 'cancel' }>`
+  background: ${({ $intent }) => $intent === 'save' ? '#166534' : '#991b1b'};
+  color: #fff;
+
+  span {
+    font-weight: 600;
+  }
+
+  &:hover {
+    background: ${({ $intent }) => $intent === 'save' ? '#15803d' : '#b91c1c'};
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: wait;
+  }
+`;
 
 export const Container = styled.div`
   display: flex;
@@ -56,6 +170,7 @@ export const SetlistLayout = styled.div`
   width: 100%;
   min-height: 100vh;
   padding: 2rem 2.5rem;
+  padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px));
   gap: 2rem;
   box-sizing: border-box;
   background: ${({ theme }) => theme.colors.background};
@@ -79,12 +194,21 @@ export const PageHeader = styled.div`
   /* background: rgba(255, 255, 255, 0.02); */
   /* border: 1px solid rgba(255, 255, 255, 0.08); */
   border-radius: 24px;
+
+  @media (max-width: 720px) {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 1.5rem;
+    padding: 0;
+  }
 `;
 
 export const TitleGroup = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
 `;
 
 export const SetlistTitle = styled.h1`
@@ -107,6 +231,32 @@ export const ActionGroup = styled.div`
   flex-wrap: wrap;
   gap: 0.75rem;
   align-items: center;
+
+  @media (max-width: 720px) {
+    flex-wrap: nowrap;
+    gap: 6px;
+    min-width: 0;
+    overflow-x: auto;
+
+    > button, > div {
+      display: inline-flex;
+      flex: 0 0 36px;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border-radius: 8px;
+
+      > span {
+        display: none;
+      }
+
+      svg {
+        flex-shrink: 0;
+      }
+    }
+  }
 `;
 
 export const IconButton = styled.button`
@@ -155,23 +305,63 @@ export const CardList = styled.div`
   gap: 0.85rem;
 `;
 
+export const ItemRow = styled.div`
+  position: relative;
+  min-width: 0;
+`;
+
+export const RemoveItemButton = styled.button`
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  background: #171b26;
+  color: #fca5a5;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(248, 113, 113, 0.15);
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${COLORS.primaryLight};
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+`;
+
 export const ItemCard = styled.button<{
+  $editing?: boolean;
   $isDragging?: boolean;
   $isDragOver?: boolean;
+  $isSelected?: boolean;
   draggable?: boolean;
   $linked?: boolean;
 }>`
   display: grid;
-  grid-template-columns: ${(props) => (props.draggable ? '52px 52px 1fr 1fr' : '52px 1fr 1fr')};
+  grid-template-areas: 'number content meta';
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
   gap: 1rem;
   width: 100%;
   padding: 1.25rem 1.3rem;
+  padding-right: ${({ $editing }) => $editing ? '52px' : '1.3rem'};
   border-radius: 20px;
   border: 1px solid ${({ $isDragOver }) => ($isDragOver ? 'rgba(94, 60, 255, 0.5)' : 'rgba(255, 255, 255, 0.1)')};
   ${($linked) => $linked && 'border-color: transparent'};
   background: ${({ $linked, theme }) => ($linked ? theme.colors.surface : theme.colors.disabled)};
   color: #fff;
   cursor: pointer;
+  outline: ${({ $isSelected }) => ($isSelected ? '2px solid #a78bfa' : 'none')};
+  outline-offset: 2px;
   transition:
     transform 0.2s ease,
     border-color 0.2s ease,
@@ -183,8 +373,10 @@ export const ItemCard = styled.button<{
   }
 
   @media (max-width: 720px) {
-    grid-template-columns: 40px auto auto;
-    align-items: center;
+    grid-template-areas: 'number content' 'number meta';
+    grid-template-columns: 44px minmax(0, 1fr);
+    row-gap: 0.8rem;
+    padding-right: 1.3rem;
   }
 `;
 
@@ -192,9 +384,12 @@ export const ItemHandle = styled.div`
   display: grid;
   place-items: center;
   color: rgba(255, 255, 255, 0.55);
+  flex-shrink: 0;
+  cursor: grab;
 `;
 
 export const ItemNumber = styled.div`
+  grid-area: number;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -204,13 +399,24 @@ export const ItemNumber = styled.div`
   font-weight: 700;
   width: 44px;
   height: 44px;
+  gap: 2px;
+
+  @media (max-width: 720px) {
+    align-self: start;
+  }
 `;
 
-export const ItemContent = styled.div`
+export const ItemContent = styled.div<{ $editing?: boolean }>`
+  grid-area: content;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
   min-width: 0;
+  overflow-wrap: anywhere;
+
+  @media (max-width: 720px) {
+    padding-right: ${({ $editing }) => $editing ? '32px' : '0'};
+  }
 `;
 
 export const ItemName = styled.h2`
@@ -229,18 +435,21 @@ export const ItemArtist = styled.p`
 `;
 
 export const ItemMeta = styled.div`
+  grid-area: meta;
   display: flex;
+  min-width: 0;
   justify-content: flex-end;
   align-items: center;
   gap: 0.75rem;
 
   @media (max-width: 720px) {
-    justify-content: flex-end;
+    justify-content: flex-start;
   }
 `;
 
 export const KeyBadge = styled.span`
   display: inline-flex;
+  flex: 0 0 56px;
   align-items: center;
   justify-content: center;
   min-width: 56px;
@@ -254,17 +463,21 @@ export const KeyBadge = styled.span`
 `;
 
 export const KeyInput = styled.input`
-  width: 100%;
-  max-width: 52px;
+  flex: 0 0 56px;
+  width: 56px;
+  max-width: 56px;
+  height: 36px;
+  box-sizing: border-box;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;
   color: #fff;
-  padding: 0.75rem 1rem;
+  padding: 0 6px;
   outline: none;
   text-align: center;
-  font-size: 1.5rem;
-  letter-spacing: 0.08em;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0;
 
   &::placeholder {
     color: rgba(255, 255, 255, 0.4);
@@ -316,17 +529,22 @@ export const SingerInput = styled.input`
 `;
 
 export const SingerSelect = styled.select`
-  width: 100%;
+  flex: 0 1 140px;
+  width: 140px;
   max-width: 140px;
+  min-width: 0;
+  height: 36px;
+  box-sizing: border-box;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;
   color: #fff;
-  padding: 0.75rem 1rem;
+  padding: 0 8px;
   outline: none;
-  font-size: 1rem;
+  font-size: 16px;
+  font-weight: 400;
   cursor: pointer;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
 
   option {
     background: #1a1a2e;

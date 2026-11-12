@@ -70,6 +70,7 @@ export const Router: React.FC = () => {
               path="/setlists/:setlistId"
               element={
                 <SetlistPage
+                  createSetlistRequest={createSetlistRequest}
                   loadSetlistRequest={loadSetlistRequest}
                   loadAllSongsRequest={loadAllSongsRequest}
                   updateSetlistRequest={updateSetlistRequest}

@@ -5,6 +5,7 @@ export interface CreateSetlistSongDTO {
   songId: string | null;
   order: string;
   key: string;
+  singerId?: string;
 }
 
 export interface CreateSetlistDTO {

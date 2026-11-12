@@ -47,6 +47,47 @@ export const Container = styled.div<ContainerProps>`
 `;
 
 /** Header */
+export const BottomNavigation = styled.nav`
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  padding: 6px 1rem calc(6px + env(safe-area-inset-bottom, 0px));
+  background: ${COLORS.bg};
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+`;
+
+export const NavigationButton = styled.button`
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  max-width: 180px;
+  height: 56px;
+  padding: 4px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: ${COLORS.text};
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 0;
+  cursor: pointer;
+
+  &:hover {
+    background: ${COLORS.cardHover};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${COLORS.primaryLight};
+    outline-offset: -2px;
+  }
+`;
+
 export const Header = styled.header`
   padding: 1rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
@@ -61,6 +102,8 @@ export const Header = styled.header`
 
 export const FlexColumn = styled.header`
   display: flex;
+  min-width: 0;
+  max-width: 100%;
   flex-direction: column;
   align-items: flex-start;
 `;
@@ -77,6 +120,13 @@ export const FlexRow = styled.header`
   }
 `;
 
+export const MetadataRow = styled(FlexRow)`
+  height: auto;
+  padding: 1.5rem 1rem;
+  flex-wrap: wrap;
+  gap: 1.6rem;
+`;
+
 export const FlexGap = styled.header`
   display: flex;
   flex-direction: row;
@@ -90,13 +140,19 @@ export const FlexGap = styled.header`
 
 export const PureFlexRow = styled.div`
   display: flex;
+  flex-wrap: wrap;
+  max-width: 100%;
   flex-direction: row;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 10px;
 `;
 
 export const Title = styled.h1`
+  width: 280px;
+  max-width: 100%;
+  min-height: 24px;
+  line-height: 24px;
   font-size: 2rem;
   font-weight: 700;
   color: #f8fafc;
@@ -108,6 +164,10 @@ export const Title = styled.h1`
 `;
 
 export const Author = styled.h1`
+  width: 240px;
+  max-width: 100%;
+  min-height: 20px;
+  line-height: 20px;
   color: #94a3b8;
   font-size: 1.5rem;
 
@@ -208,6 +268,44 @@ export const CellInput = styled.input`
   padding: 1rem;
 `;
 
+export const MetadataInput = styled(CellInput)`
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0 4px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 4px;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  box-sizing: border-box;
+
+  &:focus-visible {
+    outline: 2px solid ${COLORS.primaryLight};
+    outline-offset: 2px;
+    background-color: ${COLORS.card};
+  }
+`;
+
+export const MetadataValue = styled(CellValue) <{ $field: 'bpm' | 'rhythm' }>`
+  width: ${({ $field }) => ($field === 'bpm' ? '56px' : '96px')};
+  height: 34px;
+  padding: 0;
+  align-items: center;
+  font-size: 1.2rem;
+`;
+
+export const KeyValue = styled.span`
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 32px;
+  font-weight: inherit;
+  text-align: center;
+`;
+
 export const CellLabel = styled.div`
   font-size: 1.3rem;
   font-weight: bold;
@@ -287,6 +385,7 @@ export const SectionTitle = styled.h1<SectionTitleProps>`
 
   span {
     flex-shrink: 0;
+    font-weight: inherit;
     color: ${COLORS.primaryLight};
   }
 
@@ -393,6 +492,37 @@ export const MiniSimpleButton = styled.button<MiniSimpleButtonProps>`
   touch-action: manipulation;
 `;
 
+export const ToolbarButton = styled(MiniSimpleButton)`
+  span {
+    font: inherit;
+  }
+
+  @media (max-width: 600px) {
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+
+    span {
+      display: none;
+    }
+
+    svg {
+      width: 18px;
+      height: 18px;
+    }
+  }
+`;
+
+export const OriginalToneButton = styled(ToolbarButton)`
+  @media (max-width: 600px) {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 56px;
+    padding: 0 8px;
+  }
+`;
+
 interface BlinkingDivProps {
   bpm: number;
   $active?: boolean;
@@ -465,10 +595,22 @@ export const SectionObs = styled.div`
 `;
 
 export const LyricsBox = styled.div`
-  background-color: #000;
-  padding: 2rem;
-  border-radius: 10px;
+  width: calc(100% - 3.2rem);
+  max-width: 64ch;
+  margin: 0 auto;
+  padding: 1.6rem 0 3.2rem;
+  color: #e6e8ed;
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.8;
+  letter-spacing: 0;
+  text-align: left;
   white-space: pre-wrap;
-  font-size: 1.8rem;
-  color: #fff;
+  overflow-wrap: break-word;
+  tab-size: 4;
+
+  @media (max-width: 600px) {
+    font-size: 20px;
+    line-height: 1.75;
+  }
 `;

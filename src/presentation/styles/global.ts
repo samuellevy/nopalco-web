@@ -32,6 +32,7 @@ export const GlobalStyles = createGlobalStyle`
     }
 
     body {
+      touch-action: manipulation;
       background-color: ${({ theme }) => theme.variants.lucide.screenBackground};
       color: ${({ theme }) => theme.colors.text};
       font-family: ${({ theme }) => theme.font.default};

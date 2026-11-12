@@ -1,9 +1,21 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React from 'react';
-import { PlusCircle, MinusCircle, Search, Music4, Text } from 'lucide-react';
+import {
+  PlusCircle,
+  MinusCircle,
+  Search,
+  Music4,
+  Text,
+  Home,
+  ListMusic,
+  RotateCcw,
+  Edit2,
+  Columns,
+  Users,
+} from 'lucide-react';
 
 import * as S from './song.component.styles';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Song } from '@/domain/models';
 import { LoadAllSongsRequest } from '@/domain/usecases';
 import { LoadSetlistRequest } from '@/domain/usecases/setlists/load-setlist-request';
@@ -13,6 +25,7 @@ import { ModalSongsListComponent } from '@/presentation/components/modal-song-li
 import FullscreenButtonComponent from '@/presentation/components/fullscreen-button/fullscreen-button.component';
 import SheetMusicPage from '@/presentation/pages/sheet-music/sheet-music.page';
 import { ButtonComponent } from '../button/button';
+import { ModalSongSingers } from '@/presentation/components/modal-song-singers/modal-song-singers.component';
 
 interface Content {
   block: string;
@@ -28,10 +41,12 @@ type Props = {
   loadSetlistRequest: LoadSetlistRequest;
   updateSongRequest: UpdateSongRequest;
   setlistSongList?: SetlistItem[];
+  handleSelectSetlistItem?: (item: SetlistItem) => void;
   handleSetlistButton: () => void;
   handleNextSongButton: () => void;
   handlePreviousSongButton: () => void;
   handlePreloadNextSongButton?: () => void;
+  showPageNavigation?: boolean;
 };
 
 export const SongComponent: React.FC<Props> = ({
@@ -39,14 +54,18 @@ export const SongComponent: React.FC<Props> = ({
   dataKey,
   updateSongRequest,
   loadAllSongsRequest,
+  setlistSongList,
+  handleSelectSetlistItem,
   handleSetlistButton,
   handleNextSongButton,
   handlePreviousSongButton,
   handlePreloadNextSongButton,
+  showPageNavigation = false,
 }) => {
   const navigate = useNavigate();
+  const { setlistId } = useParams<{ setlistId: string }>();
   const [searchParams] = useSearchParams();
-  const setlist = searchParams.get('setlist');
+  const setlist = searchParams.get('setlist') || setlistId;
   const key = dataKey || null;
   const [activeBpm, setActiveBpm] = React.useState(false);
   const [editMode, setEditMode] = React.useState(false);
@@ -54,6 +73,8 @@ export const SongComponent: React.FC<Props> = ({
   const [lyricsMode, setLyricsMode] = React.useState(false);
   const [chordsMusicMode] = React.useState(true);
   const [modalSongsOpen, setModalSongsOpen] = React.useState(false);
+  const [modalSetlistOpen, setModalSetlistOpen] = React.useState(false);
+  const [modalSingersOpen, setModalSingersOpen] = React.useState(false);
   const [isSplitted, setIsSplitted] = React.useState(false);
   const [song, setSong] = React.useState<Song>(null as unknown as Song);
 
@@ -135,6 +156,7 @@ export const SongComponent: React.FC<Props> = ({
     try {
       const updatedSong = await updateSongRequest.execute(song.id, {
         ...rest,
+        singers: undefined,
         content: JSON.stringify(content),
       });
       console.log('Song updated successfully:', updatedSong);
@@ -174,7 +196,7 @@ export const SongComponent: React.FC<Props> = ({
         key && parsedContent && data.key && finalNewKey
           ? transposeContent(parsedContent, isMinorChord(data.key) ? getRelativeMajor(data.key) : data.key, finalNewKey)
           : parsedContent;
-      setSong({ ...data, content: transposedContent });
+      setSong({ ...data, key: key || data.key, content: transposedContent });
     }
   }, [data, key]);
 
@@ -232,7 +254,11 @@ export const SongComponent: React.FC<Props> = ({
     if (returnContent) {
       return newContent;
     }
-    setSong((prevState) => ({ ...prevState, content: newContent }));
+    setSong((prevState) => ({
+      ...prevState,
+      key: prevState.key ? transposeNote(prevState.key) : prevState.key,
+      content: newContent,
+    }));
     return [];
   }
 
@@ -287,8 +313,17 @@ export const SongComponent: React.FC<Props> = ({
       notes: block.notes ? block.notes.map(transposeNotesBlock) : block.notes,
     }));
 
-    setSong((prevState) => ({ ...prevState, content: newContent }));
+    setSong((prevState) => ({
+      ...prevState,
+      key: prevState.key ? transposeNote(prevState.key) : prevState.key,
+      content: newContent,
+    }));
   }
+
+  const handleResetKey = () => {
+    const content = typeof data.content === 'string' ? JSON.parse(data.content) : data.content;
+    setSong((prevState) => ({ ...prevState, key: data.key, content }));
+  };
 
   function isStringBetweenAsterisks(str: string): boolean {
     const asteriskRegex = /\*([^*]+)\*/;
@@ -414,9 +449,8 @@ export const SongComponent: React.FC<Props> = ({
     setSong((prevState) => ({ ...prevState, content: updatedContent }));
   };
 
-  const handleUpdateKey = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { value } = e.target;
-    setSong((prevState) => ({ ...prevState, key: value }));
+  const handleUpdateMetadata = (field: 'name' | 'author' | 'bpm' | 'key' | 'rhythm', value: string) => {
+    setSong((prevState) => ({ ...prevState, [field]: value }));
   };
 
   const handleUpdateSectionTitle = (e: React.ChangeEvent<HTMLInputElement>, sectionIndex: number) => {
@@ -465,9 +499,9 @@ export const SongComponent: React.FC<Props> = ({
   };
 
   const handleSaveButton = async () => {
-    if (!song?.content) return;
+    if (!song) return;
     // remover de songs tudo o que for string vazia
-    const cleanedContent = song.content.map((section: Content) => ({
+    const cleanedContent = (song.content || []).map((section: Content) => ({
       ...section,
       notes: section.notes?.filter((note) => {
         if (typeof note === 'string') {
@@ -485,8 +519,22 @@ export const SongComponent: React.FC<Props> = ({
   };
 
   const handleClickSong = (songId: string) => {
-    window.location.href = `/songs/${songId}?setlist=${setlist}`;
+    const params = new URLSearchParams();
+    if (setlist) params.set('setlist', setlist);
+    navigate(`/songs/${songId}${params.size ? `?${params.toString()}` : ''}`);
     setModalSongsOpen(false);
+  };
+
+  const handleClickSetlistItem = (itemId: string) => {
+    const item = setlistSongList?.find((setlistItem) => setlistItem.id === itemId);
+    if (!item || !setlist) return;
+    setModalSetlistOpen(false);
+    if (handleSelectSetlistItem) {
+      handleSelectSetlistItem(item);
+    } else {
+      const params = new URLSearchParams({ setlistItem: item.id, key: item.key || '' });
+      navigate(`/setlists/${setlist}?${params.toString()}`);
+    }
   };
 
   return (
@@ -511,25 +559,84 @@ export const SongComponent: React.FC<Props> = ({
           <S.Header>
             <S.FlexRow>
               <S.FlexColumn>
-                <S.Title onDoubleClick={() => goFullscreen()}>{song.name}</S.Title>
-                <S.Author>{song.author}</S.Author>
+                <S.Title onDoubleClick={() => !editMode && goFullscreen()}>
+                  {editMode ? (
+                    <S.MetadataInput
+                      aria-label="Título"
+                      placeholder="Título"
+                      value={song.name || ''}
+                      onChange={(event) => handleUpdateMetadata('name', event.target.value)}
+                    />
+                  ) : (
+                    song.name
+                  )}
+                </S.Title>
+                <S.Author>
+                  {editMode ? (
+                    <S.MetadataInput
+                      aria-label="Subtítulo"
+                      placeholder="Subtítulo"
+                      value={song.author || ''}
+                      onChange={(event) => handleUpdateMetadata('author', event.target.value)}
+                    />
+                  ) : (
+                    song.author
+                  )}
+                </S.Author>
                 <S.PureFlexRow>
                   {!editMode && (
-                    <S.MiniSimpleButton onClick={handleToggleSheetMusicMode} $active={sheetMusicMode}>
-                      <Music4 size={15} /> Partitura
-                    </S.MiniSimpleButton>
+                    <S.ToolbarButton
+                      onClick={handleToggleSheetMusicMode}
+                      $active={sheetMusicMode}
+                      aria-label="Partitura"
+                      aria-pressed={sheetMusicMode}
+                      title="Partitura"
+                    >
+                      <Music4 size={15} aria-hidden="true" /> <span>Partitura</span>
+                    </S.ToolbarButton>
                   )}
                   {!editMode && (
-                    <S.MiniSimpleButton onClick={handleToggleLyricsMode} $active={lyricsMode}>
-                      <Text size={15} /> Letra
-                    </S.MiniSimpleButton>
+                    <S.ToolbarButton
+                      onClick={handleToggleLyricsMode}
+                      $active={lyricsMode}
+                      aria-label="Letra"
+                      aria-pressed={lyricsMode}
+                      title="Letra"
+                    >
+                      <Text size={15} aria-hidden="true" /> <span>Letra</span>
+                    </S.ToolbarButton>
                   )}
-                  {!editMode && <S.MiniSimpleButton onClick={handleEditButton}>Editar</S.MiniSimpleButton>}
+                  {!editMode && (
+                    <S.ToolbarButton onClick={handleEditButton} aria-label="Editar" title="Editar">
+                      <Edit2 size={15} aria-hidden="true" /> <span>Editar</span>
+                    </S.ToolbarButton>
+                  )}
                   {editMode && <S.MiniSimpleButton onClick={handleEditButton}>Cancelar</S.MiniSimpleButton>}
                   {!editMode && (
-                    <S.MiniSimpleButton onClick={toggleSplit} $active={isSplitted}>
-                      Split
-                    </S.MiniSimpleButton>
+                    <S.ToolbarButton
+                      onClick={toggleSplit}
+                      $active={isSplitted}
+                      aria-label="Split"
+                      aria-pressed={isSplitted}
+                      title="Split"
+                    >
+                      <Columns size={15} aria-hidden="true" /> <span>Split</span>
+                    </S.ToolbarButton>
+                  )}
+                  {!editMode && (
+                    <S.ToolbarButton onClick={() => setModalSingersOpen(true)} aria-label="Cantores" title="Cantores">
+                      <Users size={15} aria-hidden="true" /> <span>Cantores</span>
+                    </S.ToolbarButton>
+                  )}
+                  {!editMode && data.key && (
+                    <S.OriginalToneButton
+                      title={`Voltar ao tom original: ${data.key}`}
+                      aria-label={`Original: ${data.key}`}
+                      onClick={handleResetKey}
+                      disabled={song.key === data.key}
+                    >
+                      <RotateCcw size={15} aria-hidden="true" /> <span>Original:</span> {data.key}
+                    </S.OriginalToneButton>
                   )}
                   {editMode && (
                     <>
@@ -549,31 +656,71 @@ export const SongComponent: React.FC<Props> = ({
               </S.CellHeader> */}
             </S.FlexRow>
 
-            {!lyricsMode && (
-              <S.FlexRow>
-                <S.CellHeader onClick={() => setActiveBpm(!activeBpm)}>
-                  <S.BlinkingDiv bpm={parseInt(song.bpm || '0')} $active={activeBpm}>
-                    {song.bpm}
-                  </S.BlinkingDiv>
-                  <S.CellValue $size="1.2rem" hidden={activeBpm}>
-                    {song.bpm}
-                  </S.CellValue>
-                  <S.CellLabel>BPM</S.CellLabel>
+            {(!lyricsMode || editMode) && (
+              <S.MetadataRow>
+                <S.CellHeader onClick={() => !editMode && setActiveBpm(!activeBpm)}>
+                  {!editMode && (
+                    <S.BlinkingDiv bpm={parseInt(song.bpm || '0')} $active={activeBpm}>
+                      {song.bpm}
+                    </S.BlinkingDiv>
+                  )}
+                  <S.MetadataValue $field="bpm" hidden={!editMode && activeBpm}>
+                    {editMode ? (
+                      <S.MetadataInput
+                        aria-label="BPM"
+                        placeholder="BPM"
+                        inputMode="numeric"
+                        value={song.bpm || ''}
+                        onChange={(event) => handleUpdateMetadata('bpm', event.target.value)}
+                      />
+                    ) : (
+                      song.bpm
+                    )}
+                  </S.MetadataValue>
                 </S.CellHeader>
                 <S.CellHeader>
-                  <S.CellValue $size="1.2rem">
-                    {editMode && <S.CellInput type="text" value={song.key} onChange={(e) => handleUpdateKey(e)} />}
-                    {!editMode && (key || song.key)}
-                  </S.CellValue>
                   <S.CellLabel>
-                    <MinusCircle size={22} onClick={() => song.content && decreaseTone(song.content, key || song.key)} />
-                    KEY
-                    <PlusCircle size={22} onClick={() => song.content && increaseTone(song.content, false, key || song.key)} />
+                    <S.MiniSimpleButton
+                      aria-label="Diminuir tom"
+                      title="Diminuir tom"
+                      onClick={() => song.content && decreaseTone(song.content, song.key)}
+                    >
+                      <MinusCircle size={22} />
+                    </S.MiniSimpleButton>
+                    <S.KeyValue aria-label={editMode ? undefined : 'Tom atual'}>
+                      {editMode ? (
+                        <S.MetadataInput
+                          aria-label="Tom"
+                          placeholder="Tom"
+                          value={song.key || ''}
+                          onChange={(event) => handleUpdateMetadata('key', event.target.value)}
+                        />
+                      ) : (
+                        song.key
+                      )}
+                    </S.KeyValue>
+                    <S.MiniSimpleButton
+                      aria-label="Aumentar tom"
+                      title="Aumentar tom"
+                      onClick={() => song.content && increaseTone(song.content, false, song.key)}
+                    >
+                      <PlusCircle size={22} />
+                    </S.MiniSimpleButton>
                   </S.CellLabel>
                 </S.CellHeader>
                 <S.CellHeader>
-                  <S.CellValue $size="1.2rem">{song.rhythm}</S.CellValue>
-                  <S.CellLabel>RHYTHM</S.CellLabel>
+                  <S.MetadataValue $field="rhythm">
+                    {editMode ? (
+                      <S.MetadataInput
+                        aria-label="Ritmo"
+                        placeholder="Ritmo"
+                        value={song.rhythm || ''}
+                        onChange={(event) => handleUpdateMetadata('rhythm', event.target.value)}
+                      />
+                    ) : (
+                      song.rhythm
+                    )}
+                  </S.MetadataValue>
                 </S.CellHeader>
                 {/* <S.Cell>
                 <S.CellValue $size="1.2rem" $variant="purple">
@@ -581,7 +728,7 @@ export const SongComponent: React.FC<Props> = ({
                 </S.CellValue>
                 <S.CellLabel>VERSION</S.CellLabel>
               </S.Cell> */}
-              </S.FlexRow>
+              </S.MetadataRow>
             )}
           </S.Header>
 
@@ -695,12 +842,43 @@ export const SongComponent: React.FC<Props> = ({
         </S.Container>
       )}
 
+      {showPageNavigation && (
+        <S.BottomNavigation aria-label="Navegacao da musica">
+          <S.NavigationButton type="button" onClick={handleHomeButton}>
+            <Home size={22} aria-hidden="true" />
+            <span>Home</span>
+          </S.NavigationButton>
+          {setlist && (
+            <S.NavigationButton type="button" onClick={handleSetlistButton}>
+              <ListMusic size={22} aria-hidden="true" />
+              <span>Setlist</span>
+            </S.NavigationButton>
+          )}
+        </S.BottomNavigation>
+      )}
+
+      {modalSingersOpen && song?.id && (
+        <ModalSongSingers
+          songId={song.id}
+          singers={song.singers || []}
+          originalKey={data.key}
+          updateSongRequest={updateSongRequest}
+          onSaved={(singers) => setSong((current) => ({ ...current, singers }))}
+          onClose={() => setModalSingersOpen(false)}
+        />
+      )}
+
       <S.RightSideActions>
         <S.UserNavigation>
           <FullscreenButtonComponent />
-          <S.Button onClick={() => setModalSongsOpen(true)}>
+          <S.Button aria-label="Buscar músicas" title="Buscar músicas" onClick={() => setModalSongsOpen(true)}>
             <Search />
           </S.Button>
+          {setlist && setlistSongList && (
+            <S.Button aria-label="Setlist atual" title="Setlist atual" onClick={() => setModalSetlistOpen(true)}>
+              <ListMusic />
+            </S.Button>
+          )}
         </S.UserNavigation>
         {/* <Search onClick={() => setModalSongsOpen(true)} /> */}
       </S.RightSideActions>
@@ -711,6 +889,15 @@ export const SongComponent: React.FC<Props> = ({
         setModalSongsOpen={setModalSongsOpen}
         handleClickSong={handleClickSong}
       />
+      {modalSetlistOpen && setlistSongList && (
+        <ModalSongsListComponent
+          loadAllSongsRequest={loadAllSongsRequest}
+          modalSongsOpen={modalSetlistOpen}
+          setModalSongsOpen={setModalSetlistOpen}
+          setlistItems={setlistSongList}
+          handleClickSong={handleClickSetlistItem}
+        />
+      )}
     </>
   );
 };
