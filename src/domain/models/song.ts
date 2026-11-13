@@ -31,4 +31,5 @@ export interface SongConversationMessage {
   author: string;
   text: string;
   createdAt: string;
+  canDelete?: boolean;
 }

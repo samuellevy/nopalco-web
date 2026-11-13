@@ -34,6 +34,7 @@ import { SongConversation } from '@/presentation/components/song-conversation/so
 import { getAccessToken, useSession } from '@/main/config/session';
 import { UserMenu } from '@/presentation/components/user-menu/user-menu.component';
 import { SetlistObservations } from '@/presentation/components/setlist-observations/setlist-observations.component';
+import { ObservationsRichText } from '@/presentation/components/setlist-observations/observations-rich-text.component';
 
 interface Content {
   block: string;
@@ -899,23 +900,18 @@ export const SongComponent: React.FC<Props> = ({
           {!observationsMode && !conversationMode && !lyricsMode && sheetMusicMode && song && (
             <SheetMusicPage song={song} />
           )}
-          {!observationsMode &&
-            !conversationMode &&
-            lyricsMode &&
-            song &&
-            (editMode ? (
-              <S.LyricsEditor>
-                <S.LyricsInput
-                  aria-label="Letra da música"
-                  placeholder="Letra da música"
-                  rows={16}
-                  value={song.lyrics || ''}
-                  onChange={(event) => handleUpdateMetadata('lyrics', event.target.value)}
-                />
-              </S.LyricsEditor>
-            ) : (
-              <S.LyricsBox>{song.lyrics}</S.LyricsBox>
-            ))}
+          {!observationsMode && !conversationMode && lyricsMode && song && (
+            <S.LyricsEditor>
+              <ObservationsRichText
+                key={editMode ? 'lyrics-edit' : 'lyrics-view'}
+                content={song.lyrics || ''}
+                editable={editMode}
+                ariaLabel="Letra da música"
+                toolbarLabel="Formatação da letra"
+                onChange={(value) => handleUpdateMetadata('lyrics', value)}
+              />
+            </S.LyricsEditor>
+          )}
           {observationsMode && onSaveObservations && (
             <SetlistObservations
               observations={observations}

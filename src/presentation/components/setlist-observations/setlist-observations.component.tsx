@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Check, Edit2, X } from 'lucide-react';
 import { getAccessToken, useSession } from '@/main/config/session';
 import * as S from '@/presentation/components/song-component/song.component.styles';
+import { ObservationsRichText } from './observations-rich-text.component';
 
 type Props = {
   observations?: string;
@@ -56,14 +57,7 @@ export const SetlistObservations = ({
       {active && isAuthenticated ? (
         <S.LyricsEditor>
           <S.ObservationsForm onSubmit={save}>
-            <S.LyricsInput
-              aria-label="Observações do item"
-              placeholder="Observações"
-              rows={16}
-              value={draft}
-              disabled={saving}
-              onChange={(event) => setDraft(event.target.value)}
-            />
+            <ObservationsRichText content={draft} editable disabled={saving} onChange={setDraft} />
             {error && <S.ObservationsError role="alert">{error}</S.ObservationsError>}
             <S.PureFlexRow>
               <S.EditAction $variant="save" type="submit" disabled={saving}>
@@ -77,7 +71,13 @@ export const SetlistObservations = ({
         </S.LyricsEditor>
       ) : (
         <>
-          <S.LyricsBox>{observations || 'Nenhuma observação.'}</S.LyricsBox>
+          {observations ? (
+            <S.LyricsEditor>
+              <ObservationsRichText content={observations} />
+            </S.LyricsEditor>
+          ) : (
+            <S.LyricsBox>Nenhuma observação.</S.LyricsBox>
+          )}
           {showEditButton && isAuthenticated && (
             <S.LyricsEditor>
               <S.EditAction $variant="add" type="button" onClick={() => changeEditing(true)}>

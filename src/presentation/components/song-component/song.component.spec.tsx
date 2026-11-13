@@ -1,12 +1,28 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import type { Editor } from '@tiptap/core';
 import { MemoryRouter } from 'react-router-dom';
 import { ServerStyleSheet, ThemeProvider } from 'styled-components';
 import { Song } from '@/domain/models';
 import { defaultTheme } from '@/presentation/styles/themes/default';
 import { GlobalStyles } from '@/presentation/styles/global';
 import { SongComponent } from './song.component';
+import { readObservationsDocument } from '@/presentation/components/setlist-observations/observations-document';
+
+const getLyricsEditor = () =>
+  (screen.getByRole('textbox', { name: 'Letra da música' }) as HTMLElement & { editor: Editor }).editor;
+
+const writeLyrics = (value: string) =>
+  act(() => {
+    getLyricsEditor().commands.setContent(readObservationsDocument(value), true);
+  });
+
+beforeAll(() => {
+  Object.defineProperty(Range.prototype, 'getBoundingClientRect', { configurable: true, value: () => new DOMRect() });
+  Object.defineProperty(Range.prototype, 'getClientRects', { configurable: true, value: () => [] });
+});
 
 beforeEach(() => {
+  jest.spyOn(window, 'requestAnimationFrame').mockImplementation(() => 0);
   const payload = btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 }));
   localStorage.setItem(
     'account',
@@ -15,6 +31,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  jest.restoreAllMocks();
   localStorage.clear();
   sessionStorage.clear();
 });
@@ -142,31 +159,35 @@ describe('SongComponent metadata editing', () => {
 });
 
 describe('SongComponent lyrics editing', () => {
-  test('shows a large textarea in lyrics mode and saves lyrics without changing chords', async () => {
+  test('shows the rich text editor and saves lyrics without changing chords', async () => {
     const updateSong = jest.fn().mockResolvedValue(undefined);
     renderSong('C', null, 'Verse', updateSong);
     fireEvent.click(screen.getByRole('button', { name: 'Letra' }));
     expect(screen.queryByRole('textbox', { name: 'Letra da música' })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
 
-    const input = screen.getByRole('textbox', { name: 'Letra da música' });
-    expect(input).toHaveValue('Primeiro verso\n\nRefrão');
-    expect(input).toHaveAttribute('rows', '16');
+    expect(getLyricsEditor().getText({ blockSeparator: '\n' })).toBe('Primeiro verso\n\nRefrão');
+    expect(screen.getByRole('toolbar', { name: 'Formatação da letra' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Seção' })).not.toBeInTheDocument();
-    fireEvent.change(input, { target: { value: 'Novo verso\n\nNovo refrão' } });
+    writeLyrics('Novo verso\n\nNovo refrão');
     fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
 
     await waitFor(() =>
       expect(updateSong).toHaveBeenCalledWith(
         'song-1',
         expect.objectContaining({
-          lyrics: 'Novo verso\n\nNovo refrão',
+          lyrics: expect.any(String),
           content: JSON.stringify([{ block: 'Verse', notes: ['C/E'] }]),
         }),
       ),
     );
+    expect(readObservationsDocument(updateSong.mock.calls[0][1].lyrics)).toEqual(
+      readObservationsDocument('Novo verso\n\nNovo refrão'),
+    );
     await waitFor(() => expect(screen.queryByRole('textbox', { name: 'Letra da música' })).not.toBeInTheDocument());
-    expect(screen.getByText('Novo verso Novo refrão')).toBeInTheDocument();
+    expect(screen.getByText('Novo verso')).toBeInTheDocument();
+    expect(screen.getByText('Novo refrão')).toBeInTheDocument();
+    expect(screen.queryByRole('toolbar', { name: 'Formatação da letra' })).not.toBeInTheDocument();
   });
 
   test('cancelling restores the previous lyrics and does not send an update', () => {
@@ -174,11 +195,12 @@ describe('SongComponent lyrics editing', () => {
     renderSong('C', null, 'Verse', updateSong);
     fireEvent.click(screen.getByRole('button', { name: 'Letra' }));
     fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
-    fireEvent.change(screen.getByRole('textbox', { name: 'Letra da música' }), { target: { value: 'Discard this' } });
+    writeLyrics('Discard this');
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
 
     expect(screen.queryByText('Discard this')).not.toBeInTheDocument();
-    expect(screen.getByText('Primeiro verso Refrão')).toBeInTheDocument();
+    expect(screen.getByText('Primeiro verso')).toBeInTheDocument();
+    expect(screen.getByText('Refrão')).toBeInTheDocument();
     expect(updateSong).not.toHaveBeenCalled();
   });
 
@@ -187,13 +209,40 @@ describe('SongComponent lyrics editing', () => {
     renderSong('C', null, 'Verse', updateSong, '');
     fireEvent.click(screen.getByRole('button', { name: 'Letra' }));
     fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
-    const input = screen.getByRole('textbox', { name: 'Letra da música' });
-    expect(input).toHaveValue('');
-    fireEvent.change(input, { target: { value: 'New lyrics' } });
+    expect(getLyricsEditor().getText()).toBe('');
+    writeLyrics('New lyrics');
     fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
     await waitFor(() =>
-      expect(updateSong).toHaveBeenCalledWith('song-1', expect.objectContaining({ lyrics: 'New lyrics' })),
+      expect(updateSong).toHaveBeenCalledWith('song-1', expect.objectContaining({ lyrics: expect.any(String) })),
     );
+    expect(readObservationsDocument(updateSong.mock.calls[0][1].lyrics)).toEqual(
+      readObservationsDocument('New lyrics'),
+    );
+  });
+
+  test('saves and restores bold formatting using the same rich text format as observations', async () => {
+    const updateSong = jest.fn().mockResolvedValue(undefined);
+    renderSong('C', null, 'Verse', updateSong, 'Texto importante');
+    fireEvent.click(screen.getByRole('button', { name: 'Letra' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
+    act(() => {
+      getLyricsEditor().commands.setTextSelection({ from: 1, to: 6 });
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Negrito' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() => expect(updateSong).toHaveBeenCalledTimes(1));
+    const document = readObservationsDocument(updateSong.mock.calls[0][1].lyrics);
+    expect(document.content?.[0].content?.[0]).toEqual({ type: 'text', text: 'Texto', marks: [{ type: 'bold' }] });
+    await waitFor(() => expect(screen.queryByRole('textbox', { name: 'Letra da música' })).not.toBeInTheDocument());
+    expect(screen.getByRole('document', { name: 'Letra da música' }).querySelector('strong')).toHaveTextContent(
+      'Texto',
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
+    act(() => {
+      getLyricsEditor().commands.setTextSelection({ from: 1, to: 6 });
+    });
+    expect(getLyricsEditor().isActive('bold')).toBe(true);
   });
 });
 

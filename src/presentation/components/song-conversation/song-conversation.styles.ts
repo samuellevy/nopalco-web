@@ -23,14 +23,44 @@ export const Messages = styled.div`
   gap: 16px;
 `;
 
-export const Message = styled.article<{ $own: boolean }>`
+export const Message = styled.article<{ $own: boolean; $deletable?: boolean }>`
+  position: relative;
   width: fit-content;
   max-width: 100%;
   align-self: ${({ $own }) => ($own ? 'flex-end' : 'flex-start')};
   padding: 12px 16px;
+  padding-right: ${({ $deletable }) => ($deletable ? '44px' : '16px')};
   border-left: 3px solid #a78bfa;
   border-radius: 6px;
   background: #171b26;
+`;
+
+export const DeleteMessageButton = styled.button`
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(248, 113, 113, 0.12);
+    color: #fca5a5;
+  }
+  &:focus-visible {
+    outline: 2px solid #a78bfa;
+    outline-offset: -2px;
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: wait;
+  }
 `;
 
 export const MessageHeader = styled.div`

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogIn, RotateCcw, Send } from 'lucide-react';
+import { LogIn, RotateCcw, Send, X } from 'lucide-react';
 import { SongConversationMessage } from '@/domain/models/song';
 import { AxiosHttpClient } from '@/infra/http/axios-http-client/axios-http-client';
 import { getAccessToken, useSession } from '@/main/config/session';
@@ -69,6 +69,8 @@ const GroupConversation = ({ songId, groupId }: { songId: string; groupId: strin
   const [sending, setSending] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [sendError, setSendError] = useState('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState('');
   const [refresh, setRefresh] = useState(0);
 
   useEffect(() => {
@@ -130,6 +132,29 @@ const GroupConversation = ({ songId, groupId }: { songId: string; groupId: strin
     }
   };
 
+  const deleteMessage = async (messageId: string) => {
+    if (!getAccessToken()) {
+      login();
+      return;
+    }
+    if (deletingId) return;
+    setDeletingId(messageId);
+    setDeleteError('');
+    try {
+      const response = await httpClient.request({
+        url: `${window.env.API}/songs/${encodeURIComponent(songId)}/conversation/${encodeURIComponent(messageId)}`,
+        method: 'delete',
+        params: { groupId },
+      });
+      if (response.statusCode !== 204) throw new Error('Message not deleted');
+      setMessages((current) => current.filter((message) => message.id !== messageId));
+    } catch {
+      setDeleteError('Não foi possível excluir a mensagem. Tente novamente.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <S.History>
       {loading && <S.Status role="status">Carregando orientações...</S.Status>}
@@ -143,10 +168,23 @@ const GroupConversation = ({ songId, groupId }: { songId: string; groupId: strin
       )}
       {!loading && !loadError && (
         <>
+          {deleteError && <S.Error role="alert">{deleteError}</S.Error>}
           {!messages.length && <S.Status>Nenhuma orientação.</S.Status>}
           <S.Messages role="log" aria-label="Mensagens de orientações" aria-live="polite">
             {messages.map((message) => (
-              <S.Message key={message.id} $own={account?.username === message.author}>
+              <S.Message key={message.id} $own={account?.username === message.author} $deletable={!!message.canDelete}>
+                {message.canDelete && (
+                  <S.DeleteMessageButton
+                    type="button"
+                    title="Excluir mensagem"
+                    aria-label={`Excluir mensagem de ${message.author}`}
+                    aria-busy={deletingId === message.id}
+                    disabled={!!deletingId}
+                    onClick={() => deleteMessage(message.id)}
+                  >
+                    <X size={16} aria-hidden="true" />
+                  </S.DeleteMessageButton>
+                )}
                 <S.MessageHeader>
                   <S.Author>{message.author}</S.Author>
                   <time dateTime={message.createdAt}>

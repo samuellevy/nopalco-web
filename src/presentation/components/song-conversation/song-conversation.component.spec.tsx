@@ -9,6 +9,8 @@ jest.mock('@/infra/http/axios-http-client/axios-http-client', () => ({
 
 const message = {
   id: 'message-1',
+  groupId: 'group-1',
+  canDelete: true,
   userId: 'user-1',
   author: 'ana',
   text: 'Entrar no refrão\n<script>alert(1)</script>',
@@ -18,7 +20,7 @@ const message = {
 const renderConversation = () =>
   render(
     <MemoryRouter>
-      <SongConversation songId="song-1" />
+      <SongConversation songId="song-1" groupId="group-1" groupName="Band A" />
     </MemoryRouter>,
   );
 
@@ -40,15 +42,25 @@ const login = () => {
   localStorage.setItem('account', JSON.stringify({ username: 'ana', access_token: `header.${payload}.signature` }));
 };
 
-test('allows visitors to read plain text but does not offer a message input', async () => {
+test('requires authentication before reading private group messages', () => {
+  renderConversation();
+  expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Entrar para acessar orientações' })).toBeInTheDocument();
+  expect(mockRequest).not.toHaveBeenCalled();
+});
+
+test('shows group messages as plain text without executing HTML', async () => {
+  login();
   const { container } = renderConversation();
   await screen.findByText('ana');
 
   expect(screen.getByText(/Entrar no refrão/)).toHaveTextContent('<script>alert(1)</script>');
   expect(container.querySelector('script')).toBeNull();
-  expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Entrar para enviar' })).toBeInTheDocument();
-  expect(mockRequest).toHaveBeenCalledWith({ url: 'http://api.test/songs/song-1/conversation', method: 'get' });
+  expect(mockRequest).toHaveBeenCalledWith({
+    url: 'http://api.test/songs/song-1/conversation',
+    method: 'get',
+    params: { groupId: 'group-1' },
+  });
 });
 
 test('sends only text and appends the server-assigned author and ID', async () => {
@@ -65,7 +77,7 @@ test('sends only text and appends the server-assigned author and ID', async () =
   expect(mockRequest).toHaveBeenLastCalledWith({
     url: 'http://api.test/songs/song-1/conversation',
     method: 'post',
-    body: { text: 'Nova orientação' },
+    body: { text: 'Nova orientação', groupId: 'group-1' },
   });
   expect(input).toHaveValue('');
 });
@@ -85,4 +97,41 @@ test('preserves the message after a failed send and rejects blank text', async (
   await screen.findByRole('alert');
   expect(input).toHaveValue('Não perder esta mensagem');
   await waitFor(() => expect(screen.getByRole('button', { name: 'Enviar' })).toBeEnabled());
+});
+
+test('deletes an authorized message and immediately updates the conversation', async () => {
+  login();
+  mockRequest.mockResolvedValueOnce({ statusCode: 200, body: [message] });
+  mockRequest.mockResolvedValueOnce({ statusCode: 204 });
+  renderConversation();
+  const remove = await screen.findByRole('button', { name: 'Excluir mensagem de ana' });
+  fireEvent.click(remove);
+
+  await screen.findByText('Nenhuma orientação.');
+  expect(screen.queryByText(/Entrar no refrão/)).not.toBeInTheDocument();
+  expect(mockRequest).toHaveBeenLastCalledWith({
+    url: 'http://api.test/songs/song-1/conversation/message-1',
+    method: 'delete',
+    params: { groupId: 'group-1' },
+  });
+});
+
+test('keeps the message and offers retry if deletion fails', async () => {
+  login();
+  mockRequest.mockResolvedValueOnce({ statusCode: 200, body: [message] });
+  mockRequest.mockResolvedValueOnce({ statusCode: 500 });
+  renderConversation();
+  fireEvent.click(await screen.findByRole('button', { name: 'Excluir mensagem de ana' }));
+
+  expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível excluir');
+  expect(screen.getByText(/Entrar no refrão/)).toBeInTheDocument();
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Excluir mensagem de ana' })).toBeEnabled());
+});
+
+test('does not render a deletion button without server permission', async () => {
+  login();
+  mockRequest.mockResolvedValueOnce({ statusCode: 200, body: [{ ...message, canDelete: false }] });
+  renderConversation();
+  await screen.findByText('ana');
+  expect(screen.queryByRole('button', { name: 'Excluir mensagem de ana' })).not.toBeInTheDocument();
 });
