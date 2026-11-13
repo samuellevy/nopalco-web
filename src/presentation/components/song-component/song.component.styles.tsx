@@ -305,7 +305,7 @@ export const EditAction = styled.button<{ $variant: 'save' | 'cancel' | 'add' | 
 
 export const SectionEditor = styled.div`
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 8px;
   margin-bottom: 12px;
@@ -315,6 +315,21 @@ export const SectionEditor = styled.div`
     button {
       justify-self: end;
     }
+  }
+`;
+
+export const ScoreInputLabel = styled.label`
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+
+  input {
+    max-width: 100%;
   }
 `;
 

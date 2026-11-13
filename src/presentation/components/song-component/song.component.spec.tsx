@@ -56,6 +56,7 @@ const renderSong = (
   blockTitle = 'Verse',
   updateSong = jest.fn().mockResolvedValue(undefined),
   lyrics = 'Primeiro verso\n\nRefrão',
+  content: Song['content'] = [{ block: blockTitle, notes: [`${originalKey}/E`] }],
 ) => {
   const sheet = new ServerStyleSheet();
   const song: Song = {
@@ -66,7 +67,7 @@ const renderSong = (
     bpm: '120',
     rhythm: 'Pop',
     lyrics,
-    content: [{ block: blockTitle, notes: [`${originalKey}/E`] }],
+    content,
   };
 
   render(
@@ -90,6 +91,80 @@ const renderSong = (
   );
   return sheet;
 };
+
+describe('SongComponent score uploads', () => {
+  test('inserts a score before the first section', () => {
+    renderSong();
+    fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Partitura no início' }));
+    expect(screen.getByLabelText('Título do bloco 1')).toHaveValue('Nova partitura');
+    expect(screen.getByLabelText('Título do bloco 2')).toHaveValue('Verse');
+    expect(screen.getByLabelText('Arquivo da partitura 1')).toBeInTheDocument();
+  });
+
+  test('uploads scores and saves them between the chosen note sections', async () => {
+    window.env = { API: 'http://api.test' };
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ filename: 'first-unique.xml' }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ filename: 'second-unique.musicxml' }) });
+    const originalFetch = global.fetch;
+    global.fetch = fetchMock;
+    try {
+      const updateSong = jest.fn().mockResolvedValue(undefined);
+      renderSong('C', null, 'Verse', updateSong, '', [
+        { block: 'First', notes: ['C'] },
+        { block: 'Second', notes: ['G'] },
+      ]);
+      fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
+      fireEvent.click(screen.getAllByRole('button', { name: 'Partitura depois' })[0]);
+      fireEvent.click(screen.getAllByRole('button', { name: 'Partitura depois' })[2]);
+      const first = new File(['first'], 'first.xml', { type: 'application/xml' });
+      const second = new File(['second'], 'second.musicxml', { type: 'application/xml' });
+      fireEvent.change(screen.getByLabelText('Arquivo da partitura 2'), { target: { files: [first] } });
+      fireEvent.change(screen.getByLabelText('Arquivo da partitura 4'), { target: { files: [second] } });
+      fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+      await waitFor(() => expect(updateSong).toHaveBeenCalled());
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(fetchMock.mock.calls[0][0]).toBe('http://api.test/songs/scores');
+      expect(fetchMock.mock.calls[0][1].headers.Authorization).toMatch(/^Bearer /);
+      expect(fetchMock.mock.calls[0][1].body.get('file')).toBe(first);
+      expect(JSON.parse(updateSong.mock.calls[0][1].content)).toEqual([
+        { block: 'First', notes: ['C'] },
+        { block: 'Nova partitura', score: 'first-unique.xml' },
+        { block: 'Second', notes: ['G'] },
+        { block: 'Nova partitura', score: 'second-unique.musicxml' },
+      ]);
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+
+  test('keeps the editor and selected file when upload fails', async () => {
+    window.env = { API: 'http://api.test' };
+    const originalFetch = global.fetch;
+    global.fetch = jest.fn().mockResolvedValue({ ok: false });
+    jest.spyOn(window, 'alert').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const updateSong = jest.fn();
+      renderSong('C', null, 'Verse', updateSong);
+      fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Partitura depois' }));
+      fireEvent.change(screen.getByLabelText('Arquivo da partitura 2'), {
+        target: { files: [new File(['score'], 'score.xml')] },
+      });
+      fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+      await waitFor(() => expect(window.alert).toHaveBeenCalled());
+      expect(updateSong).not.toHaveBeenCalled();
+      expect((screen.getByLabelText('Arquivo da partitura 2') as HTMLInputElement).files?.[0].name).toBe('score.xml');
+      expect(screen.getByRole('button', { name: 'Salvar' })).toBeEnabled();
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+});
 
 describe('SongComponent metadata editing', () => {
   test('allows anonymous viewing but hides editing and singer management', () => {

@@ -10,60 +10,47 @@ type Props = {
 
 const SheetMusicPage: React.FC<Props> = ({ sheet }) => {
   const ref = useRef<HTMLDivElement>(null);
-  const osmdRef = useRef<OpenSheetMusicDisplay | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!sheet) return;
 
+    let cancelled = false;
     setError(null);
+    const filename = encodeURIComponent(sheet);
+    const apiUrl = `${window.env.API}/scores/${filename}`;
 
-    fetch(`/assets/scores/${sheet}`, { method: 'HEAD' })
-      .then((response) => {
-        if (!response.ok) {
-          setError('Sheet music not found.');
-          return;
-        }
-
-        if (!ref.current || osmdRef.current) return;
-
-        const osmd = new OpenSheetMusicDisplay(ref.current, {
-          autoResize: true,
-          backend: 'svg',
-          drawTitle: false,
-          drawComposer: false,
-        });
-
-        osmd.setOptions({
-          drawPartNames: false, // remove nome lateral
-          drawPartAbbreviations: false,
-        });
-
-        osmdRef.current = osmd;
-
-        osmd
-          .load(`/assets/scores/${sheet}`)
-          .then(() => {
-            setError(null);
-            osmd.render();
-          })
-          .catch((err) => {
-            setError('Failed to load sheet music.');
-            console.error(err);
-          });
-      })
-      .catch(() => {
-        setError('Failed to check sheet music.');
+    const load = async () => {
+      let url = `/assets/scores/${filename}`;
+      const response = await fetch(apiUrl, { method: 'HEAD' }).catch(() => null);
+      if (response?.ok) url = apiUrl;
+      if (cancelled || !ref.current) return;
+      ref.current.replaceChildren();
+      const osmd = new OpenSheetMusicDisplay(ref.current, {
+        autoResize: true,
+        backend: 'svg',
+        drawTitle: false,
+        drawComposer: false,
       });
+      osmd.setOptions({ drawPartNames: false, drawPartAbbreviations: false });
+      try {
+        await osmd.load(url);
+        if (!cancelled) osmd.render();
+      } catch (err) {
+        if (!cancelled) setError('Não foi possível carregar a partitura.');
+        console.error(err);
+      }
+    };
+    void load();
+    return () => {
+      cancelled = true;
+    };
   }, [sheet]);
 
   return (
     <Container>
-      {error ? (
-        <div style={{ color: 'red', textAlign: 'center', padding: '20px', display: 'none' }}>{error}</div>
-      ) : (
-        <div className="osmd" ref={ref}></div>
-      )}
+      {error && <div role="alert">{error}</div>}
+      <div className="osmd" ref={ref}></div>
     </Container>
   );
 };

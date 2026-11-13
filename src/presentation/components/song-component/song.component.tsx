@@ -16,6 +16,7 @@ import {
   Check,
   X,
   Trash2,
+  Upload,
 } from 'lucide-react';
 
 import * as S from './song.component.styles';
@@ -41,6 +42,8 @@ interface Content {
   notes: (string | [string, string])[];
   score?: string;
   obs?: string;
+  scoreFile?: File;
+  scoreUpload?: boolean;
 }
 
 type Props = {
@@ -108,6 +111,7 @@ export const SongComponent: React.FC<Props> = ({
   const [modalSingersOpen, setModalSingersOpen] = React.useState(false);
   const [isSplitted, setIsSplitted] = React.useState(false);
   const [song, setSong] = React.useState<Song>(null as unknown as Song);
+  const [saving, setSaving] = React.useState(false);
   const editSnapshot = React.useRef<Song | null>(null);
   const editMode = controlledEditMode ?? localEditMode;
   const lyricsMode = controlledLyricsMode ?? localLyricsMode;
@@ -209,13 +213,13 @@ export const SongComponent: React.FC<Props> = ({
   const updateSong = async (tempSong: Song) => {
     if (!getAccessToken()) {
       navigate('/login', { state: { from: window.location.pathname + window.location.search } });
-      return;
+      return false;
     }
     const { content, ...rest } = tempSong;
 
     if (!song?.id) {
       console.error('Cannot update song: song ID is missing');
-      return;
+      return false;
     }
 
     try {
@@ -225,9 +229,11 @@ export const SongComponent: React.FC<Props> = ({
         content: JSON.stringify(content),
       });
       console.log('Song updated successfully:', updatedSong);
+      return true;
     } catch (error) {
       console.error('Error updating song:', error);
       alert('Failed to update song. Please try again.');
+      return false;
     }
   };
 
@@ -479,6 +485,7 @@ export const SongComponent: React.FC<Props> = ({
   // };
 
   const handleEditButton = () => {
+    if (saving) return;
     if (!getAccessToken()) {
       navigate('/login', { state: { from: window.location.pathname + window.location.search } });
       return;
@@ -513,7 +520,7 @@ export const SongComponent: React.FC<Props> = ({
   };
 
   const handleUpdateNote = (e: React.ChangeEvent<HTMLInputElement>, noteKey: number, sectionKeyChanged: number) => {
-    if (!song?.content) return;
+    if (!song?.content || saving) return;
     const { value } = e.target;
     const updatedContent = song.content.map((section: Content, sectionKey: number) => ({
       ...section,
@@ -530,11 +537,12 @@ export const SongComponent: React.FC<Props> = ({
   };
 
   const handleUpdateMetadata = (field: 'name' | 'author' | 'bpm' | 'key' | 'rhythm' | 'lyrics', value: string) => {
+    if (saving) return;
     setSong((prevState) => ({ ...prevState, [field]: value }));
   };
 
   const handleUpdateSectionTitle = (e: React.ChangeEvent<HTMLInputElement>, sectionIndex: number) => {
-    if (!song?.content) return;
+    if (!song?.content || saving) return;
     const { value } = e.target;
     const updatedContent = song.content.map((section: Content, index: number) =>
       index === sectionIndex ? { ...section, block: value } : section,
@@ -543,7 +551,7 @@ export const SongComponent: React.FC<Props> = ({
   };
 
   const handleUpdateSectionObs = (e: React.ChangeEvent<HTMLInputElement>, sectionIndex: number) => {
-    if (!song?.content) return;
+    if (!song?.content || saving) return;
     const { value } = e.target;
     const updatedContent = song.content.map((section: Content, index: number) =>
       index === sectionIndex ? { ...section, obs: value } : section,
@@ -552,13 +560,13 @@ export const SongComponent: React.FC<Props> = ({
   };
 
   const handleRemoveSection = (sectionIndex: number) => {
-    if (!song?.content) return;
+    if (!song?.content || saving) return;
     const updatedContent = song.content.filter((_, index: number) => index !== sectionIndex);
     setSong((prevState) => ({ ...prevState, content: updatedContent }));
   };
 
   const handleAddSection = () => {
-    if (!song?.content) return;
+    if (!song?.content || saving) return;
     const newSection: Content = {
       block: 'Nova Seção',
       notes: ['%', '%', '%', '%'],
@@ -568,8 +576,31 @@ export const SongComponent: React.FC<Props> = ({
     setSong((prevState) => ({ ...prevState, content: updatedContent }));
   };
 
+  const handleAddScore = (sectionIndex: number) => {
+    if (!song?.content || saving) return;
+    const newSection: Content = { block: 'Nova partitura', notes: [], scoreUpload: true };
+    setSong((previous) => ({
+      ...previous,
+      content: [
+        ...previous.content!.slice(0, sectionIndex + 1),
+        newSection,
+        ...previous.content!.slice(sectionIndex + 1),
+      ],
+    }));
+  };
+
+  const handleScoreFile = (file: File | undefined, sectionIndex: number) => {
+    if (!file || saving) return;
+    setSong((previous) => ({
+      ...previous,
+      content: previous.content?.map((section, index) =>
+        index === sectionIndex ? { ...section, scoreFile: file } : section,
+      ),
+    }));
+  };
+
   const handleAddNote = (noteKey: number) => {
-    if (!song?.content) return;
+    if (!song?.content || saving) return;
     // preciso adicionar uma nova nota vazia após a notaKey
     const updatedContent = song.content.map((section: Content) => ({
       ...section,
@@ -579,24 +610,66 @@ export const SongComponent: React.FC<Props> = ({
   };
 
   const handleSaveButton = async () => {
-    if (!song) return;
-    // remover de songs tudo o que for string vazia
-    const cleanedContent = (song.content || []).map((section: Content) => ({
-      ...section,
-      notes: section.notes?.filter((note) => {
-        if (typeof note === 'string') {
-          return note.trim() !== '';
-        } else if (Array.isArray(note)) {
-          return note[0].trim() !== '' || note[1].trim() !== '';
-        }
-        return true;
-      }),
-    }));
-    const tempSong = { ...song, content: cleanedContent };
-    setSong((prevState) => ({ ...prevState, content: cleanedContent }));
-    await updateSong(tempSong);
-    editSnapshot.current = null;
-    setEditMode(false);
+    if (!song || saving) return;
+    const sections = (song.content || []) as Content[];
+    if (sections.some((section) => section.scoreUpload && !section.scoreFile && !section.score)) {
+      alert('Selecione um arquivo para cada partitura.');
+      return;
+    }
+    const token = getAccessToken();
+    if (!token) {
+      navigate('/login', { state: { from: window.location.pathname + window.location.search } });
+      return;
+    }
+    setSaving(true);
+    try {
+      const uploadedContent = [...sections];
+      for (let index = 0; index < uploadedContent.length; index++) {
+        const section = uploadedContent[index];
+        if (!section.scoreFile) continue;
+        const form = new FormData();
+        form.append('file', section.scoreFile);
+        const response = await fetch(`${window.env.API}/songs/scores`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: form,
+        });
+        if (!response.ok) throw new Error('Falha ao enviar partitura.');
+        const result = await response.json();
+        if (typeof result.filename !== 'string' || !result.filename) throw new Error('Resposta de upload inválida.');
+        const { scoreFile, scoreUpload, ...rest } = section;
+        uploadedContent[index] = { ...rest, score: result.filename };
+        setSong((previous) => ({
+          ...previous,
+          content: previous.content?.map((item, itemIndex) => (itemIndex === index ? uploadedContent[index] : item)),
+        }));
+      }
+      const cleanedContent = uploadedContent.map(({ scoreFile, scoreUpload, ...section }: Content) => ({
+        ...section,
+        notes:
+          section.score && section.notes?.length === 0
+            ? undefined
+            : section.notes?.filter((note) => {
+                if (typeof note === 'string') {
+                  return note.trim() !== '';
+                } else if (Array.isArray(note)) {
+                  return note[0].trim() !== '' || note[1].trim() !== '';
+                }
+                return true;
+              }),
+      }));
+      const tempSong = { ...song, content: cleanedContent };
+      setSong((prevState) => ({ ...prevState, content: cleanedContent }));
+      if (await updateSong(tempSong)) {
+        editSnapshot.current = null;
+        setEditMode(false);
+      }
+    } catch (error) {
+      console.error('Error uploading score:', error);
+      alert('Não foi possível enviar a partitura. Tente novamente.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleClickSong = (songId: string) => {
@@ -693,7 +766,7 @@ export const SongComponent: React.FC<Props> = ({
                     </S.ToolbarButton>
                   )}
                   {editMode && !observationsMode && (
-                    <S.EditAction $variant="cancel" type="button" onClick={handleEditButton}>
+                    <S.EditAction $variant="cancel" type="button" onClick={handleEditButton} disabled={saving}>
                       <X size={16} aria-hidden="true" /> Cancelar
                     </S.EditAction>
                   )}
@@ -740,12 +813,22 @@ export const SongComponent: React.FC<Props> = ({
                   {editMode && !observationsMode && (
                     <>
                       {!lyricsMode && (
-                        <S.EditAction $variant="add" type="button" onClick={handleAddSection}>
-                          <PlusCircle size={16} aria-hidden="true" /> Seção
-                        </S.EditAction>
+                        <>
+                          <S.EditAction $variant="add" type="button" onClick={handleAddSection} disabled={saving}>
+                            <PlusCircle size={16} aria-hidden="true" /> Seção
+                          </S.EditAction>
+                          <S.EditAction
+                            $variant="add"
+                            type="button"
+                            onClick={() => handleAddScore(-1)}
+                            disabled={saving}
+                          >
+                            <Upload size={16} aria-hidden="true" /> Partitura no início
+                          </S.EditAction>
+                        </>
                       )}
-                      <S.EditAction $variant="save" type="button" onClick={handleSaveButton}>
-                        <Check size={16} aria-hidden="true" /> Salvar
+                      <S.EditAction $variant="save" type="button" onClick={handleSaveButton} disabled={saving}>
+                        <Check size={16} aria-hidden="true" /> {saving ? 'Salvando...' : 'Salvar'}
                       </S.EditAction>
                     </>
                   )}
@@ -784,7 +867,7 @@ export const SongComponent: React.FC<Props> = ({
                     <S.MiniSimpleButton
                       aria-label="Diminuir tom"
                       title="Diminuir tom"
-                      onClick={() => song.content && decreaseTone(song.content, song.key)}
+                      onClick={() => !saving && song.content && decreaseTone(song.content, song.key)}
                     >
                       <MinusCircle size={22} />
                     </S.MiniSimpleButton>
@@ -803,7 +886,7 @@ export const SongComponent: React.FC<Props> = ({
                     <S.MiniSimpleButton
                       aria-label="Aumentar tom"
                       title="Aumentar tom"
-                      onClick={() => song.content && increaseTone(song.content, false, song.key)}
+                      onClick={() => !saving && song.content && increaseTone(song.content, false, song.key)}
                     >
                       <PlusCircle size={22} />
                     </S.MiniSimpleButton>
@@ -852,9 +935,35 @@ export const SongComponent: React.FC<Props> = ({
                           value={songSection.obs || ''}
                           onChange={(e) => handleUpdateSectionObs(e, keyContent)}
                         />
-                        <S.EditAction $variant="remove" type="button" onClick={() => handleRemoveSection(keyContent)}>
+                        <S.EditAction
+                          $variant="remove"
+                          type="button"
+                          onClick={() => handleRemoveSection(keyContent)}
+                          disabled={saving}
+                        >
                           <Trash2 size={16} aria-hidden="true" /> Remover
                         </S.EditAction>
+                        <S.EditAction
+                          $variant="add"
+                          type="button"
+                          onClick={() => handleAddScore(keyContent)}
+                          disabled={saving}
+                        >
+                          <Upload size={16} aria-hidden="true" /> Partitura depois
+                        </S.EditAction>
+                        {(songSection.score || songSection.scoreUpload) && (
+                          <S.ScoreInputLabel>
+                            Arquivo da partitura {keyContent + 1}
+                            <input
+                              type="file"
+                              accept=".xml,.musicxml,.mxl"
+                              aria-label={`Arquivo da partitura ${keyContent + 1}`}
+                              disabled={saving}
+                              onChange={(event) => handleScoreFile(event.target.files?.[0], keyContent)}
+                            />
+                            {songSection.scoreFile?.name || songSection.score || ''}
+                          </S.ScoreInputLabel>
+                        )}
                       </S.SectionEditor>
                     ) : (
                       <>
