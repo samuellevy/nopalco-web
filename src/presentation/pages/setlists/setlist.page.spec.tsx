@@ -324,6 +324,9 @@ describe('SetlistPage adding songs', () => {
     expect(originalRow).toHaveAttribute('aria-pressed', 'true');
 
     fireEvent.click(screen.getByRole('button', { name: /Added song/ }));
+    fireEvent.click(
+      within(screen.getByRole('dialog', { name: 'Reordenar músicas' })).getByRole('button', { name: 'Trocar posições' }),
+    );
 
     expect(screen.queryByRole('dialog', { name: 'Substituir música do setlist' })).not.toBeInTheDocument();
     expect(screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent)).toEqual([
@@ -346,6 +349,57 @@ describe('SetlistPage adding songs', () => {
     );
   });
 
+  test.each([
+    { source: 'Third song', target: 'First song', expected: ['third', 'first', 'second', 'fourth'] },
+    { source: 'First song', target: 'Fourth song', expected: ['second', 'third', 'first', 'fourth'] },
+  ])('moves $source before $target and saves the new order', async ({ source, target, expected }) => {
+    const { updateSetlist } = await renderSetlist([
+      { id: 'first', song: { id: 'first', name: 'First song' }, key: 'C', order: 1 },
+      { id: 'second', song: { id: 'second', name: 'Second song' }, key: 'D', order: 2 },
+      {
+        id: 'third',
+        song: { id: 'third', name: 'Third song' },
+        singer: { id: 'singer-third', name: 'Third singer', key: 'E' },
+        key: 'E',
+        order: 3,
+      },
+      { id: 'fourth', song: { id: 'fourth', name: 'Fourth song' }, key: 'F', order: 4 },
+    ]);
+    fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(source) }));
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(target) }));
+    const dialog = screen.getByRole('dialog', { name: 'Reordenar músicas' });
+    expect(dialog).toHaveTextContent(source);
+    expect(dialog).toHaveTextContent(target);
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Colocar antes' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() => expect(updateSetlist).toHaveBeenCalledTimes(1));
+    const savedItems = updateSetlist.mock.calls[0][1].items;
+    expect(savedItems.map((item: { songId: string }) => item.songId)).toEqual(expected);
+    expect(savedItems.map((item: { order: number }) => item.order)).toEqual([1, 2, 3, 4]);
+    expect(savedItems.find((item: { songId: string }) => item.songId === 'third')).toEqual(
+      expect.objectContaining({ key: 'E', singerId: 'singer-third' }),
+    );
+  });
+
+  test('cancelling reordering leaves the draft unchanged and clears selection', async () => {
+    await renderSetlist();
+    fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
+    await selectSong();
+    const originalRow = screen.getByRole('button', { name: /Existing song/ });
+    fireEvent.click(originalRow);
+    fireEvent.click(screen.getByRole('button', { name: /Added song/ }));
+    const dialog = screen.getByRole('dialog', { name: 'Reordenar músicas' });
+    expect(screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent)).toEqual([
+      'Existing song',
+      'Added song',
+    ]);
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancelar' }));
+    expect(screen.queryByRole('dialog', { name: 'Reordenar músicas' })).not.toBeInTheDocument();
+    expect(originalRow).toHaveAttribute('aria-pressed', 'false');
+  });
+
   test('offers an explicit replacement button without making the whole card draggable', async () => {
     await renderSetlist();
     fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
@@ -364,6 +418,9 @@ describe('SetlistPage adding songs', () => {
     await selectSong();
     fireEvent.click(screen.getByRole('button', { name: /Existing song/ }), { detail: 1 });
     fireEvent.click(screen.getByRole('button', { name: /Added song/ }), { detail: 2 });
+    fireEvent.click(
+      within(screen.getByRole('dialog', { name: 'Reordenar músicas' })).getByRole('button', { name: 'Trocar posições' }),
+    );
 
     expect(screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent)).toEqual([
       'Added song',
@@ -427,6 +484,9 @@ describe('SetlistPage adding songs', () => {
     fireEvent.click(row);
     expect(row).toHaveAttribute('aria-pressed', 'true');
     fireEvent.click(screen.getByRole('button', { name: /Other song/ }));
+    fireEvent.click(
+      within(screen.getByRole('dialog', { name: 'Reordenar músicas' })).getByRole('button', { name: 'Trocar posições' }),
+    );
 
     expect(screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent)).toEqual([
       'Other song',
@@ -477,6 +537,9 @@ describe('SetlistPage adding songs', () => {
       fireEvent.touchStart(row, { touches: [touch] });
       fireEvent.touchEnd(row, { changedTouches: [touch], touches: [] });
     }
+    fireEvent.click(
+      within(screen.getByRole('dialog', { name: 'Reordenar músicas' })).getByRole('button', { name: 'Trocar posições' }),
+    );
 
     expect(screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent)).toEqual([
       'Added song',

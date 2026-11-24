@@ -9,6 +9,8 @@ import {
   Edit2,
   Check,
   X,
+  ArrowUp,
+  ArrowLeftRight,
   GripVertical,
   Upload,
   Download,
@@ -64,6 +66,7 @@ export const SetlistPage: React.FC<SetlistProps> = ({
   const [modalSongsOpen, setModalSongsOpen] = React.useState(false);
   const [modalAddSongsOpen, setModalAddSongsOpen] = React.useState(false);
   const [replacingItemId, setReplacingItemId] = React.useState<string | null>(null);
+  const [reorderTargetId, setReorderTargetId] = React.useState<string | null>(null);
   const lastItemTap = React.useRef<{ id: string; time: number } | null>(null);
   const itemTouch = React.useRef<{
     id: string;
@@ -237,6 +240,7 @@ export const SetlistPage: React.FC<SetlistProps> = ({
     setIsEditMode(false);
     setModalAddSongsOpen(false);
     setReplacingItemId(null);
+    setReorderTargetId(null);
     setEditableItems([]);
     setDraggedIndex(null);
     setDragOverIndex(null);
@@ -290,23 +294,40 @@ export const SetlistPage: React.FC<SetlistProps> = ({
     if (isSaving) return;
 
     if (replacingItemId) {
-      setEditableItems((items) => {
-        const selectedIndex = items.findIndex((entry) => entry.id === replacingItemId);
-        const targetIndex = items.findIndex((entry) => entry.id === item.id);
-        if (selectedIndex < 0 || targetIndex < 0 || selectedIndex === targetIndex) return items;
-
-        const reorderedItems = [...items];
-        [reorderedItems[selectedIndex], reorderedItems[targetIndex]] = [
-          reorderedItems[targetIndex],
-          reorderedItems[selectedIndex],
-        ];
-        return reorderedItems;
-      });
-      setReplacingItemId(null);
-      setModalAddSongsOpen(false);
+      if (replacingItemId === item.id) {
+        setReplacingItemId(null);
+      } else {
+        setReorderTargetId(item.id);
+        lastItemTap.current = null;
+      }
     } else {
       setReplacingItemId(item.id);
     }
+  };
+
+  const handleReorderItems = (action: 'move' | 'swap') => {
+    if (replacingItemId && reorderTargetId) {
+      setEditableItems((items) => {
+        const selectedIndex = items.findIndex((entry) => entry.id === replacingItemId);
+        const targetIndex = items.findIndex((entry) => entry.id === reorderTargetId);
+        if (selectedIndex < 0 || targetIndex < 0 || selectedIndex === targetIndex) return items;
+
+        const reorderedItems = [...items];
+        if (action === 'swap') {
+          [reorderedItems[selectedIndex], reorderedItems[targetIndex]] = [
+            reorderedItems[targetIndex],
+            reorderedItems[selectedIndex],
+          ];
+        } else {
+          const [selectedItem] = reorderedItems.splice(selectedIndex, 1);
+          const insertionIndex = reorderedItems.findIndex((entry) => entry.id === reorderTargetId);
+          reorderedItems.splice(insertionIndex, 0, selectedItem);
+        }
+        return reorderedItems;
+      });
+    }
+    setReplacingItemId(null);
+    setReorderTargetId(null);
   };
 
   const handleEditableItemDoubleClick = (item: SetlistItem) => {
@@ -546,6 +567,7 @@ export const SetlistPage: React.FC<SetlistProps> = ({
       setDuplicateOpen(false);
       setModalAddSongsOpen(false);
       setReplacingItemId(null);
+      setReorderTargetId(null);
     }
   }, [isAuthenticated]);
 
@@ -1103,6 +1125,53 @@ export const SetlistPage: React.FC<SetlistProps> = ({
         setModalSongsOpen={setModalSongsOpen}
         handleClickSong={handleClickSong}
       />
+
+      {isEditMode && reorderTargetId && (
+        <S.DuplicateOverlay
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              setReorderTargetId(null);
+              setReplacingItemId(null);
+            }
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') {
+              setReorderTargetId(null);
+              setReplacingItemId(null);
+            }
+          }}
+        >
+          <S.DuplicateDialog as="div" role="dialog" aria-modal="true" aria-labelledby="reorder-title">
+            <S.DuplicateTitle id="reorder-title">Reordenar músicas</S.DuplicateTitle>
+            <p style={{ overflowWrap: 'anywhere' }}>
+              {editableItems.find((item) => item.id === replacingItemId)?.pureTitle ||
+                editableItems.find((item) => item.id === replacingItemId)?.song?.name ||
+                'Sem título'}{' '}
+              →{' '}
+              {editableItems.find((item) => item.id === reorderTargetId)?.pureTitle ||
+                editableItems.find((item) => item.id === reorderTargetId)?.song?.name ||
+                'Sem título'}
+            </p>
+            <S.DuplicateActions>
+              <S.Button type="button" autoFocus onClick={() => handleReorderItems('move')}>
+                <ArrowUp size={16} /> Colocar antes
+              </S.Button>
+              <S.Button type="button" onClick={() => handleReorderItems('swap')}>
+                <ArrowLeftRight size={16} /> Trocar posições
+              </S.Button>
+              <S.Button
+                type="button"
+                onClick={() => {
+                  setReorderTargetId(null);
+                  setReplacingItemId(null);
+                }}
+              >
+                <X size={16} /> Cancelar
+              </S.Button>
+            </S.DuplicateActions>
+          </S.DuplicateDialog>
+        </S.DuplicateOverlay>
+      )}
 
       {duplicateOpen && (
         <S.DuplicateOverlay
