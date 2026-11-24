@@ -20,6 +20,7 @@ import {
   ChevronRight,
   RotateCcw,
   Users,
+  Plus,
 } from 'lucide-react';
 import { UserMenu } from '@/presentation/components/user-menu/user-menu.component';
 import { useSession } from '@/main/config/session';
@@ -162,6 +163,10 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest, loadAllS
     setIsSaving(true);
   };
 
+  const handleCreateSetlist = () => {
+    navigate('/setlists/create');
+  };
+
   return (
     <S.Container>
       <S.Header>
@@ -175,6 +180,14 @@ export const HomePage: React.FC<HomeProps> = ({ loadAllSetlistsRequest, loadAllS
             onClick={() => setModalSongsOpen(true)}
           >
             <Search aria-hidden="true" />
+          </S.Button>
+          <S.Button
+            type="button"
+            title="Criar setlist"
+            aria-label="Criar setlist"
+            onClick={() => handleCreateSetlist()}
+          >
+            <Plus aria-hidden="true" />
           </S.Button>
           <UserMenu inline />
         </S.UserNavigation>

@@ -17,7 +17,9 @@ type BadgeProps = {
 export const Container = styled.div`
   display: flex;
   flex-direction: column;
-  height: 100%;
+  min-height: 100%;
+  background: #0f1117;
+  color: #f8fafc;
 `;
 
 /** Header */
@@ -48,185 +50,253 @@ export const UserNavigation = styled.nav`
 /** Header */
 
 export const Content = styled.div`
-  display: flex;
-  flex-direction: row;
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(0, 2fr);
   flex: 1;
-  padding: 2rem 1rem;
-  overflow-y: auto;
-  gap: 5rem;
+  align-items: start;
+  padding: 2rem 2.5rem calc(100px + env(safe-area-inset-bottom, 0px));
+  gap: 2rem;
+
+  @media (max-width: 800px) {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 1.5rem 1rem calc(100px + env(safe-area-inset-bottom, 0px));
+  }
 `;
 
 export const Section = styled.section`
   display: flex;
   flex-direction: column;
   width: 100%;
-  align-items: flex-start;
+  min-width: 0;
+  align-items: stretch;
 `;
 
 export const SectionHeaderColumn = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
 `;
 
 export const SectionHeaderRow = styled.div`
-  display: flex;
-  flex-direction: row;
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 1rem;
+  align-items: end;
 `;
 
 export const SimpleButton = styled.button`
-  background-color: #06f;
-  border: 1px solid #06f;
-  border-radius: 4px;
-  box-shadow: rgba(0, 0, 0, 0.1) 0 2px 4px 0;
+  background-color: #8b5cf6;
+  border: 1px solid #8b5cf6;
+  border-radius: 6px;
   box-sizing: border-box;
   color: #fff;
   cursor: pointer;
-  font-size: 16px;
-  font-weight: 400;
-  outline: none;
-  outline: 0;
-  padding: 10px 25px;
-  @media (max-width: 350px) {
-    padding: 10px 0px;
-    width: 33%;
-  }
+  min-height: 40px;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 16px;
   text-align: center;
-  transform: translateY(0);
-  transition:
-    transform 150ms,
-    box-shadow 150ms;
-  user-select: none;
-  -webkit-user-select: none;
-  touch-action: manipulation;
+  &:hover:not(:disabled) {
+    background-color: #a78bfa;
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: wait;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #a78bfa;
+    outline-offset: 2px;
+  }
+`;
+
+export const Footer = styled.footer`
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 50;
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 2.5rem calc(12px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  background: #0f1117;
+
+  @media (max-width: 800px) {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+`;
+
+export const SaveButton = styled(SimpleButton)`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 120px;
 `;
 
 export const InputGroup = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 6px;
   justify-content: flex-end;
+  min-width: 0;
+  color: #94a3b8;
+  font-size: 14px;
+  font-weight: 500;
 `;
 
 export const SectionTitle = styled.h1`
-  font-size: 2rem;
-  font-weight: bold;
+  font-size: 1.25rem;
+  font-weight: 600;
 `;
 
 export const SectionContent = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
-  margin-top: 2rem;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
   width: 100%;
 `;
 
 export const Badge = styled.div<BadgeProps>`
   display: flex;
   flex-direction: row;
-  border-radius: 1rem;
-  box-shadow: 0 0 1rem rgba(0, 0, 0, 0.1);
+  border: 1px solid ${({ $selected }) => ($selected ? 'rgba(167, 139, 250, 0.3)' : 'rgba(255, 255, 255, 0.06)')};
+  border-radius: 8px;
   width: 100%;
-  height: 10rem;
+  min-width: 0;
+  min-height: 72px;
   cursor: pointer;
-  padding: 10px;
+  padding: 12px;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
+  background: ${({ $selected }) => ($selected ? '#1d2232' : '#171b26')};
+  color: #f8fafc;
 
-  ${({ theme, $variant }) =>
-    $variant && `background-color: ${theme.variants[$variant].background}; color: ${theme.variants[$variant].color};`};
-
-  ${({ theme, $selected, $variant }) =>
-    `background-color: ${$selected ? '#4169E1' : theme.variants[$variant].background};`}
+  &:hover {
+    background: #1d2232;
+  }
 `;
 
 export const BadgeTitle = styled.h1`
-  font-size: 2rem;
-  font-weight: bold;
+  font-size: 1.5rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
 
   input {
-    font-size: 1.5rem;
+    font-size: 1rem;
     font-weight: 500;
-    color: #ffffff;
-    width: 45px;
-    padding: 5px 2px;
-    text-align: left;
-    transform: translateX(-5px);
+    color: #f8fafc;
+    background: #0f1117;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    width: 56px;
+    min-width: 0;
+    padding: 8px;
 
-    &:focus {
-      outline: ${({ theme }) => theme.colors.primary};
-      background-color: #346da7;
+    &:focus-visible {
+      outline: 2px solid #a78bfa;
+      outline-offset: 2px;
     }
   }
 `;
 
 export const BadgeSubTitle = styled.h2`
-  font-size: 1.5rem;
-  font-weight: 500;
+  color: #94a3b8;
+  font-size: 1.125rem;
+  font-weight: 400;
+  overflow-wrap: anywhere;
 `;
 
 export const FormInput = styled.input`
-  background-color: #fff;
-  min-width: 220px;
-  font-size: 14px;
-  padding: 10px 15px;
-  border-radius: 1rem;
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  background: #0f1117;
+  color: #f8fafc;
+  color-scheme: dark;
+  font-size: 16px;
+
+  &:focus-visible {
+    outline: 2px solid #a78bfa;
+    outline-offset: 2px;
+  }
 `;
 
-export const FormInputHeader = styled.input`
-  background-color: #fff;
-  max-width: 140px;
-  font-size: 14px;
-  padding: 10px 15px;
-  border-radius: 1rem;
+export const FormInputHeader = styled(FormInput)``;
+
+export const MomentForm = styled.div`
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  max-width: 420px;
+  width: 100%;
+
+  > div {
+    flex: 1;
+  }
+`;
+
+export const MomentButton = styled(SimpleButton)`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 40px;
+  width: 40px;
+  padding: 0;
 `;
 
 export const ASide = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.25rem;
+  min-width: 0;
 `;
 
 export const ASideTitle = styled(ASide)`
-  width: 50%;
+  flex: 1 1 0;
 `;
 
 export const ASideDetails = styled(ASide)`
-  width: 30%;
+  flex: 0 1 80px;
 `;
 
 export const ASidePosition = styled(ASide)`
-  width: 10%;
+  flex: 0 0 auto;
 `;
 
 export const ASideButtons = styled.div`
-  width: 10%;
-  padding: 10px;
+  flex: 0 0 auto;
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  gap: 0.5rem;
 
   i {
-    width: 30px;
-    height: 30px;
-    background-color: #4191e1;
-    border-radius: 25px;
+    width: 32px;
+    height: 32px;
+    background-color: #292e3d;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
 
     &:hover {
-      background-color: #346da7;
+      background-color: #3a4052;
     }
   }
 `;
 
 export const PositionText = styled.div`
-  background-color: #4191e1;
-  width: 50px;
-  height: 50px;
-  border-radius: 40px;
+  background-color: rgba(167, 139, 250, 0.18);
+  color: #c4b5fd;
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
   display: flex;
   justify-content: center;
   align-items: center;

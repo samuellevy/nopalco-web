@@ -4,13 +4,13 @@ import * as S from './setlist-create.styles';
 import { LoadAllSongsRequest } from '@/domain/usecases';
 import { Song } from '@/domain/models';
 import Loader from '@/presentation/components/loader/loader';
-import { ArrowDownUp, Check, X } from 'lucide-react';
+import { ArrowDownUp, Check, Save, X } from 'lucide-react';
 import { CreateSetlistDTO, CreateSetlistRequest } from '@/domain/usecases/setlists/create-setlist-request';
 import { SetlistGroupSelect } from '@/presentation/components/setlist-group-select/setlist-group-select.component';
 
 type Props = {
   loadAllSongsRequest: LoadAllSongsRequest;
-  createSetlistRequest?: CreateSetlistRequest;
+  createSetlistRequest: CreateSetlistRequest;
 };
 
 export const SetlistCreatePage: React.FC<Props> = ({ loadAllSongsRequest, createSetlistRequest }) => {
@@ -21,7 +21,7 @@ export const SetlistCreatePage: React.FC<Props> = ({ loadAllSongsRequest, create
   const [momentName, setMomentName] = React.useState<string>('');
   const [eventName, setEventName] = React.useState<string>('');
   const [eventDescription, setEventDescription] = React.useState<string>('');
-  const [eventDate, setEventDate] = React.useState<string>(null);
+  const [eventDate, setEventDate] = React.useState<string>('');
   const [eventAddress, setEventAddress] = React.useState<string>('');
   const [groupId, setGroupId] = React.useState<string | null>(null);
   const [sendingData, setSendingData] = React.useState(false);
@@ -43,10 +43,10 @@ export const SetlistCreatePage: React.FC<Props> = ({ loadAllSongsRequest, create
     }
   };
 
-  const updateKeyOnSelectedSong = (e: React.ChangeEvent<HTMLInputElement>, songId: string) => {
+  const updateKeyOnSelectedSong = (e: React.ChangeEvent<HTMLInputElement>, songIndex: number) => {
     const tmpSelectedSongs = [
-      ...selectedSongs.map((songItem) =>
-        songItem.id === songId ? { ...songItem, key: e.target.value } : { ...songItem },
+      ...selectedSongs.map((songItem, index) =>
+        index === songIndex ? { ...songItem, key: e.target.value } : { ...songItem },
       ),
     ];
     setSelectedSongs(tmpSelectedSongs);
@@ -75,7 +75,7 @@ export const SetlistCreatePage: React.FC<Props> = ({ loadAllSongsRequest, create
           .replace(/[\u0300-\u036f]/g, '')
           .toLowerCase()
           .includes(value.toLowerCase()) ||
-        song.author
+        (song.author ?? '')
           .normalize('NFD')
           .replace(/[\u0300-\u036f]/g, '')
           .toLowerCase()
@@ -137,25 +137,25 @@ export const SetlistCreatePage: React.FC<Props> = ({ loadAllSongsRequest, create
       description: eventDescription,
       address: eventAddress,
       groupId,
-      date: eventDate ? new Date(eventDate) : null,
+      date: eventDate ? new Date(eventDate) : undefined,
       items: selectedSongs.map((song, index) => ({
         pureTitle: song.name,
-        songId: song.new ? null : song.id,
+        songId: song.new ? null : song.id ?? null,
         order: `${index + 1}`,
-        key: song.key,
+        key: song.key ?? '',
       })),
     };
 
     console.log(payload, 'payload');
 
     try {
-      const createSetlistResponse = await createSetlistRequest?.execute(payload);
+      const createSetlistResponse = await createSetlistRequest.execute(payload);
       alert('Setlist criada com sucesso!');
       window.location.href = `/setlists/${createSetlistResponse.id}`;
     } catch (err) {
       console.error(err);
     } finally {
-      setSendingData(true);
+      setSendingData(false);
     }
 
     console.log({
@@ -186,6 +186,59 @@ export const SetlistCreatePage: React.FC<Props> = ({ loadAllSongsRequest, create
       </S.Header> */}
 
       <S.Content>
+        <S.SectionHeaderRow>
+          <S.InputGroup>
+            <label>Nome do evento</label>
+            <S.FormInputHeader
+              placeholder="Nome do evento"
+              onChange={(e) => setEventName(e.target.value)}
+              value={eventName}
+            />
+          </S.InputGroup>
+          <S.InputGroup>
+            <label>Descrição</label>
+            <S.FormInputHeader
+              placeholder="Descrição do evento"
+              onChange={(e) => setEventDescription(e.target.value)}
+              value={eventDescription}
+            />
+          </S.InputGroup>
+          <S.InputGroup>
+            <label>Data do evento</label>
+            <S.FormInputHeader onChange={(e) => setEventDate(e.target.value)} value={eventDate} type="datetime-local" />
+          </S.InputGroup>
+          <S.InputGroup>
+            <label>Endereço</label>
+            <S.FormInputHeader
+              placeholder="Rua exemplo, 123"
+              onChange={(e) => setEventAddress(e.target.value)}
+              value={eventAddress}
+            />
+          </S.InputGroup>
+          <S.InputGroup>
+            <SetlistGroupSelect value={groupId} onChange={setGroupId} disabled={sendingData} />
+          </S.InputGroup>
+        </S.SectionHeaderRow>
+        <S.MomentForm>
+          <S.InputGroup>
+            <label htmlFor="moment-name">Adicionar momento não linkável</label>
+            <S.FormInput
+              id="moment-name"
+              name="moment-name"
+              placeholder="Escreva aqui"
+              onChange={(e) => setMomentName(e.target.value)}
+              value={momentName}
+            />
+          </S.InputGroup>
+          <S.MomentButton
+            type="button"
+            onClick={handleCreateMoment}
+            aria-label="Adicionar momento"
+            title="Adicionar momento"
+          >
+            <Check size={18} />
+          </S.MomentButton>
+        </S.MomentForm>
         <S.Section>
           <S.SectionHeaderColumn>
             <S.SectionTitle>Lista de músicas</S.SectionTitle>
@@ -211,56 +264,13 @@ export const SetlistCreatePage: React.FC<Props> = ({ loadAllSongsRequest, create
         </S.Section>
 
         <S.Section>
-          <S.SectionHeaderRow>
-            <S.InputGroup>
-              <label>Nome do evento</label>
-              <S.FormInputHeader
-                placeholder="Nome do evento"
-                onChange={(e) => setEventName(e.target.value)}
-                value={eventName}
-                width={10}
-              />
-            </S.InputGroup>
-            <S.InputGroup>
-              <label>Descrição</label>
-              <S.FormInputHeader
-                placeholder="01/01/2025"
-                onChange={(e) => setEventDescription(e.target.value)}
-                value={eventDescription}
-              />
-            </S.InputGroup>
-            <S.InputGroup>
-              <label>Data do evento</label>
-              <S.FormInputHeader
-                onChange={(e) => setEventDate(e.target.value)}
-                value={eventDate}
-                type="datetime-local"
-              />
-            </S.InputGroup>
-            <S.InputGroup>
-              <label>Endereço</label>
-              <S.FormInputHeader
-                placeholder="Rua exemplo, 123"
-                onChange={(e) => setEventAddress(e.target.value)}
-                value={eventAddress}
-              />
-            </S.InputGroup>
-            <S.InputGroup>
-              <SetlistGroupSelect value={groupId} onChange={setGroupId} disabled={sendingData} />
-            </S.InputGroup>
-            <S.InputGroup>
-              <S.SimpleButton disabled={sendingData} onClick={() => handleCreateSetlist()}>
-                {sendingData ? 'Salvando...' : 'Salvar'}
-              </S.SimpleButton>
-            </S.InputGroup>
-          </S.SectionHeaderRow>
           <S.SectionContent>
             {selectedSongs.length === 0 && (
               <div style={{ width: '100%' }}>
                 <S.SectionTitle>Nenhuma música adicionada</S.SectionTitle>
               </div>
             )}
-            {selectedSongs.map((song: Song) => (
+            {selectedSongs.map((song: Song, index) => (
               <S.Badge
                 $variant="darkGray"
                 $selected={!!selectedSongs.find((a) => a.id === song.id)}
@@ -283,7 +293,7 @@ export const SetlistCreatePage: React.FC<Props> = ({ loadAllSongsRequest, create
                 style={{
                   opacity: draggedIndex === selectedSongs.findIndex((a) => a.id === song.id) ? 0.5 : 1,
                   backgroundColor:
-                    dragOverIndex === selectedSongs.findIndex((a) => a.id === song.id) ? '#f0f0f0' : undefined,
+                    dragOverIndex === selectedSongs.findIndex((a) => a.id === song.id) ? '#332b4b' : undefined,
                   cursor: 'grab',
                 }}
               >
@@ -299,7 +309,7 @@ export const SetlistCreatePage: React.FC<Props> = ({ loadAllSongsRequest, create
                 <S.ASideDetails>
                   {/* <S.BadgeTitle>{song.key}</S.BadgeTitle> */}
                   <S.BadgeTitle>
-                    <input value={song.key} onChange={(e) => updateKeyOnSelectedSong(e, song.id)} />
+                    <input value={song.key ?? ''} onChange={(e) => updateKeyOnSelectedSong(e, index)} />
                   </S.BadgeTitle>
                   <S.BadgeSubTitle>{song.rhythm}</S.BadgeSubTitle>
                 </S.ASideDetails>
@@ -307,7 +317,7 @@ export const SetlistCreatePage: React.FC<Props> = ({ loadAllSongsRequest, create
                   <S.PositionText>#{selectedSongs.findIndex((a) => a.id === song.id) + 1}</S.PositionText>
                 </S.ASidePosition>
                 <S.ASideButtons>
-                  <i onClick={() => handleClickSong(song)} style={{ backgroundColor: '#CF142b' }}>
+                  <i onClick={() => handleClickSong(song)} style={{ backgroundColor: '#991b1b' }}>
                     <X size={15} />
                   </i>
                   <i style={{ cursor: 'grab' }}>
@@ -316,45 +326,15 @@ export const SetlistCreatePage: React.FC<Props> = ({ loadAllSongsRequest, create
                 </S.ASideButtons>
               </S.Badge>
             ))}
-            <p>Adicionar momento não linkável</p>
-            <S.Badge $variant="darkGray" key={`selected-song-form`}>
-              {/* <S.ASide>
-                  <SongList.Thumbnail>
-                    <img src="/assets/no-photo.png" alt="" />
-                  </SongList.Thumbnail>
-                </S.ASide> */}
-              <S.ASideTitle>
-                <S.BadgeTitle>
-                  <input
-                    name="moment-name"
-                    placeholder={'Escreva aqui'}
-                    onChange={(e) => setMomentName(e.target.value)}
-                    value={momentName}
-                    style={{ width: '100%' }}
-                  />
-                </S.BadgeTitle>
-                <S.BadgeSubTitle></S.BadgeSubTitle>
-              </S.ASideTitle>
-              <S.ASideDetails>
-                {/* <S.BadgeTitle>{song.key}</S.BadgeTitle> */}
-                <S.BadgeTitle></S.BadgeTitle>
-                <S.BadgeSubTitle></S.BadgeSubTitle>
-              </S.ASideDetails>
-              <S.ASidePosition>
-                <S.PositionText>#{selectedSongs.length + 1}</S.PositionText>
-              </S.ASidePosition>
-              <S.ASideButtons>
-                <i onClick={() => handleCreateMoment()} style={{ backgroundColor: '#008000' }}>
-                  <Check size={15} />
-                </i>
-                <i>
-                  <ArrowDownUp size={15} />
-                </i>
-              </S.ASideButtons>
-            </S.Badge>
           </S.SectionContent>
         </S.Section>
       </S.Content>
+      <S.Footer>
+        <S.SaveButton type="button" disabled={sendingData} onClick={handleCreateSetlist}>
+          <Save size={18} />
+          {sendingData ? 'Salvando...' : 'Salvar'}
+        </S.SaveButton>
+      </S.Footer>
     </S.Container>
   );
 };
