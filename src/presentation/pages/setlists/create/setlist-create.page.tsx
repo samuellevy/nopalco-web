@@ -4,7 +4,7 @@ import * as S from './setlist-create.styles';
 import { LoadAllSongsRequest } from '@/domain/usecases';
 import { Song } from '@/domain/models';
 import Loader from '@/presentation/components/loader/loader';
-import { ArrowDownUp, Check, Save, X } from 'lucide-react';
+import { ArrowDownUp, Check, Home, Save, X } from 'lucide-react';
 import { CreateSetlistDTO, CreateSetlistRequest } from '@/domain/usecases/setlists/create-setlist-request';
 import { SetlistGroupSelect } from '@/presentation/components/setlist-group-select/setlist-group-select.component';
 
@@ -330,6 +330,10 @@ export const SetlistCreatePage: React.FC<Props> = ({ loadAllSongsRequest, create
         </S.Section>
       </S.Content>
       <S.Footer>
+        <S.HomeLink to="/">
+          <Home size={18} />
+          Início
+        </S.HomeLink>
         <S.SaveButton type="button" disabled={sendingData} onClick={handleCreateSetlist}>
           <Save size={18} />
           {sendingData ? 'Salvando...' : 'Salvar'}

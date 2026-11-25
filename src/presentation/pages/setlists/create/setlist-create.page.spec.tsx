@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { SetlistCreatePage } from './setlist-create.page';
 
 jest.mock('@/presentation/components/loader/loader', () => () => null);
@@ -14,10 +15,12 @@ describe('SetlistCreatePage', () => {
 
     try {
       render(
-        <SetlistCreatePage
-          loadAllSongsRequest={{ execute: jest.fn().mockResolvedValue({ songs: [{ id: 'song-1', name: 'Song' }] }) }}
-          createSetlistRequest={{ execute: createSetlist }}
-        />,
+        <MemoryRouter>
+          <SetlistCreatePage
+            loadAllSongsRequest={{ execute: jest.fn().mockResolvedValue({ songs: [{ id: 'song-1', name: 'Song' }] }) }}
+            createSetlistRequest={{ execute: createSetlist }}
+          />
+        </MemoryRouter>,
       );
 
       await screen.findByRole('heading', { name: 'Song' });
@@ -38,5 +41,27 @@ describe('SetlistCreatePage', () => {
     } finally {
       consoleError.mockRestore();
     }
+  });
+
+  test('navigates home from the footer', async () => {
+    render(
+      <MemoryRouter initialEntries={['/setlists/create']}>
+        <Routes>
+          <Route
+            path="/setlists/create"
+            element={
+              <SetlistCreatePage
+                loadAllSongsRequest={{ execute: jest.fn().mockResolvedValue({ songs: [] }) }}
+                createSetlistRequest={{ execute: jest.fn() }}
+              />
+            }
+          />
+          <Route path="/" element={<h1>Página inicial</h1>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(await screen.findByRole('link', { name: 'Início' }));
+    expect(screen.getByRole('heading', { name: 'Página inicial' })).toBeInTheDocument();
   });
 });

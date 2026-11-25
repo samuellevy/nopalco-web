@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { Link } from 'react-router-dom';
 
 type BadgeProps = {
   $variant?:
@@ -117,7 +118,8 @@ export const Footer = styled.footer`
   inset: auto 0 0;
   z-index: 50;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  gap: 12px;
   padding: 12px 2.5rem calc(12px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   background: #0f1117;
@@ -134,6 +136,31 @@ export const SaveButton = styled(SimpleButton)`
   justify-content: center;
   gap: 8px;
   min-width: 120px;
+`;
+
+export const HomeLink = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  background: #171b26;
+  color: #f8fafc;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    background: #1d2232;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #a78bfa;
+    outline-offset: 2px;
+  }
 `;
 
 export const InputGroup = styled.div`
